@@ -116,7 +116,7 @@ node_modules/
 docs/_build/
 
 # === Git & LFS Support ===
-.gitattributes
+# .gitattributes should be tracked!
 .gitignore.bak
 .git/
 
