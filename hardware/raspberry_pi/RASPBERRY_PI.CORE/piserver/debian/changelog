@@ -1,0 +1,116 @@
+piserver (0.7.6) bullseye; urgency=medium
+
+  * Add support for newer Pi with MAC-addresses that start with d8:3a:dd
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Tue, 16 May 2023 22:04:36 +0200
+
+piserver (0.7.5) buster; urgency=medium
+
+  * Fix "Cannot use erase() with null" error when using
+    non-ad external LDAP server
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Sat, 10 Sep 2022 23:42:33 +0200
+
+piserver (0.7.4) buster; urgency=medium
+
+  * Update convert script for bullseye 
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Tue, 23 Nov 2021 20:55:19 +0100
+
+piserver (0.7.3) buster; urgency=medium
+
+  * Fix GDateTime reference counting 
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Sat, 03 Jul 2021 01:09:49 +0200
+
+piserver (0.7.2) buster; urgency=medium
+
+  * Drop file system capabilities while running chroot shell
+  * Importing SD cards: copy start menu folder structure too   
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Thu, 27 May 2021 18:33:33 +0200
+
+piserver (0.7.1) buster; urgency=medium
+
+  * Add support for converting OS images from SD card 
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Thu, 29 Apr 2021 23:37:25 +0200
+
+piserver (0.7) buster; urgency=medium
+
+  * Add new MAC OUI
+  * pxz -> xz
+  * Mention Pi 4 is also supported in UI
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Tue, 27 Apr 2021 14:38:33 +0200
+
+piserver (0.6) buster; urgency=medium
+
+  [ Floris Bos ]
+  * Add missing return statement
+
+ -- Serge Schneider <serge@raspberrypi.org>  Wed, 19 Feb 2020 17:36:57 +0000
+
+piserver (0.5) buster; urgency=medium
+
+  * Add export/save button for OS images
+  * AD: support having users outside CN=users
+  * LOCALE_DIR -> LOCALEDIR
+  * Implement minimal download resuming support
+  * Add support for lastlogin tracking, description
+  * Fix mouse cursor on startup
+  * Do not continously poll for SD card that usually is not present
+  * Remove PubkeyAuthentication=no from pam_mount.conf.xml
+  * Link to libatomic if needed
+  * Fix setting /etc/nslcd.conf when using external LDAP/AD server
+  * External LDAP/AD server: allow restricting access by user group
+  * Warn user if STP is enabled on switch
+  * Buster: fix disabling console auto-login
+  * Add hosts screen: add new OUI to detection routine
+  * sdtweak,pollonce -> sdtweak,poll_once
+  * Buster: fix systemd-timesync time synchronization
+  * Let systemd create the sshd runtime directory
+  * Remove improper references to gksu
+  * Remove references to Pixel
+
+ -- Serge Schneider <serge@raspberrypi.org>  Mon, 14 Oct 2019 10:40:59 +0100
+
+piserver (0.4) buster; urgency=medium
+
+  * Add 'clone OS' button
+  * Remove dependency on gksudo
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 07 Feb 2019 10:26:54 +0000
+
+piserver (0.3) stretch; urgency=medium
+
+  * dhcpcd: disable link detection
+  * Fix copying timezone setting from Piserver computer
+  * Mount shared folders nolock
+  * Shell button: call x-terminal-emulator instead of lxterminal
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 03 Jul 2018 09:52:24 +0100
+
+piserver (0.2) stretch; urgency=medium
+
+  * Add DhcpClient. Remove dependency on odhcploc
+  * Force reconfig of existing slapd
+  * Add initial .csv import support
+  * Workaround for warnings being printed (gtk empty string bug)
+  * Force systemd reload on install
+  * Update convert_chrooted_cmds for Stretch
+  * Remove data files on apt-get remove --purge piserver
+  * Add minimal support for external LDAP/AD servers
+  * Workaround for error when running "dpkg-reconfigure slapd" twice
+  * Defer home directory creation to first login
+  * Set certificate date to 9999
+  * Add simple shared folder support
+  * Do not create /etc/dnsmasq.d/piserver if not configured
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 20 Mar 2018 10:53:01 +0000
+
+piserver (0.1) jessie; urgency=medium
+
+  * Initial release
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Fri, 14 Apr 2017 21:10:11 +0100

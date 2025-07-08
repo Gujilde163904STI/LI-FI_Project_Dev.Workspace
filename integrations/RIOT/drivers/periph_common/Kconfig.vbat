@@ -1,0 +1,18 @@
+# Copyright (c) 2022 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+menu "PERIPH_VBAT backup battery monitoring peripheral driver"
+    depends on USEMODULE_PERIPH_VBAT
+
+config VBAT_ADC_VREF_MV
+    int "ADC reference voltage in mV"
+    default 3300
+    help
+        This is the reference voltage (VREF) of the ADC.
+        Often VREF is connected with VDDA, which is equal to VDD.
+
+endmenu # PERIPH_VBAT backup battery monitoring peripheral driver

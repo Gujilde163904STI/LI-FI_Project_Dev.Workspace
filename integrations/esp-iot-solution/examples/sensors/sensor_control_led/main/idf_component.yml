@@ -1,0 +1,10 @@
+dependencies:
+  boards:
+    version: "~0.0.1"
+    override_path: "../../../common_components/boards"
+  sht3x:
+    public: true
+    override_path: "../../../../components/sensors/humiture/sht3x"
+  sensor_hub:
+    public: true
+    override_path: "../../../../components/sensors/sensor_hub"

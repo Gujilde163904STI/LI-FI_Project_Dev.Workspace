@@ -1,0 +1,39 @@
+# ChangeLog
+
+## v1.1.1 - 2025-1-20
+
+* Fix the issue of crashes and reboots caused by reinstalling the USB PHY.
+
+## v1.1.0 - 2024-12-11
+
+* Support bootloader uf2
+* Support ESP32-P4
+
+## v0.2.2 - 2024-06-19
+
+* Fix usb may not be enumerated after switch from usb-serial-jtag to usb-otg
+* Fix tinyusb debug issue if usb console is enabled
+* Fix power management when frequency dynamic scaling is enabled
+
+## v0.2.1 - 2024-04-22
+
+* Fix build with latest ESP-IDF (USB Hal: Change name of usb*phy HAL files to usb*fsls_phy)
+
+## v0.2.0 - 2023-07-17
+
+* Support `esp*tinyuf2*uninstall` API (Restore the USB hardware to default state, Not teardown TinyUSB stack)
+* Support target test
+
+## v0.1.0 - 2023-07-05
+
+* Support USB Console for log (disabled by default)
+
+## v0.0.2 - 2023-07-03
+
+* Add Linux INI file write workaround
+
+## v0.0.1 - 2023-06-26
+
+* initial version
+* Support update APP through UF2
+* Support modify NVS through UF2

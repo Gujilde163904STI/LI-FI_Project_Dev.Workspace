@@ -1,0 +1,120 @@
+version: '3.4'
+
+x-tests-template: &tests-template
+    image: registry.gitlab.com/buildstream/buildstream-docker-images/testsuite-fedora:41-${CI_IMAGE_VERSION:-latest}
+    command: tox -vvvvv -- --color=yes --integration
+    environment:
+      TOXENV: ${CI_TOXENV_ALL}
+
+    # Enable privileges to run the sandbox
+    #
+    privileged: true
+    devices:
+      - /dev/fuse:/dev/fuse
+
+    # Mount the local directory and set the working directory
+    # to run the tests from.
+    #
+    volumes:
+      - ../..:/home/testuser/buildstream
+    working_dir: /home/testuser/buildstream
+
+
+services:
+
+  debian-11:
+    <<: *tests-template
+    image: registry.gitlab.com/buildstream/buildstream-docker-images/testsuite-debian:11-${CI_IMAGE_VERSION:-latest}
+
+  fedora-41:
+    <<: *tests-template
+    image: registry.gitlab.com/buildstream/buildstream-docker-images/testsuite-fedora:41-${CI_IMAGE_VERSION:-latest}
+
+  fedora-42:
+    <<: *tests-template
+    image: registry.gitlab.com/buildstream/buildstream-docker-images/testsuite-fedora:42-${CI_IMAGE_VERSION:-latest}
+
+  ubuntu-22.04:
+    <<: *tests-template
+    image: registry.gitlab.com/buildstream/buildstream-docker-images/testsuite-ubuntu:22.04-${CI_IMAGE_VERSION:-latest}
+
+  # Ensure that tests also pass in the absence of a sandboxing tool
+  fedora-missing-deps:
+    <<: *tests-template
+    image: registry.gitlab.com/buildstream/buildstream-docker-images/testsuite-fedora:minimal-${CI_IMAGE_VERSION:-latest}
+
+  # Test the master version of external plugins
+  plugins-master:
+    <<: *tests-template
+    environment:
+      BST_PLUGINS_EXPERIMENTAL_VERSION: master
+
+  buildgrid:
+    <<: *tests-template
+    command: tox -vvvvv -- --color=yes --remote-execution
+    environment:
+      TOXENV: ${CI_TOXENV_MAIN}
+      ARTIFACT_CACHE_SERVICE: http://localhost:50052
+      REMOTE_EXECUTION_SERVICE: http://localhost:50051
+      SOURCE_CACHE_SERVICE: http://localhost:50052
+
+    # We need to use host networking mode in order to be able to
+    # properly resolve services exposed by adjacent containers.
+    #
+    network_mode: host
+
+  buildbarn:
+    <<: *tests-template
+    command: tox -vvvvv -- --color=yes --remote-cache
+    environment:
+      TOXENV: ${CI_TOXENV_MAIN}
+      ARTIFACT_INDEX_SERVICE: http://localhost:7981
+      ARTIFACT_STORAGE_SERVICE: http://localhost:7982
+
+    # We need to use host networking mode in order to be able to
+    # properly resolve services exposed by adjacent containers.
+    #
+    network_mode: host
+
+  docs:
+    <<: *tests-template
+    command: tox -e docs
+    environment:
+      BST_FORCE_SESSION_REBUILD: 1
+
+  lint:
+    <<: *tests-template
+    command: tox -e lint,format-check
+
+  mypy:
+    <<: *tests-template
+    command: tox -e mypy
+
+  # Test that each BuildStream+BuildBox wheel package can install and run.
+  # on the PyPA official 'manylinux' images that define the base ABI for
+  # Python binary packages.
+
+  wheels-manylinux_2_28-cp39:
+    <<: *tests-template
+    image: quay.io/pypa/manylinux_2_28_x86_64
+    command: .github/wheel-helpers/test-wheel-manylinux.sh cp39 /opt/python/cp39-cp39/bin/python3
+
+  wheels-manylinux_2_28-cp310:
+    <<: *tests-template
+    image: quay.io/pypa/manylinux_2_28_x86_64
+    command: .github/wheel-helpers/test-wheel-manylinux.sh cp310 /opt/python/cp310-cp310/bin/python3
+
+  wheels-manylinux_2_28-cp311:
+    <<: *tests-template
+    image: quay.io/pypa/manylinux_2_28_x86_64
+    command: .github/wheel-helpers/test-wheel-manylinux.sh cp311 /opt/python/cp311-cp311/bin/python3
+
+  wheels-manylinux_2_28-cp312:
+    <<: *tests-template
+    image: quay.io/pypa/manylinux_2_28_x86_64
+    command: .github/wheel-helpers/test-wheel-manylinux.sh cp312 /opt/python/cp312-cp312/bin/python3
+
+  wheels-manylinux_2_28-cp313:
+    <<: *tests-template
+    image: quay.io/pypa/manylinux_2_28_x86_64
+    command: .github/wheel-helpers/test-wheel-manylinux.sh cp313 /opt/python/cp313-cp313/bin/python3

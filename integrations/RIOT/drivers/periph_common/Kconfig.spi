@@ -1,0 +1,17 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+if USEMODULE_PERIPH_SPI
+
+# TODO: these modules are actually just artifacts from the way periph_init_%
+# modules are handled in Makefile. We need to define them to keep the list the
+# same for now. We should be able to remove them later on.
+
+# Include CPU specific configurations
+osource "$(RIOTCPU)/$(CPU)/periph/Kconfig.spi"
+
+endif # USEMODULE_PERIPH_SPI

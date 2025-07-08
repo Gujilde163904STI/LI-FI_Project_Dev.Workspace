@@ -1,0 +1,45 @@
+.TH "BST BUILD" "1" "2025-05-09" "2.5" "bst build Manual"
+.SH NAME
+bst\-build \- Build elements in a pipeline
+.SH SYNOPSIS
+.B bst build
+[OPTIONS] [ELEMENTS]...
+.SH DESCRIPTION
+Build elements in a pipeline
+.PP
+    Specifying no elements will result in building the default targets
+    of the project. If no default targets are configured, all project
+    elements will be built.
+.PP
+    When this command is executed from a workspace directory, the default
+    is to build the workspace element.
+.PP
+    Specify `--deps` to control which dependencies must be built:
+.PP
+    
+        none:  No dependencies, just the element itself
+        build: Build time dependencies, excluding the element itself
+        all:   All dependencies
+.PP
+    Dependencies that are consequently required to build the requested
+    elements will be built on demand.
+    
+.SH OPTIONS
+.TP
+\fB\-d,\fP \-\-deps [none|build|all]
+The dependencies to build
+.TP
+\fB\-\-artifact\-remote\fP REMOTE
+A remote for uploading and downloading artifacts
+.TP
+\fB\-\-source\-remote\fP REMOTE
+A remote for uploading and downloading cached sources
+.TP
+\fB\-\-ignore\-project\-artifact\-remotes\fP
+Ignore remote artifact cache servers recommended by projects
+.TP
+\fB\-\-ignore\-project\-source\-remotes\fP
+Ignore remote source cache servers recommended by projects
+.TP
+\fB\-r,\fP \-\-retry\-failed
+Try to build elements for which a failed build artifact is found

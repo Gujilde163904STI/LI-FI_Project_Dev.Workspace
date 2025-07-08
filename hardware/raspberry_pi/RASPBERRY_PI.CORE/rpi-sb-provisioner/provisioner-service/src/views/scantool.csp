@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Scanner</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <%view stylesheet %>
+    <style>
+       
+        /* QR Scanner specific container style - override any global container styles */
+        body .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .scan-container {
+            display: none; /* Hide it instead of removing to prevent layout shifts */
+        }
+        
+        .video-container {
+            position: relative;
+            max-width: 100%;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        #video {
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            display: block;
+        }
+        
+        #processed-canvas {
+            width: 100%;
+            border: 1px solid #ddd;
+            display: block;
+        }
+        
+        #canvas {
+            display: none;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .message-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            color: #3c763d;
+        }
+        
+        .error {
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            color: #a94442;
+        }
+        
+        .warning {
+            background-color: #fcf8e3;
+            border: 1px solid #faebcc;
+            color: #8a6d3b;
+            display: block;
+            margin-bottom: 20px;
+        }
+        
+        /* Debug Panel Styles */
+        #debug-panel {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .debug-controls {
+            margin-bottom: 10px;
+        }
+        
+        #debug-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        
+        #debug-table th, #debug-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        #debug-table th {
+            background-color: #f2f2f2;
+        }
+        
+        #console-output {
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #333;
+            color: #fff;
+            font-family: monospace;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+        
+        .log-entry .timestamp {
+            color: #aaa;
+            margin-right: 10px;
+        }
+        
+        .log-entry.info {
+            color: #4CAF50;
+        }
+        
+        .log-entry.warn {
+            color: #ff9800;
+        }
+        
+        .log-entry.error {
+            color: #f44336;
+        }
+    </style>
+    <!-- Include the ZXing library from local static files -->
+    <script src="/js/zxing.js"></script>
+    
+    <!-- Fallback message if camera access fails -->
+    <div id="cameraError" style="display: none; color: #a94442; background-color: #f2dede; border: 1px solid #ebccd1; padding: 15px; margin: 15px 0; border-radius: 5px;">
+        <strong>Camera Error:</strong> <span id="errorDetails"></span>
+        <p>Please ensure you've granted camera permissions to this website.</p>
+    </div>
+</head>
+<body>
+    <%view navbar %>
+    
+    <div class="container">
+        <h1>QR Code Scanner</h1>
+        
+        <div id="results">
+            <div id="success-container" class="message-container success">
+                <h2>Success</h2>
+                <p>Code Value: <span id="code-value"></span></p>
+                <p>Status: <span id="code-status"></span></p>
+                <p>Message: <span id="code-message"></span></p>
+            </div>
+            
+            <div id="error-container" class="message-container error">
+                <h2>Error</h2>
+                <p>Message: <span id="error-message"></span></p>
+            </div>
+        </div>
+        
+        <div id="scanner">
+            <div class="video-container">
+                <video id="video"></video>
+            </div>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="start-button">Start Scanner</button>
+            <button id="stop-button" disabled>Stop Scanner</button>
+            <button id="toggle-debug">Show Debug Panel</button>
+        </div>
+        
+        <div id="debug-panel" class="debug-panel">
+            <h2>Debug Panel</h2>
+            <div class="debug-controls">
+                <button id="clear-console">Clear Console</button>
+            </div>
+            
+            <h3>Scanner Metrics</h3>
+            <table id="debug-table">
+                <tr>
+                    <td>ZXing Library:</td>
+                    <td id="metric-libraryStatus">Not initialized</td>
+                </tr>
+                <tr>
+                    <td>Camera Support:</td>
+                    <td id="metric-cameraSupport">Checking...</td>
+                </tr>
+                <tr>
+                    <td>Video Dimensions:</td>
+                    <td id="metric-videoDimensions">Unknown</td>
+                </tr>
+                <tr>
+                    <td>Scanner State:</td>
+                    <td id="metric-scannerState">Inactive</td>
+                </tr>
+                <tr>
+                    <td>Frames Processed:</td>
+                    <td id="metric-framesProcessed">0</td>
+                </tr>
+                <tr>
+                    <td>Last Frame Time:</td>
+                    <td id="metric-lastFrameTime">0ms</td>
+                </tr>
+                <tr>
+                    <td>Frame Brightness:</td>
+                    <td id="metric-frameBrightness">0%</td>
+                </tr>
+                <tr>
+                    <td>Decoder Errors:</td>
+                    <td id="metric-decoderErrors">0</td>
+                </tr>
+            </table>
+            
+            <h3>Console Output</h3>
+            <div id="console-output" class="console-output"></div>
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', function () {
+            let selectedDeviceId;
+            const codeReader = new ZXing.BrowserMultiFormatReader();
+            console.log('ZXing code reader initialized');
+            
+            const startButton = document.getElementById('start-button');
+            const stopButton = document.getElementById('stop-button');
+            
+            // Hide result containers initially
+            document.getElementById('success-container').style.display = 'none';
+            document.getElementById('error-container').style.display = 'none';
+            
+            // Check if we're in a secure context
+            checkSecureContext();
+            
+            function checkSecureContext() {
+                // Warning container for security context issues
+                const securityWarning = document.createElement('div');
+                securityWarning.className = 'message-container warning';
+                securityWarning.id = 'security-warning';
+                securityWarning.style.display = 'none';
+                
+                // Add warning text
+                const securityHeading = document.createElement('h3');
+                securityHeading.textContent = 'Security Warning';
+                securityWarning.appendChild(securityHeading);
+                
+                const securityText = document.createElement('p');
+                securityText.textContent = 'This page is not running in a secure context (HTTPS or localhost). Camera access may be denied by your browser.';
+                securityWarning.appendChild(securityText);
+                
+                // Insert at the top of the container
+                const container = document.querySelector('.container');
+                container.insertBefore(securityWarning, container.firstChild);
+                
+                // Check if we're in a secure context
+                const isSecure = window.isSecureContext;
+                const isLocalhost = window.location.hostname === 'localhost' || 
+                                    window.location.hostname === '127.0.0.1' ||
+                                    window.location.hostname.includes('192.168.') ||
+                                    window.location.hostname.includes('10.0.');
+                
+                // Show warning if not secure and not localhost
+                if (!isSecure && !isLocalhost) {
+                    securityWarning.style.display = 'block';
+                    console.warn('Not running in a secure context. Camera access may be restricted.');
+                }
+            }
+
+            codeReader.listVideoInputDevices()
+                .then((videoInputDevices) => {
+                    console.log('videoInputDevices', videoInputDevices);
+                    
+                    if (videoInputDevices.length === 0) {
+                        showError('No camera detected. Please ensure your camera is connected and permissions are granted.');
+                        return;
+                    }
+                    
+                    // Select the first available device
+                    selectedDeviceId = videoInputDevices[0].deviceId;
+                    console.log('Selected device:', selectedDeviceId);
+                    
+                    // Setup hints with formats we want to scan
+                    const hints = new Map();
+                    const formats = [
+                        ZXing.BarcodeFormat.QR_CODE,
+                        ZXing.BarcodeFormat.DATA_MATRIX
+                    ];
+                    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+                    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                    
+                    // Set up high-resolution constraints with preference for rear camera
+                    const constraints = {
+                        video: {
+                            width: { min: 1280, ideal: 1920 },
+                            height: { min: 720, ideal: 1080 },
+                            facingMode: { ideal: 'environment' } // Prefer rear camera
+                        }
+                    };
+                    
+                    console.log('Starting camera with constraints:', constraints);
+                    
+                    // Use decodeFromConstraints to apply our custom constraints
+                    codeReader.decodeFromConstraints(constraints, 'video', (result, err) => {
+                        if (result) {
+                            console.log('Found code!', result);
+                            
+                            // Get the scanned code value
+                            const code = result.getText();
+                            
+                            // Verify the code against the manufacturing database
+                            verifyQRCode(code)
+                                .then(response => {
+                                    if (response.exists) {
+                                        showSuccess(code, "Valid", "Device ID found in manufacturing database");
+                                    } else {
+                                        showError("Device ID not found in manufacturing database: " + code);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error verifying QR code:', error);
+                                    showError("Error verifying code: " + error.message);
+                                });
+                            
+                            // Log the actual dimensions
+                            const video = document.getElementById('video');
+                            console.log('Actual video dimensions:', video.videoWidth, 'x', video.videoHeight);
+                        }
+                        
+                        if (err && !(err instanceof ZXing.NotFoundException)) {
+                            console.error(err);
+                            // Only show error for significant errors, not just "code not found"
+                            
+                            // Increment decoder errors count in debug panel
+                            const errorCountElement = document.getElementById('metric-decoderErrors');
+                            if (errorCountElement) {
+                                const currentCount = parseInt(errorCountElement.textContent) || 0;
+                                errorCountElement.textContent = currentCount + 1;
+                            }
+                        }
+                    }, hints)
+                    .then(() => {
+                        console.log('Started continuous decode with custom constraints');
+                        
+                        // Update button states
+                        startButton.disabled = true;
+                        stopButton.disabled = false;
+                    })
+                    .catch(err => {
+                        console.error('Error initializing camera:', err);
+                        showError('Error initializing camera: ' + err.message);
+                    });
+                })
+                .catch((err) => {
+                    console.error(err);
+                    showError('Error listing video devices: ' + err);
+                });
+            
+            stopButton.addEventListener('click', () => {
+                console.log('Stop button clicked');
+                
+                codeReader.reset();
+                console.log('Reset.');
+                
+                // Stop any active stream
+                const videoElement = document.getElementById('video');
+                if (videoElement && videoElement.srcObject) {
+                    const tracks = videoElement.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                    videoElement.srcObject = null;
+                }
+                
+                // Hide results
+                document.getElementById('success-container').style.display = 'none';
+                document.getElementById('error-container').style.display = 'none';
+                
+                // Update button states
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            });
+            
+            // Function to show success message
+            function showSuccess(code, status, message) {
+                const successContainer = document.getElementById('success-container');
+                const errorContainer = document.getElementById('error-container');
+                
+                document.getElementById('code-value').textContent = code;
+                document.getElementById('code-status').textContent = status;
+                document.getElementById('code-message').textContent = message;
+                
+                successContainer.style.display = 'block';
+                errorContainer.style.display = 'none';
+            }
+            
+            // Function to show error message
+            function showError(message) {
+                const successContainer = document.getElementById('success-container');
+                const errorContainer = document.getElementById('error-container');
+                
+                document.getElementById('error-message').textContent = message;
+                
+                successContainer.style.display = 'none';
+                errorContainer.style.display = 'block';
+            }
+
+            // Function to verify QR code with the server
+            async function verifyQRCode(qrcode) {
+                try {
+                    const response = await fetch('/api/v2/verify-qrcode', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ qrcode }),
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Server error');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error verifying QR code:', error);
+                    throw error;
+                }
+            }
+        });
+        
+        // Debug Panel Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debug panel elements
+            const debugPanel = document.getElementById('debug-panel');
+            const toggleDebugBtn = document.getElementById('toggle-debug');
+            const clearConsoleBtn = document.getElementById('clear-console');
+            const consoleOutput = document.getElementById('console-output');
+            
+            // Hide debug panel by default
+            debugPanel.style.display = 'none';
+            
+            // Toggle debug panel visibility
+            toggleDebugBtn.addEventListener('click', function() {
+                if (debugPanel.style.display === 'none') {
+                    debugPanel.style.display = 'block';
+                    toggleDebugBtn.textContent = 'Hide Debug Panel';
+                    setupDebugMetrics();
+                } else {
+                    debugPanel.style.display = 'none';
+                    toggleDebugBtn.textContent = 'Show Debug Panel';
+                }
+            });
+            
+            // Clear console output
+            clearConsoleBtn.addEventListener('click', function() {
+                consoleOutput.innerHTML = '';
+            });
+            
+            // Function to set up debug metrics and console output
+            function setupDebugMetrics() {
+                // Update scanner metrics
+                updateMetric('libraryStatus', 'ZXing loaded');
+                updateMetric('cameraSupport', navigator.mediaDevices ? 'Supported' : 'Not supported');
+                
+                // Intercept console logs for debug panel
+                const originalConsoleLog = console.log;
+                const originalConsoleWarn = console.warn;
+                const originalConsoleError = console.error;
+                
+                // Override console.log
+                console.log = function(...args) {
+                    // Call original console.log
+                    originalConsoleLog.apply(console, args);
+                    // Add to debug panel
+                    addLogEntry('info', args);
+                };
+                
+                // Override console.warn
+                console.warn = function(...args) {
+                    // Call original console.warn
+                    originalConsoleWarn.apply(console, args);
+                    // Add to debug panel
+                    addLogEntry('warn', args);
+                };
+                
+                // Override console.error
+                console.error = function(...args) {
+                    // Call original console.error
+                    originalConsoleError.apply(console, args);
+                    // Add to debug panel
+                    addLogEntry('error', args);
+                };
+                
+                // Function to measure frame brightness
+                function measureFrameBrightness() {
+                    const videoElement = document.getElementById('video');
+                    if (!videoElement || !videoElement.videoWidth) return;
+                    
+                    // Create temporary canvas to analyze video frame
+                    const tempCanvas = document.createElement('canvas');
+                    const tempContext = tempCanvas.getContext('2d', { willReadFrequently: true });
+                    
+                    // Set canvas dimensions
+                    tempCanvas.width = videoElement.videoWidth;
+                    tempCanvas.height = videoElement.videoHeight;
+                    
+                    // Draw video frame to canvas
+                    tempContext.drawImage(videoElement, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    try {
+                        // Get image data for analysis
+                        const imageData = tempContext.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                        const data = imageData.data;
+                        
+                        // Sample pixels (every 20th pixel to reduce computation)
+                        let totalBrightness = 0;
+                        let sampleCount = 0;
+                        
+                        for (let i = 0; i < data.length; i += 80) { // Skip pixels and channels (4 bytes per pixel)
+                            const r = data[i];
+                            const g = data[i + 1];
+                            const b = data[i + 2];
+                            
+                            // Calculate brightness using luminance formula
+                            const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+                            totalBrightness += brightness;
+                            sampleCount++;
+                        }
+                        
+                        // Calculate average brightness (0-255) and convert to percentage
+                        const avgBrightness = totalBrightness / sampleCount;
+                        const brightnessPercent = Math.round((avgBrightness / 255) * 100);
+                        
+                        // Update the brightness metric
+                        updateMetric('frameBrightness', brightnessPercent + '%');
+                    } catch (err) {
+                        console.error('Error measuring brightness:', err);
+                    }
+                }
+                
+                // Set up periodic metric updates
+                setInterval(function() {
+                    const videoElement = document.getElementById('video');
+                    if (videoElement && videoElement.videoWidth) {
+                        updateMetric('videoDimensions', `${videoElement.videoWidth}x${videoElement.videoHeight}`);
+                    }
+                    
+                    // Update frames processed from ZXing
+                    const framesProcessed = parseInt(document.getElementById('metric-framesProcessed').textContent) + 1;
+                    updateMetric('framesProcessed', framesProcessed);
+                    
+                    // Update scanner state based on video element
+                    if (videoElement && !videoElement.paused) {
+                        updateMetric('scannerState', 'Active');
+                    } else {
+                        updateMetric('scannerState', 'Inactive');
+                    }
+                    
+                    // Update last frame time
+                    updateMetric('lastFrameTime', new Date().toISOString().substr(11, 8));
+                    
+                    // Measure frame brightness
+                    measureFrameBrightness();
+                }, 1000);
+            }
+            
+            // Function to update a metric in the debug table
+            function updateMetric(metricId, value) {
+                const element = document.getElementById(`metric-${metricId}`);
+                if (element) {
+                    element.textContent = value;
+                }
+            }
+            
+            // Function to add a log entry to the console output
+            function addLogEntry(level, args) {
+                // Create log entry element
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${level}`;
+                
+                // Add timestamp
+                const timestamp = document.createElement('span');
+                timestamp.className = 'timestamp';
+                timestamp.textContent = new Date().toISOString().substr(11, 8);
+                logEntry.appendChild(timestamp);
+                
+                // Add message
+                const message = document.createElement('span');
+                message.textContent = args.map(arg => {
+                    if (typeof arg === 'object') {
+                        try {
+                            return JSON.stringify(arg);
+                        } catch (e) {
+                            return String(arg);
+                        }
+                    }
+                    return String(arg);
+                }).join(' ');
+                logEntry.appendChild(message);
+                
+                // Add to console output
+                consoleOutput.appendChild(logEntry);
+                
+                // Auto-scroll to bottom
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html> 

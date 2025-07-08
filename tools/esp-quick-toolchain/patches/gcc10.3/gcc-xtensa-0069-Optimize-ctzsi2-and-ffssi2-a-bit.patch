@@ -1,0 +1,44 @@
+From c7111ec38b7a1825f759804b021afc7b7b5b7491 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Thu, 12 Jan 2023 10:01:01 +0900
+Subject: [PATCH] xtensa: Optimize ctzsi2 and ffssi2 a bit
+
+This patch saves one byte when the Code Density Option is enabled,
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (ctzsi2, ffssi2):
+	Rearrange the emitting codes.
+---
+ gcc/config/xtensa/xtensa.md | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 4b0b74368..4f1e8fd13 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -477,8 +477,8 @@
+   emit_insn (gen_negsi2 (temp, operands[1]));
+   emit_insn (gen_andsi3 (temp, temp, operands[1]));
+   emit_insn (gen_clzsi2 (temp, temp));
+-  emit_insn (gen_negsi2 (temp, temp));
+-  emit_insn (gen_addsi3 (operands[0], temp, GEN_INT (31)));
++  emit_move_insn (operands[0], GEN_INT (31));
++  emit_insn (gen_subsi3 (operands[0], operands[0], temp));
+   DONE;
+ })
+ 
+@@ -491,8 +491,8 @@
+   emit_insn (gen_negsi2 (temp, operands[1]));
+   emit_insn (gen_andsi3 (temp, temp, operands[1]));
+   emit_insn (gen_clzsi2 (temp, temp));
+-  emit_insn (gen_negsi2 (temp, temp));
+-  emit_insn (gen_addsi3 (operands[0], temp, GEN_INT (32)));
++  emit_move_insn (operands[0], GEN_INT (32));
++  emit_insn (gen_subsi3 (operands[0], operands[0], temp));
+   DONE;
+ })
+ 
+-- 
+2.30.2
+

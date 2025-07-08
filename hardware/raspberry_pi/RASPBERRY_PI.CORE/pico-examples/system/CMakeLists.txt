@@ -1,0 +1,5 @@
+add_subdirectory_exclude_platforms(boot_info host host rp2040)
+add_subdirectory_exclude_platforms(hello_double_tap host)
+add_subdirectory_exclude_platforms(narrow_io_write host)
+add_subdirectory_exclude_platforms(unique_board_id host)
+add_subdirectory_exclude_platforms(rand host)

@@ -1,0 +1,11 @@
+/**
+ * @defgroup pkg_openthread   OpenThread network stack
+ * @ingroup  pkg
+ * @ingroup  net
+ * @brief    Provides a RIOT adaption of the OpenThread network stack
+ * @see      https://github.com/openthread/openthread
+ * @note     A good technical introduction to how Thread works is available in
+ *           the [thread primer] of OpenThread.
+ *
+ * [thread primer]: https://openthread.io/guides/thread-primer
+ */

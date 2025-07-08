@@ -1,0 +1,310 @@
+# example/a               // project full path
+#  target: esp32          // target name
+#  sdkconfig:             // sdkconfig name
+#     - a                 // sdkconfig.ci.a
+#     - default           // sdkconfig.default (will be renamed to {target}_generic)
+#  target: esp32s3        // target name
+#  sdkconfig:             // sdkconfig name
+#     - b                 // sdkconfig.ci.b
+#     - default           // sdkconfig.default (will be renamed to {target}_generic)
+#  description:           // Description of the example (optional)
+#     <description>
+#  readme:                // readme url must point a README.md link (optional)
+#     <URL>
+
+examples/display/lcd/lcd_with_te:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  description: This is the LCD example
+  readme: https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/display/lcd/lcd_with_te/README.md
+
+examples/display/lcd/qspi_with_ram:
+  esp32s3:
+    sdkconfig:
+      - sh8601
+      - gc9b71
+      - defaults
+  description: This is the QSPI LCD (with RAM) and Touch Panel Example
+  readme: https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/display/lcd/qspi_with_ram/README.md
+
+examples/display/lcd/qspi_without_ram:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  description: This is the QSPI LCD (without RAM) Example
+  readme: https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/display/lcd/qspi_without_ram/README.md
+
+examples/display/lcd/rgb_avoid_tearing:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  description: This is the RGB Avoid Tearing Example
+  readme: https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/display/lcd/rgb_avoid_tearing/README.md
+
+examples/display/lcd/rgb_lcd_8bit:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  description: This is the RGB LCD 8BIT Example
+  readme: https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/display/lcd/rgb_lcd_8bit/README.md
+
+examples/keyboard:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  description: A full key anti-ghosting keyboard powered by the ESP32S3. https://github.com/espressif/esp-iot-solution/tree/master/examples/keyboard
+  readme: https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/keyboard/README.md
+
+examples/usb/device/bootloader_uf2:
+  esp32s3:
+    sdkconfig:
+      - singleapp_2m
+      - singleapp_4m
+      - singleapp_8m
+  esp32s2:
+    sdkconfig:
+      - singleapp_2m
+      - singleapp_4m
+      - singleapp_8m
+  esp32p4:
+    sdkconfig:
+      - singleapp_2m
+      - singleapp_4m
+      - singleapp_8m
+  description:
+    USB can be used as a UF2 feature for drag-and-drop flashing and modifying NVS.
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/bootloader_uf2/README.md
+
+examples/usb/device/usb_dongle:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  esp32s2:
+    sdkconfig:
+      - defaults
+  description:
+    Using ESP32 boards that support USB-OTG as a USB dongle device
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_dongle/README.md
+
+examples/usb/device/usb_dual_uvc_device:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+      - defaults
+  esp32p4:
+    sdkconfig:
+      - defaults
+  description:
+    This is the USB dual UVC device example
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_dual_uvc_device/README.md
+
+examples/usb/device/usb_extend_screen:
+  esp32s3:
+    sdkconfig:
+      - esp32_s3_lcd_ev_board_480_480
+      - esp32_s3_lcd_ev_board_800_480
+  esp32p4:
+    sdkconfig:
+      - esp32_p4_function_ev_board
+  description:
+    Using the ESP32-P4-Function-EV-Board as a Windows USB Extension Screen
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_extend_screen/README.md
+
+examples/usb/device/usb_hid_device:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+  description:
+    This example demonstrates how to use ESP32-Sx USB function as the HID device
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_hid_device/README.md
+
+examples/usb/device/usb_lcd_display:
+  esp32p4:
+    sdkconfig:
+      - defaults
+  description:
+    This example demonstrates how to use the esp_lcd_usb_display component to compress generated image data into a JPEG frame stream and transmit it to the USB host
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_lcd_display/README.md
+
+examples/usb/device/usb_msc_wireless_disk:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+      - external_sd
+      - internal_flash
+      - defaults
+  description:
+    Using ESP32-Sx as a USB Disk with Wireless accessibility
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_msc_wireless_disk/README.md
+
+examples/usb/device/usb_surface_dial:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+  description:
+    This example shows how to use the ESP32-Sx USB function to emulate a Windows knob that allows volume control, page up and down, and more
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_surface_dial/README.md
+
+examples/usb/device/usb_uac:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  esp32p4:
+    sdkconfig:
+      - defaults
+  description:
+    This example demonstrates how to utilize the USB function of ESP32-Sx/Px to implement a UAC (USB Audio Class) device
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_uac/README.md
+
+examples/usb/device/usb_uart_bridge:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  esp32s2:
+    sdkconfig:
+      - defaults
+  description:
+    USB to serial bridge tool using the USB and UART capabilities of the ESP32-S2/S3 microcontroller
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_uart_bridge/README.md
+
+examples/usb/device/usb_uf2_nvs:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+  description:
+    This example demonstrates a new Wi-Fi Provisioning solution through TinyUF2
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_uf2_nvs/README.md
+
+examples/usb/device/usb_uf2_ota:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+      - defaults
+  description:
+    This example demonstrates a OTA disk solution through TinyUF2
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_uf2_ota/README.md
+
+examples/usb/device/usb_webcam:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_eye
+  description:
+    This is the USB webcam example
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/device/usb_webcam/README.md
+
+examples/usb/host/usb_audio_player:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  esp32s2:
+    sdkconfig:
+      - defaults
+  esp32p4:
+    sdkconfig:
+      - defaults
+  description:
+    This example demonstrates how to use `usb_host_uac` component to handle an USB Headset device
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/host/usb_audio_player/README.md
+
+examples/usb/host/usb_camera_lcd_display:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_lcd_ev_board
+      - defaults
+  description:
+    This is the USB camera LCD display example
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/host/usb_camera_lcd_display/README.md
+
+examples/usb/host/usb_camera_mic_spk:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+      - defaults
+  description:
+    This is the USB camera microphone speaker example
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/host/usb_camera_mic_spk/README.md
+
+examples/usb/host/usb_cdc_4g_module:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+      - defaults
+  esp32s2:
+    sdkconfig:
+      - defaults
+  description:
+    This is the USB CDC 4G module example
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/host/usb_cdc_4g_module/README.md
+
+examples/usb/host/usb_cdc_basic:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+  description:
+    This is the USB CDC basic example
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/host/usb_cdc_basic/README.md
+
+examples/usb/host/usb_hub_dual_camera:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  esp32p4:
+    sdkconfig:
+      - defaults
+  description:
+    This is the USB Host Dual UVC example
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/host/usb_hub_dual_camera/README.md
+
+examples/usb/host/usb_msc_ota:
+  esp32s3:
+    sdkconfig:
+      - esp32s3_usb_otg
+      - defaults
+  esp32s2:
+    sdkconfig:
+      - defaults
+  description:
+    This example demonstrates how to use esp_msc_ota to OTA with USB disk or other MSC devices.
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/host/usb_msc_ota/README.md
+
+examples/usb/otg/usb_host_device_mode_manual_switch:
+  esp32s3:
+    sdkconfig:
+      - defaults
+  esp32p4:
+    sdkconfig:
+      - defaults
+  description:
+    This example demonstrates how to manually switch the USB OTG peripheral from host to device mode.
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/usb/otg/usb_host_device_mode_manual_switch/README.md
+
+examples/vision/opencv/color_tracker:
+  esp32p4:
+    sdkconfig:
+      - defaults
+  description:
+    This example demonstrates how to use the ESP32-P4-Function-EV-Board with OpenCV to achieve color tracking.
+  readme:
+    https://raw.githubusercontent.com/espressif/esp-iot-solution/master/examples/vision/opencv/color_tracker/README.md

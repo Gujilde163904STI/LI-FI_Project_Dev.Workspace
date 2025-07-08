@@ -1,0 +1,108 @@
+name: Push components to Espressif Component Service
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  upload_components:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          submodules: 'recursive'
+      - name: Upload components to component service
+        uses: espressif/upload-components-ci-action@v1
+        with:
+          directories: >
+            components/audio/adc_mic;
+            components/audio/pwm_audio;
+            components/avi_player;
+            components/bluetooth/ble_conn_mgr;
+            components/bluetooth/ble_hci;
+            components/bluetooth/ble_profiles/esp/ble_ota;
+            components/bluetooth/ble_profiles/std/ble_anp;
+            components/bluetooth/ble_profiles/std/ble_hrp;
+            components/bluetooth/ble_profiles/std/ble_htp;
+            components/bluetooth/ble_services;
+            components/bootloader_support_plus;
+            components/button;
+            components/display/lcd/esp_lcd_axs15231b;
+            components/display/lcd/esp_lcd_ek79007;
+            components/display/lcd/esp_lcd_gc9b71;
+            components/display/lcd/esp_lcd_hx8399;
+            components/display/lcd/esp_lcd_jd9165;
+            components/display/lcd/esp_lcd_jd9365;
+            components/display/lcd/esp_lcd_nv3022b;
+            components/display/lcd/esp_lcd_panel_io_additions;
+            components/display/lcd/esp_lcd_sh8601;
+            components/display/lcd/esp_lcd_spd2010;
+            components/display/lcd/esp_lcd_st7701;
+            components/display/lcd/esp_lcd_st7703;
+            components/display/lcd/esp_lcd_st77903_qspi;
+            components/display/lcd/esp_lcd_st77903_rgb;
+            components/display/lcd/esp_lcd_st77916;
+            components/display/lcd/esp_lcd_st77922;
+            components/display/lcd/esp_lcd_usb_display;
+            components/display/lcd_touch/esp_lcd_touch_ili2118;
+            components/display/lcd_touch/esp_lcd_touch_spd2010;
+            components/display/lcd_touch/esp_lcd_touch_st7123;
+            components/display/tools/esp_lv_decoder;
+            components/display/tools/esp_lv_fs;
+            components/display/tools/esp_mmap_assets;
+            components/elf_loader;
+            components/expander/io_expander/mcp23017;
+            components/extended_vfs;
+            components/gprof;
+            components/i2c_bus;
+            components/iot_eth;
+            components/ir/ir_learn;
+            components/keyboard_button;
+            components/knob;
+            components/led/led_indicator;
+            components/led/lightbulb_driver;
+            components/motor/drv10987;
+            components/motor/esp_sensorless_bldc_control;
+            components/motor/esp_simplefoc;
+            components/motor/servo;
+            components/openai;
+            components/sensors/adc/mcp3201;
+            components/sensors/battery_fuel_gauge/adc_battery_estimation;
+            components/sensors/battery_fuel_gauge/max17048;
+            components/sensors/power_measure;
+            components/sensors/gesture/apds9960;
+            components/sensors/humiture/aht20;
+            components/sensors/humiture/hdc2010;
+            components/sensors/humiture/mvh3004d;
+            components/sensors/humiture/sht3x;
+            components/sensors/imu/lis2dh12;
+            components/sensors/light_sensor/veml6040;
+            components/sensors/light_sensor/veml6075;
+            components/sensors/ntc_driver;
+            components/sensors/power_monitor/ina236;
+            components/sensors/pressure/bme280;
+            components/sensors/radar/at581x;
+            components/sensors/sensor_hub;
+            components/spi_bus;
+            components/storage/eeprom/at24c02;
+            components/touch/touch_button;
+            components/touch/touch_button_sensor;
+            components/touch/touch_proximity_sensor;
+            components/touch/touch_slider_sensor;
+            components/usb/esp_msc_ota;
+            components/usb/esp_tinyuf2;
+            components/usb/iot_usbh;
+            components/usb/iot_usbh_cdc;
+            components/usb/iot_usbh_modem;
+            components/usb/usb_device_uac;
+            components/usb/usb_device_uvc;
+            components/usb/iot_usbh_rndis;
+            components/usb/iot_usbh_ecm;
+            components/usb/usb_stream;
+            components/utilities/adc_tp_calibration;
+            components/utilities/xz;
+            components/zero_detection;
+            tools/cmake_utilities;
+          namespace: "espressif"
+          api_token: ${{ secrets.IDF_COMPONENT_API_TOKEN }}

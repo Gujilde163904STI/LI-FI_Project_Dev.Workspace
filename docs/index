@@ -1,0 +1,71 @@
+# Li-Fi Project Documentation Index
+
+## 📚 Quick Navigation Guide
+
+### 🏠 Main Documentation
+- **README.md** - Comprehensive overview and navigation guide
+- **INTEGRATION_GUIDE.md** - Detailed integration workflows and examples
+- **PRACTICAL_EXAMPLES.md** - Code examples and implementation patterns
+- **protocols.md** - Li-Fi specific communication protocols
+
+### 🔧 External Documentation Repositories
+- **dotnet-docs/** - .NET IoT Libraries for embedded development
+- **windows-iot-docs/** - Windows IoT Core platform documentation
+- **things-network-docs/** - LoRaWAN and IoT network protocols
+- **thinger-docs/** - IoT device management and visualization
+
+### 🛠️ Tools and Scripts
+- **update_docs.sh** - Automated documentation update script
+
+## 🎯 Development Paths
+
+### For ESP8266 Development
+1. Start: `PRACTICAL_EXAMPLES.md` → ESP8266 Li-Fi Transmitter
+2. Reference: `dotnet-docs/docs/iot/` → .NET IoT patterns
+3. Network: `things-network-docs/doc/content/lorawan/` → Protocol design
+
+### For Raspberry Pi Development
+1. Start: `PRACTICAL_EXAMPLES.md` → Raspberry Pi Li-Fi Receiver
+2. Platform: `windows-iot-docs/` → IoT platform patterns
+3. Integration: `thinger-docs/` → Device management
+
+### For Network Architecture
+1. Start: `things-network-docs/doc/content/lorawan/architecture/` → Network design
+2. Implementation: `dotnet-docs/docs/networking/` → Network programming
+3. Management: `thinger-docs/` → Network orchestration
+
+### For Device Management
+1. Start: `thinger-docs/` → Device provisioning patterns
+2. Security: `windows-iot-docs/` → IoT security frameworks
+3. Integration: `INTEGRATION_GUIDE.md` → Cross-platform integration
+
+## 🔄 Maintenance
+- Run `./update_docs.sh` to keep all repositories current
+- Check `README.md` for detailed navigation instructions
+- Review `INTEGRATION_GUIDE.md` for advanced workflows
+
+## 📖 Key Resources by Topic
+
+### Hardware Development
+- ESP8266: `dotnet-docs/docs/iot/` + `PRACTICAL_EXAMPLES.md`
+- Raspberry Pi: `windows-iot-docs/` + `PRACTICAL_EXAMPLES.md`
+- GPIO/PWM: `dotnet-docs/docs/iot/` → System.Device.Gpio
+
+### Network Protocols
+- LoRaWAN Patterns: `things-network-docs/doc/content/lorawan/`
+- Li-Fi Adaptation: `protocols.md` + `PRACTICAL_EXAMPLES.md`
+- Architecture: `things-network-docs/doc/content/lorawan/architecture/`
+
+### Device Management
+- Provisioning: `thinger-docs/` → Device management patterns
+- Monitoring: `thinger-docs/` → Real-time data visualization
+- Orchestration: `INTEGRATION_GUIDE.md` → Network management
+
+### Security & Testing
+- IoT Security: `windows-iot-docs/` → Security frameworks
+- Network Security: `things-network-docs/doc/content/lorawan/security/`
+- Cross-platform Testing: `INTEGRATION_GUIDE.md` → Testing workflows
+
+---
+
+*This index provides quick navigation to all Li-Fi project documentation resources.*

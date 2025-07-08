@@ -1,0 +1,110 @@
+From 1ba9369255749ccf9ec82565a192b1a523b0e374 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Fri, 10 Jun 2022 13:17:40 +0900
+Subject: [PATCH 15/31] xtensa: Tweak some widen multiplications
+
+umulsidi3 is faster than umuldi3 even if library call, and is also
+prerequisite for fast constant division by multiplication.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (mulsidi3, umulsidi3):
+	Split into individual signedness, in order to use libcall
+	"__umulsidi3" but not the other.
+	(<u>mulhisi3): Merge into one by using code iterator.
+	(<u>mulsidi3, mulhisi3, umulhisi3): Remove.
+---
+ gcc/config/xtensa/xtensa.md | 56 +++++++++++++++++++++----------------
+ 1 file changed, 32 insertions(+), 24 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 6c76fb942..3314b3fd6 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -224,20 +224,42 @@
+ 
+ ;; Multiplication.
+ 
+-(define_expand "<u>mulsidi3"
++(define_expand "mulsidi3"
+   [(set (match_operand:DI 0 "register_operand")
+-	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+-		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
++	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand"))
++		 (sign_extend:DI (match_operand:SI 2 "register_operand"))))]
+   "TARGET_MUL32_HIGH"
+ {
+   rtx temp = gen_reg_rtx (SImode);
+   emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
+-  emit_insn (gen_<u>mulsi3_highpart (gen_highpart (SImode, operands[0]),
+-				     operands[1], operands[2]));
++  emit_insn (gen_mulsi3_highpart (gen_highpart (SImode, operands[0]),
++				  operands[1], operands[2]));
+   emit_insn (gen_movsi (gen_lowpart (SImode, operands[0]), temp));
+   DONE;
+ })
+ 
++(define_expand "umulsidi3"
++  [(set (match_operand:DI 0 "register_operand")
++	(mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand"))
++		 (zero_extend:DI (match_operand:SI 2 "register_operand"))))]
++  ""
++{
++  if (TARGET_MUL32_HIGH)
++    {
++      rtx temp = gen_reg_rtx (SImode);
++      emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
++      emit_insn (gen_umulsi3_highpart (gen_highpart (SImode, operands[0]),
++				       operands[1], operands[2]));
++      emit_insn (gen_movsi (gen_lowpart (SImode, operands[0]), temp));
++    }
++  else
++    emit_library_call_value (gen_rtx_SYMBOL_REF (Pmode, "__umulsidi3"),
++			     operands[0], LCT_NORMAL, DImode,
++			     operands[1], SImode,
++			     operands[2], SImode);
++   DONE;
++})
++
+ (define_insn "<u>mulsi3_highpart"
+   [(set (match_operand:SI 0 "register_operand" "=a")
+ 	(truncate:SI
+@@ -261,30 +283,16 @@
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"3")])
+ 
+-(define_insn "mulhisi3"
+-  [(set (match_operand:SI 0 "register_operand" "=C,A")
+-	(mult:SI (sign_extend:SI
+-		  (match_operand:HI 1 "register_operand" "%r,r"))
+-		 (sign_extend:SI
+-		  (match_operand:HI 2 "register_operand" "r,r"))))]
+-  "TARGET_MUL16 || TARGET_MAC16"
+-  "@
+-   mul16s\t%0, %1, %2
+-   mul.aa.ll\t%1, %2"
+-  [(set_attr "type"	"mul16,mac16")
+-   (set_attr "mode"	"SI")
+-   (set_attr "length"	"3,3")])
+-
+-(define_insn "umulhisi3"
++(define_insn "<u>mulhisi3"
+   [(set (match_operand:SI 0 "register_operand" "=C,A")
+-	(mult:SI (zero_extend:SI
++	(mult:SI (any_extend:SI
+ 		  (match_operand:HI 1 "register_operand" "%r,r"))
+-		 (zero_extend:SI
++		 (any_extend:SI
+ 		  (match_operand:HI 2 "register_operand" "r,r"))))]
+   "TARGET_MUL16 || TARGET_MAC16"
+   "@
+-   mul16u\t%0, %1, %2
+-   umul.aa.ll\t%1, %2"
++   mul16<su>\t%0, %1, %2
++   <u>mul.aa.ll\t%1, %2"
+   [(set_attr "type"	"mul16,mac16")
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"3,3")])
+-- 
+2.20.1
+

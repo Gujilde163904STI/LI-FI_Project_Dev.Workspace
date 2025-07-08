@@ -1,0 +1,60 @@
+#
+# Avoid diluting the dev mailing list with meta stuff,
+# redirect it all to the commit list.
+#
+notifications:
+  commits: commits@buildstream.apache.org
+  issues: commits@buildstream.apache.org
+  pullrequests: commits@buildstream.apache.org
+
+#
+# Configure github
+#
+github:
+
+  description: "BuildStream, the software integration tool"
+  homepage: https://buildstream.build/
+
+  # Main features
+  features:
+    # Enable wiki for documentation
+    wiki: true
+    # Enable issue management
+    issues: true
+    # Enable projects for project management boards
+    projects: true
+
+  # Buttons
+  enabled_merge_buttons:
+    # Disable squash button:
+    squash: false
+    # enable merge button:
+    merge: true
+    # disable rebase button:
+    rebase: false
+
+  # Close branches when pull requests are merged
+  del_branch_on_merge: true
+
+  # Enable pages publishing
+  ghp_branch: gh-pages
+  ghp_path: /
+
+  # Testing basic protection of multiple branches,
+  # this needs to be tested on the master branch.
+  # 
+  protected_branches:
+
+    # Test 1
+    #
+    tristan/test-protected-branch-1:
+      required_status_checks:
+        # strict means "Require branches to be up to date before merging".
+        strict: true
+
+    # Test 2
+    #
+    tristan/test-protected-branch-2:
+      required_status_checks:
+        # strict means "Require branches to be up to date before merging".
+        strict: true

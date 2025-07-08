@@ -1,0 +1,17 @@
+# Copyright (c) 2020 HAW Hamburg
+#               2022 Gunar Schorcht
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+
+config BOARD
+    default "esp32c3-ci" if BOARD_ESP32C3_CI
+
+config BOARD_ESP32C3_CI
+    bool
+    default y
+    select BOARD_COMMON_ESP32C3
+    select CPU_MODEL_ESP32C3_MINI_1X
+
+source "$(RIOTBOARD)/common/esp32c3/Kconfig"

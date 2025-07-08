@@ -1,0 +1,16 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+
+config BOARD
+    default "waveshare-nrf52840-eval-kit" if BOARD_WAVESHARE_NRF52840_EVAL_KIT
+
+config BOARD_WAVESHARE_NRF52840_EVAL_KIT
+    bool
+    default y
+    select BOARD_COMMON_NRF52
+    select CPU_MODEL_NRF52840XXAA
+
+source "$(RIOTBOARD)/common/nrf52/Kconfig"

@@ -1,0 +1,7 @@
+if (TARGET hardware_rtc)
+    add_subdirectory_exclude_platforms(hello_rtc)
+    add_subdirectory_exclude_platforms(rtc_alarm)
+    add_subdirectory_exclude_platforms(rtc_alarm_repeat)
+else()
+    message("Skipping RTC examples as hardware_rtc is unavailable on this platform")
+endif()

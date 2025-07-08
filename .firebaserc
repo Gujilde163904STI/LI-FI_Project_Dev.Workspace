@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "lifi-embedded-console"
+  },
+  "targets": {},
+  "etags": {}
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% include head.html %}
+  </head>
+  <body>
+    {% include header.html %}
+
+    <div class="toptitle">
+      <h1><a href="/documentation/"><b>Raspberry Pi</b> Documentation</a></h1>
+      <div id="search-container">
+        <div id="docsearch"></div>
+      </div>
+      {% include tabs.html %}
+    </div>
+
+    <div id="container">
+      <section id="box-content">
+        {% for item in site.data.index.tabs %}
+          {% if page.dir == item.path or page.dir == "/" and item.default_tab and item.default_tab == "yes" %}
+            {% for entry in item.subitems %}
+            {% if entry.path %}
+            <a class="box" href="{{ site.baseurl }}{{ entry.path }}">
+            {% else %}
+            <a class="box" href="{{ entry.url }}">
+            {% endif %}
+              <span><img src="{{ site.baseurl }}{{ entry.imagepath }}" width="121" height="121" alt=""></span>
+              <span class="title">{{ entry.title | markdownify }}</span>
+              <span>{{ entry.description }}</span>
+            </a>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      </section>
+    </div>
+
+    {% include legal.html %}
+    {% include footer.html %}
+    {% include search.html %}
+
+  </body>
+</html>

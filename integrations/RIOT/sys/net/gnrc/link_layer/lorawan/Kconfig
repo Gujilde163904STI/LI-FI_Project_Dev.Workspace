@@ -1,0 +1,16 @@
+# Copyright (c) 2019 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+menu "GNRC LoRaWAN"
+    depends on USEMODULE_GNRC_LORAWAN
+
+config GNRC_LORAWAN_MIN_SYMBOLS_TIMEOUT
+    int "Minimum symbols to detect a LoRa preamble"
+    default 30
+    range 0 1024
+
+endmenu # GNRC LoRaWAN

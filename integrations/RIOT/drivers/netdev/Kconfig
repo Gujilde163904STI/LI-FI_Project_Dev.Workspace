@@ -1,0 +1,13 @@
+# Copyright (c) 2022 Otto-von-Guericke-Universität Magdeburg
+#               2022 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+
+if USEMODULE_NETDEV
+
+config NETDEV_REGISTER_SIGNAL
+    bool "Signal when a network device is registered"
+
+endif # USEMODULE_NETDEV

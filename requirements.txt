@@ -1,0 +1,19 @@
+# Li-Fi Project Python Dependencies
+# Core dependencies
+numpy>=1.21.0
+scipy>=1.7.0
+
+# IoT and hardware
+RPi.GPIO>=0.7.0
+pyserial>=3.5
+
+# Development tools
+black>=21.0.0
+isort>=5.0.0
+flake8>=3.9.0
+pylint>=2.8.0
+pytest>=6.0.0
+
+# Documentation
+sphinx>=4.0.0
+sphinx-rtd-theme>=0.5.0

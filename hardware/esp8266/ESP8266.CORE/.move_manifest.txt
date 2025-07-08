@@ -1,0 +1,1 @@
+This file will track all files and folders moved into ESP8266.CORE for audit and rollback if needed.

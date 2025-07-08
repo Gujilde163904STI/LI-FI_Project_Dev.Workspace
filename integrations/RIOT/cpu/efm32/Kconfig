@@ -1,0 +1,24 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+
+config CPU_COMMON_EFM32
+    bool
+
+config CPU_EFM32_SERIES0
+    bool
+
+config CPU_EFM32_SERIES1
+    bool
+
+config CPU_EFM32_SERIES2
+    bool
+
+## Common CPU symbols
+config CPU
+    default "efm32" if CPU_COMMON_EFM32
+
+orsource "families/*/Kconfig"
+source "$(RIOTCPU)/cortexm_common/Kconfig"

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Services</title>
+    <%view stylesheet %>
+</head>
+<body>
+    <%view navbar %>
+
+    <%c++ 
+    bool hasWarning = false;
+    std::string warningMessage;
+    try {
+        warningMessage = @@.get<std::string>("warning");
+        hasWarning = !warningMessage.empty();
+    } catch(...) {
+        // No warning message found, ignore
+    }
+    
+    if (hasWarning) { 
+    %>
+    <div class="warning-block">
+        [[warning]]
+    </div>
+    <%c++ } %>
+    <h1>System Services</h1>
+    
+    <div class="service-info">Services shown include both active and inactive (including completed/dead) services.</div>
+    
+    <%view auto_refresh_toggle %>
+    
+    <div id="services-table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Service Name</th>
+                    <th>Status</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            <%c++ 
+            auto servicesList = @@.get<std::vector<std::map<std::string, std::string>>>("services");
+            if(servicesList.size() > 0) {
+            %>
+                <%c++ for(const auto& service : servicesList) { %>
+                    <tr>
+                        <td>
+                            <%c++ 
+                            // Display base_name and instance if available
+                            if (!service.at("instance").empty()) {
+                                $$ << service.at("base_name") << "@" << service.at("instance");
+                            } else {
+                                $$ << service.at("name");
+                            }
+                            %>
+                        </td>
+                        <td><%c++ $$ << service.at("status"); %></td>
+                        <td class="status-<%c++ 
+                            std::string activeClass = service.at("active");
+                            // Remove spaces and parentheses for CSS class
+                            activeClass.erase(std::remove_if(activeClass.begin(), activeClass.end(), 
+                                [](char c) { return c == ' ' || c == '(' || c == ')'; }), activeClass.end());
+                            $$ << activeClass;
+                        %>"><%c++ $$ << service.at("active"); %></td>
+                        <td>
+                            <a href="/service-log/<%c++ $$ << service.at("full_name"); %>" class="log-link">View Logs</a>
+                        </td>
+                    </tr>
+                <%c++ } %>
+            <%c++ } else { %>
+                    <tr>
+                        <td colspan="4" class="no-devices">No services available</td>
+                    </tr>
+            <%c++ } %>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Function to convert active state to valid CSS class
+        function activeStateToClass(active) {
+            return 'status-' + active.replace(/[\s()]/g, '');
+        }
+        
+        // Function to fetch and update the services table
+        async function refreshServicesTable() {
+            try {
+                const response = await fetch('/services', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch services');
+                }
+                
+                const data = await response.json();
+                
+                // Create a new table with the updated data
+                let tableHtml = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Service Name</th>
+                                <th>Status</th>
+                                <th>Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                if (data.services && data.services.length > 0) {
+                    data.services.forEach(service => {
+                        let serviceName = service.name;
+                        if (service.instance && service.instance.length > 0) {
+                            serviceName = service.base_name + '@' + service.instance;
+                        }
+                        
+                        tableHtml += `
+                            <tr>
+                                <td>${serviceName}</td>
+                                <td>${service.status}</td>
+                                <td class="${activeStateToClass(service.active)}">${service.active}</td>
+                                <td>
+                                    <a href="/service-log/${service.full_name}" class="log-link">View Logs</a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tableHtml += `
+                        <tr>
+                            <td colspan="4" class="no-devices">No services available</td>
+                        </tr>
+                    `;
+                }
+                
+                tableHtml += `
+                        </tbody>
+                    </table>
+                `;
+                
+                tableContainer.innerHTML = tableHtml;
+            } catch (error) {
+                console.error('Error refreshing services table:', error);
+            }
+        }
+        
+        // Initialize the table container reference
+        const tableContainer = document.getElementById('services-table-container');
+        
+        // Initialize auto-refresh with the services table refresh function
+        initAutoRefresh(refreshServicesTable);
+    </script>
+</body>
+</html> 

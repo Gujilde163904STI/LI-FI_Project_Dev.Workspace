@@ -1,0 +1,116 @@
+From 16cfee0871e5a6411b17adc2dc422b9760d17893 Mon Sep 17 00:00:00 2001
+From: Max Filippov <jcmvbkbc@gmail.com>
+Date: Wed, 22 Feb 2023 22:08:21 -0800
+Subject: [PATCH 1/2] xtensa: fix PR target/108876
+
+In commit b2ef02e8cbbaf95fee98be255f697f47193960ec, the sibling call
+insn included (use (reg:SI A0_REG)) to fix the problem, which added
+a USE chain unconditionally to the data flow of register A0 during
+the sibling call.
+
+As a result, df_regs_ever_live_p (A0_REG) returns true, so even if
+register A0 is not used outside of the sibling call insn, saves and
+restores to stack slots are emitted in pro/epilogue, and finally
+code size increases.
+(This is why I never included (use A0) in sibling calls)
+
+    /* example */
+    extern int foo(int);
+    int test(int a) {
+      return foo(a * 3 + 1);
+    }
+
+;; before
+    test:
+	addi	sp, sp, -16	;; unneeded stack frame allocation (induced)
+	s32i.n	a0, sp, 12	;; unneeded saving of register A0
+	l32i.n	a0, sp, 12	;; unneeded restoration of register A0
+	addx2	a2, a2, a2
+	addi.n	a2, a2, 1
+	addi	sp, sp, 16	;; unneeded stack frame freeing (induced)
+	j.l	foo, a9		;; sibling call (truly needs register A0)
+
+The essential cause is that we emit (use A0) *before* the insns that
+does the stack pointer adjustment during epilogue expansion, so the
+liveness of register A0 ends early, so register A0 is reused afterwards.
+
+This patch fixes the problem and avoids such regression by doing the
+emit of (use A0) in the sibling call epilogue expansion at the end.
+
+;; after
+test:
+	addx2	a2, a2, a2
+	addi.n	a2, a2, 1
+	j.l	foo, a9
+
+>From RTL-pass "315r.rnreg" by
+"gfortran -O3 -funroll-loops -mabi=call0 -S -da gcc-gnu/gcc/testsuite/gfortran.dg/allocate_with_source_5.f90":
+
+    ;; Function selector_init (__selectors_MOD_selector_init, funcdef_no=2, decl_uid=987, cgraph_uid=3, symbol_order=4)
+    ...
+    (insn 3807 3806 3808 121 (set (reg:SI 15 a15)
+            (mem/c:SI (plus:SI (reg/f:SI 1 sp)
+                    (const_int 268 [0x10c])) [31  S4 A32])) "gcc-gnu/gcc/testsuite/gfortran.dg/allocate_with_source_5.f90":35:30 53 {movsi_internal}
+         (nil))
+    (insn 3808 3807 3809 121 (set (reg:SI 7 a7)
+            (const_int 288 [0x120])) "gcc-gnu/gcc/testsuite/gfortran.dg/allocate_with_source_5.f90":35:30 53 {movsi_internal}
+         (nil))
+    (insn 3809 3808 3810 121 (set (reg/f:SI 1 sp)
+            (plus:SI (reg/f:SI 1 sp)
+                (reg:SI 7 a7))) "gcc-gnu/gcc/testsuite/gfortran.dg/allocate_with_source_5.f90":35:30 1 {addsi3}
+         (expr_list:REG_DEAD (reg:SI 9 a9)
+            (nil)))
+    (insn 3810 3809 721 121 (use (reg:SI 0 a0)) "gcc-gnu/gcc/testsuite/gfortran.dg/allocate_with_source_5.f90":35:30 -1
+         (expr_list:REG_DEAD (reg:SI 0 a0)
+            (nil)))
+    (call_insn/j 721 3810 722 121 (call (mem:SI (symbol_ref:SI ("free") [flags 0x41]  <function_decl 0x7f7c885f6000 __builtin_free>) [0 __builtin_free S4 A32])
+            (const_int 0 [0])) "gcc-gnu/gcc/testsuite/gfortran.dg/allocate_with_source_5.f90":35:30 discrim 1 106 {sibcall_internal}
+         (expr_list:REG_DEAD (reg:SI 2 a2)
+            (expr_list:REG_CALL_DECL (symbol_ref:SI ("free") [flags 0x41]  <function_decl 0x7f7c885f6000 __builtin_free>)
+                (expr_list:REG_EH_REGION (const_int 0 [0])
+                    (nil))))
+        (expr_list:SI (use (reg:SI 2 a2))
+            (nil)))
+
+(IMHO the "rnreg" pass doesn't take REG_ALLOC_ORDER into account;
+it just seems to allocate registers in fixed_regs index order,
+which may have hurt register A0 that became allocatable in the recent
+patch)
+
+gcc/ChangeLog:
+	PR target/108876
+
+	* config/xtensa/xtensa.c (xtensa_expand_epilogue):
+	Emit (use (reg:SI A0_REG)) at the end in the sibling call
+	(i.e. the same place as (return) in the normal call).
+---
+ gcc/config/xtensa/xtensa.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 5c6ee7a8f..3426494f5 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -3583,8 +3583,6 @@ xtensa_expand_epilogue (bool sibcall_p)
+ 			      gen_frame_mem (SImode, x));
+ 	    }
+ 	}
+-      if (sibcall_p)
+-	emit_use (gen_rtx_REG (SImode, A0_REG));
+ 
+       if (cfun->machine->current_frame_size > 0)
+ 	{
+@@ -3610,7 +3608,9 @@ xtensa_expand_epilogue (bool sibcall_p)
+ 				  EH_RETURN_STACKADJ_RTX));
+     }
+   cfun->machine->epilogue_done = true;
+-  if (!sibcall_p)
++  if (sibcall_p)
++    emit_use (gen_rtx_REG (SImode, A0_REG));
++  else
+     emit_jump_insn (gen_return ());
+ }
+ 
+-- 
+2.30.2
+

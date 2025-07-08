@@ -1,0 +1,4 @@
+# Put board specific dependencies here
+ifeq (,$(filter native native32 native64,$(BOARD)))
+  USEMODULE += stdio_ethos
+endif

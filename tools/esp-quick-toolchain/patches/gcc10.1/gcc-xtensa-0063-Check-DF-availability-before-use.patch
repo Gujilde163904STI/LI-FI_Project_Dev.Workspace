@@ -1,0 +1,31 @@
+From 4b938a83c19e3e7dc71b407e2f78f2ccbc57b742 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Thu, 29 Dec 2022 21:14:33 +0900
+Subject: [PATCH] xtensa: Check DF availability before use
+
+Perhaps no problem, but for safety.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.c (xtensa_expand_prologue): Fix to check
+	DF availability before use of DF_* macros.
+---
+ gcc/config/xtensa/xtensa.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 054a44ea3..8f748efa4 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -3357,7 +3357,7 @@ xtensa_expand_prologue (void)
+ 				  || crtl->calls_eh_return;
+ 
+       /* Check if the function body really needs the stack pointer.  */
+-      if (!stack_pointer_needed)
++      if (!stack_pointer_needed && df)
+ 	for (ref = DF_REG_USE_CHAIN (A1_REG);
+ 	     ref; ref = DF_REF_NEXT_REG (ref))
+ 	  if (DF_REF_CLASS (ref) == DF_REF_REGULAR
+-- 
+2.30.2
+

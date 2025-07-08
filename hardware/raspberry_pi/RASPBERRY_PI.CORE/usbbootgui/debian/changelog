@@ -1,0 +1,36 @@
+usbbootgui (0.5) buster; urgency=medium
+
+  * Add CM4 support
+
+ -- Serge Schneider <serge@raspberrypi.com>  Tue, 13 Oct 2020 16:06:54 +0100
+
+usbbootgui (0.4) buster; urgency=medium
+
+  * Workaround for https://github.com/systemd/systemd/issues/7587
+    - v240 of SystemD does not see the 'remove' event, which makes usbbootgui
+      run only once. Adding the systemd tag to the remove event works around
+      the problem.
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 12 Feb 2019 16:40:47 +0000
+
+usbbootgui (0.3) stretch; urgency=medium
+
+  * Set GPIOZERO_PIN_FACTORY=pigpio
+  * Purge /etc/profile.d/pigpio_default_address.sh
+  * Bump standards to 3.9.8
+
+ -- Serge Schneider <serge@raspberrypi.org>  Tue, 04 Sep 2018 15:08:03 +0100
+
+usbbootgui (0.2) stretch; urgency=medium
+
+  * Add delay between disconnecting and re-connecting USB
+  * Fix having more than one unit at the same time
+  * Fix setting default PIGPIO_ADDR
+
+ -- Serge Schneider <serge@raspberrypi.org>  Thu, 05 Jul 2018 17:30:10 +0100
+
+usbbootgui (0.1) jessie; urgency=medium
+
+  * Initial release
+
+ -- Floris Bos <bos@je-eigen-domein.nl>  Tue, 14 Mar 2017 21:10:11 +0100

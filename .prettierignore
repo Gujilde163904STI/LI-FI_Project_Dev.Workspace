@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+__pycache__/
+
+# Build outputs
+build/
+dist/
+target/
+.pio/
+
+# Archives and legacy
+archive/
+__archive/
+
+# Documentation and resources
+docs/raspberrypi-documentation/
+docs/thinger-docs/
+docs/windows-iot-docs/
+docs/things-network-docs/
+resources/
+
+# Hardware and firmware
+hardware/parts/HARDWARES/Photodiode/open-pd/amplifier.ipynb
+*.ipynb
+
+# Generated files
+*.min.js
+*.min.css
+*.bundle.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log 

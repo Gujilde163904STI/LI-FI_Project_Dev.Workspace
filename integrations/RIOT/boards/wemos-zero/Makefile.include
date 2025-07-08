@@ -1,0 +1,8 @@
+# Include all definitions for flashing with bossa other USB
+include $(RIOTBOARD)/common/samdx1-arduino-bootloader/Makefile.include
+include $(RIOTBOARD)/common/arduino-zero/Makefile.include
+
+# Depending on whether the board is running RIOT or the bootloader, it has
+# registers using a different vendor and model. We try to detect either.
+TTY_BOARD_FILTER := --model $(BOARD) --vendor 'RIOT-os\.org'
+PROG_TTY_BOARD_FILTER := --vendor 'Arduino LLC' --model '(Arduino|Genuino) Zero'

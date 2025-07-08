@@ -1,0 +1,17 @@
+# Copyright (c) 2020 Inria
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+config BOARD
+    default "nucleo-f722ze" if BOARD_NUCLEO_F722ZE
+
+config BOARD_NUCLEO_F722ZE
+    bool
+    default y
+    select BOARD_COMMON_NUCLEO144
+    select CPU_MODEL_STM32F722ZE
+
+source "$(RIOTBOARD)/common/nucleo144/Kconfig"

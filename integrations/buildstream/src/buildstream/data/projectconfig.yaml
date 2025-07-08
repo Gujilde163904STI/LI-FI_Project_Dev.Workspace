@@ -1,0 +1,184 @@
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+# Default BuildStream project configuration.
+
+
+# General configuration defaults
+#
+
+# Elements are found at the project root
+element-path: .
+
+# Store source references in element files
+ref-storage: inline
+
+# Variable Configuration
+#
+variables:
+  # Path configuration, to be used in build instructions.
+  prefix: "/usr"
+  exec_prefix: "%{prefix}"
+  bindir: "%{exec_prefix}/bin"
+  sbindir: "%{exec_prefix}/sbin"
+  libexecdir: "%{exec_prefix}/libexec"
+  datadir: "%{prefix}/share"
+  sysconfdir: "/etc"
+  sharedstatedir: "%{prefix}/com"
+  localstatedir: "/var"
+  lib: "lib"
+  libdir: "%{prefix}/%{lib}"
+  debugdir: "%{libdir}/debug"
+  includedir: "%{prefix}/include"
+  docdir: "%{datadir}/doc"
+  infodir: "%{datadir}/info"
+  mandir: "%{datadir}/man"
+
+  # Indicates the default build directory where input is
+  # normally staged
+  build-root: /buildstream/%{project-name}/%{element-name}
+
+  # Indicates where the build system should look for configuration files  
+  conf-root: .
+  
+  # Indicates the build installation directory in the sandbox
+  install-root: /buildstream-install
+
+  # You need to override this with the commands specific for your system
+  strip-binaries: ""
+
+# Base sandbox environment, can be overridden by plugins
+environment:
+  PATH: /usr/bin:/bin:/usr/sbin:/sbin
+  SHELL: /bin/sh
+  TERM: dumb
+  USER: tomjon
+  USERNAME: tomjon
+  LOGNAME: tomjon
+  LC_ALL: C
+  HOME: /tmp
+  TZ: UTC
+
+  # For reproducible builds we use 2011-11-11 11:11:11 UTC as a constant
+  SOURCE_DATE_EPOCH: 1321009871
+
+# List of environment variables which should not be taken into
+# account when calculating a cache key for a given element.
+#
+environment-nocache: []
+
+# Configuration for the sandbox other than environment variables
+# should go in 'sandbox'.
+sandbox: {}
+
+# Defaults for the 'split-rules' public data found on elements
+# in the 'bst' domain.
+#
+split-rules:
+
+  # The runtime domain includes whatever is needed for the
+  # built element to run, this includes stripped executables
+  # and shared libraries by default.
+  runtime:
+  - |
+    %{bindir}
+  - |
+    %{bindir}/*
+  - |
+    %{sbindir}
+  - |
+    %{sbindir}/*
+  - |
+    %{libexecdir}
+  - |
+    %{libexecdir}/*
+  - |
+    %{libdir}/lib*.so*
+
+  # The devel domain includes additional things which
+  # you may need for development.
+  #
+  # By default this includes header files, static libraries
+  # and other metadata such as pkgconfig files, m4 macros and
+  # libtool archives.
+  devel:
+  - |
+    %{includedir}
+  - |
+    %{includedir}/**
+  - |
+    %{libdir}/lib*.a
+  - |
+    %{libdir}/lib*.la
+  - |
+    %{libdir}/pkgconfig/*.pc
+  - |
+    %{datadir}/pkgconfig/*.pc
+  - |
+    %{datadir}/aclocal/*.m4
+
+  # The debug domain includes debugging information stripped
+  # away from libraries and executables
+  debug:
+  - |
+    %{debugdir}
+  - |
+    %{debugdir}/**
+
+  # The doc domain includes documentation
+  doc:
+  - |
+    %{docdir}
+  - |
+    %{docdir}/**
+  - |
+    %{infodir}
+  - |
+    %{infodir}/**
+  - |
+    %{mandir}
+  - |
+    %{mandir}/**
+
+  # The locale domain includes translations etc
+  locale:
+  - |
+    %{datadir}/locale
+  - |
+    %{datadir}/locale/**
+  - |
+    %{datadir}/i18n
+  - |
+    %{datadir}/i18n/**
+  - |
+    %{datadir}/zoneinfo
+  - |
+    %{datadir}/zoneinfo/**
+
+
+# Default behavior for `bst shell`
+#
+shell:
+
+  # Command to run when `bst shell` does not provide a command
+  #
+  command: [ 'sh', '-i' ]
+
+# Defaults for bst commands
+#
+defaults:
+
+  # Set default target elements to use when none are passed on the command line.
+  # If none are configured in the project, default to all project elements.
+  targets: []

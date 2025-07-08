@@ -1,0 +1,159 @@
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+# Default BuildStream user configuration.
+
+#
+#    Work Directories
+#
+
+# Location to store sources
+sourcedir: ${XDG_CACHE_HOME}/buildstream/sources
+
+# Root location for other directories in the cache
+cachedir: ${XDG_CACHE_HOME}/buildstream
+
+# Location to store build logs
+logdir: ${XDG_CACHE_HOME}/buildstream/logs
+
+# Default root location for workspaces, blank for no default set.
+workspacedir: .
+
+#
+#    Cache
+#
+cache:
+
+  # Use as much space as possible
+  quota: infinity
+
+  # Keep 5% of disk space available
+  reserved-disk-space: 5%
+
+  # Retain 80% of the cache on cleanup
+  low-watermark: 80%
+
+  # Whether to pull build trees when downloading element artifacts
+  pull-buildtrees: False
+
+  # Whether to cache build trees on artifact creation
+  #
+  cache-buildtrees: auto
+
+
+#
+#    Scheduler
+#
+scheduler:
+
+  # Maximum number of simultaneous downloading tasks.
+  fetchers: 10
+
+  # Maximum number of simultaneous build tasks.
+  builders: 4
+
+  # Maximum number of simultaneous uploading tasks.
+  pushers: 4
+
+  # Maximum number of retries for network tasks.
+  network-retries: 2
+
+  # Control what to do when a task fails, if not running in
+  # interactive mode
+  #
+  on-error: quit
+
+
+#
+# Build related configuration
+#
+build:
+
+  #
+  # Maximum number of jobs to run per build task.
+  #
+  max-jobs: 0
+
+  #
+  # Try to build elements for which a failed build artifact is found
+  #
+  retry-failed: False
+
+  #
+  # Control which dependencies to build
+  #
+  dependencies: none
+
+
+#
+# Source fetch related configuration
+#
+fetch:
+
+  #
+  # Which URIs are allowed to be accessed
+  #
+  source: all
+
+
+#
+# Source track related configuration
+#
+track:
+
+  #
+  # Which URIs are allowed to be accessed
+  #
+  source: aliases
+
+
+#
+#    Logging
+#
+logging:
+
+  # The abbreviated cache key length to display in the UI
+  key-length: 8
+
+  # Whether to show extra detailed messages
+  verbose: True
+
+  # Maximum number of lines to print from the
+  # end of a failing build log
+  error-lines: 20
+
+  # Maximum number of lines to print in a detailed
+  # message on the console or in the master log (the full
+  # messages are always recorded in the individual build
+  # logs)
+  message-lines: 20
+
+  # Whether to enable debugging messages
+  debug: False
+
+  # Format string for printing the pipeline at startup, this
+  # also determines the default display format for `bst show`
+  #
+  element-format: |
+
+    %{state: >12} %{full-key} %{name} %{workspace-dirs}
+
+  # Format string for log messages.
+  #
+  message-format: |
+
+    [%{elapsed}][%{key}][%{element}] %{action} %{message}
+
+  # Limit bst console output update rate to 1Hz where applicable
+  throttle-ui-updates: True

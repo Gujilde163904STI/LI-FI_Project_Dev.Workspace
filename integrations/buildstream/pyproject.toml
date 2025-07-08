@@ -1,0 +1,66 @@
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+[build-system]
+requires = [
+    # We need at least version 41.2.0 to support python 3.9
+    "setuptools>=41.2.0",
+    # In order to build wheels, and as required by PEP 517
+    "wheel",
+    # Require a new enough cython for the python versions we support
+    "Cython>=0.29.25",
+    "packaging",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 119
+exclude = '''
+(
+  /(
+      \.eggs
+    | \.git
+    | \.mypy_cache
+    | \.tox
+    | _build
+    | build
+    | dist
+  )/
+  | src/buildstream/_protos
+)
+'''
+
+[tool.cibuildwheel]
+build-frontend = "build"
+environment = { BST_BUNDLE_BUILDBOX = "1" }
+
+# The BuildBox binaries produced in buildbox-integration are linked against GLIBC 2.28
+# from Debian 10. See: https://gitlab.com/BuildGrid/buildbox/buildbox-integration.
+#
+# The PyPA manylinux_2_28 platform tag identifies that our wheel will run on any x86_64
+# OS with GLIBC >= 2.28. Following this setting, `cibuildwheel` builds the packages in
+# the corresponding manylinux_2_28 container image. See: https://github.com/pypa/manylinux
+manylinux-x86_64-image = "manylinux_2_28"
+
+skip = [
+  # BuildStream supports Python >= 3.9
+  "cp36-*",
+  "cp37-*",
+  "cp38-*",
+  # PyPy may work, but nobody is testing it so avoid distributing prebuilt binaries.
+  "pp*",
+  # Skipping this niche archicture ~halves overall build time.
+  "*_i686",
+  # The prebuilt BuildBox binaries link against GLibc so will work on manylinux but not musllinux
+  "*-musllinux_*",
+]

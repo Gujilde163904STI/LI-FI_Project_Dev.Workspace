@@ -1,0 +1,43 @@
+# Copyright (c) 2020 Freie Universitaet Berlin
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+menu "DHCPv6"
+    depends on USEMODULE_DHCPV6
+
+menu "DHCPv6 client"
+    depends on USEMODULE_DHCPV6_CLIENT
+
+config DHCPV6_CLIENT_ADDR_LEASE_MAX
+    int "Maximum number of leases to be stored"
+    default 1
+
+config DHCPV6_CLIENT_PFX_LEASE_MAX
+    int "Maximum number of prefix leases to be stored"
+    default 1
+
+menu "DHCPv6 Client MUD URL"
+    depends on USEMODULE_DHCPV6_CLIENT_MUD_URL
+
+config DHCPV6_CLIENT_MUD_URL
+    string "URL pointing to a Manufacturer Usage Description file"
+
+endmenu # DHCPv6 Client MUD URL
+endmenu # DHCPv6 client
+
+menu "DHCPv6 relay agent"
+    depends on USEMODULE_DHCPV6_RELAY
+
+config DHCPV6_RELAY_HOP_LIMIT
+    int "Maximum hop count in relay-forward message (HOP_COUNT_LIMIT)"
+    default 8
+
+config DHCPV6_RELAY_BUFLEN
+    int "Default length of relay agent send and receive buffer"
+    default 256
+
+endmenu # DHCPv6 relay agent
+endmenu # DHCPv6

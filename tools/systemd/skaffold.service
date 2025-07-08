@@ -1,0 +1,13 @@
+[Unit]
+Description=Launch skaffold dev on boot for live sync and build
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=skaffold dev --rpc-http-port 8081
+WorkingDirectory=%h/GALAHADD.DEV.PROJECTS/LI-FI_Project_Dev.Workspace
+Restart=always
+User=%i
+
+[Install]
+WantedBy=multi-user.target 

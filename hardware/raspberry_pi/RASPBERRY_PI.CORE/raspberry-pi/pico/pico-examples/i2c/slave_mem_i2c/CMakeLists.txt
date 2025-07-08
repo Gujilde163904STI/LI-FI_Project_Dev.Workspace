@@ -1,0 +1,21 @@
+add_executable(slave_mem_i2c
+    slave_mem_i2c.c
+    )
+target_link_libraries(slave_mem_i2c
+    pico_i2c_slave
+    hardware_i2c
+    pico_stdlib
+    )
+pico_add_extra_outputs(slave_mem_i2c)
+example_auto_set_url(slave_mem_i2c)
+
+add_executable(slave_mem_i2c_burst
+    slave_mem_i2c_burst.c
+    )
+target_link_libraries(slave_mem_i2c_burst
+    pico_i2c_slave
+    hardware_i2c
+    pico_stdlib
+    )
+pico_add_extra_outputs(slave_mem_i2c_burst)
+example_auto_set_url(slave_mem_i2c_burst)

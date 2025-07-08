@@ -1,0 +1,169 @@
+variables:
+  # Versioned esp-idf-doc env image to use for all document building jobs
+  ESP_DOCS_ENV_IMAGE: "$CI_DOCKER_REGISTRY/esp-idf-doc-env-v5.0"
+
+push_to_github:
+  stage: deploy
+  only:
+    - master
+    - /^release\/v/
+#  when: on_success
+  image: $CI_DOCKER_REGISTRY/esp32-ci-env
+  tags:
+    - github_sync
+  variables:
+    GIT_STRATEGY: clone
+    SUBMODULES_TO_FETCH: "none"
+  dependencies: []
+  before_script:
+    - echo "skip default before_script"
+  script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -n $GH_PUSH_KEY > ~/.ssh/id_rsa_base64
+    - base64 --decode --ignore-garbage ~/.ssh/id_rsa_base64 > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+    - git remote remove github &>/dev/null || true
+    - git remote add github git@github.com:espressif/esp-iot-solution.git
+    - ${IOT_SOLUTION_PATH}/tools/ci/push_to_github.sh
+
+.deploy_docs_template:
+  stage: deploy
+  image: $ESP_DOCS_ENV_IMAGE
+  tags:
+    - deploy_docs
+  needs:
+    - job: "build_docs_html"
+      artifacts: true
+      optional: false
+    - job: "build_docs_pdf"
+      artifacts: true
+      optional: false
+  script:
+    - source ${CI_PROJECT_DIR}/.gitlab/ci/utils.sh
+    - add_doc_server_ssh_keys $DOCS_DEPLOY_PRIVATEKEY $DOCS_DEPLOY_SERVER $DOCS_DEPLOY_SERVER_USER
+    - export GIT_VER=$(git describe --always)
+    - pip install -r ${CI_PROJECT_DIR}/docs/requirements.txt
+    - mkdir -p logs
+    - deploy-docs | tee logs/doc-url.txt
+
+deploy_docs_preview:
+  extends:
+    - .deploy_docs_template
+    - .rules:deploy:docs_preview
+  environment:
+    name: esp-iot-solution_docs_preview
+    url: ${FINAL_PREVIEW_URL}
+  variables:
+    TYPE: "preview"
+    DOCS_BUILD_DIR: "${CI_PROJECT_DIR}/docs/_build/"
+    DOCS_DEPLOY_PRIVATEKEY: "$DOCS_PREVIEW_DEPLOY_KEY"
+    DOCS_DEPLOY_SERVER: "$DOCS_PREVIEW_SERVER"
+    DOCS_DEPLOY_SERVER_USER: "$DOCS_PREVIEW_SERVER_USER"
+    DOCS_DEPLOY_PATH: "$DOCS_PREVIEW_PATH"
+    DOCS_DEPLOY_URL_BASE: "$DOCS_PREVIEW_URL_BASE"
+  before_script:
+    - export SANITIZED_BRANCH_NAME=$(echo "$CI_COMMIT_REF_NAME" | tr '/' '-')
+    - export FINAL_PREVIEW_URL="https://preview-docs.espressif.com/projects/esp-iot-solution/zh_CN/$SANITIZED_BRANCH_NAME/index.html"
+  artifacts:
+    when: always
+    paths:
+      - logs/doc-url.txt
+    expire_in: 4 days
+
+deploy_docs_production:
+  extends:
+    - .deploy_docs_template
+    - .rules:deploy:docs_production
+  environment:
+    name: esp-iot-solution_docs_preview
+    url: https://docs.espressif.com/projects/esp-iot-solution/zh_CN/latest/index.html
+  variables:
+    TYPE: "production"
+    DOCS_BUILD_DIR: "${CI_PROJECT_DIR}/docs/_build/"
+    DOCS_DEPLOY_PRIVATEKEY: "$DOCS_PROD_DEPLOY_KEY"
+    DOCS_DEPLOY_SERVER: "$DOCS_PROD_SERVER"
+    DOCS_DEPLOY_SERVER_USER: "$DOCS_PROD_SERVER_USER"
+    DOCS_DEPLOY_PATH: "$DOCS_PROD_PATH"
+    DOCS_DEPLOY_URL_BASE: "$DOCS_PROD_URL_BASE"
+
+post_links:
+  stage: post_deploy
+  extends:
+    - .rules:deploy:docs_preview
+  tags: [deploy_docs]
+  image: $ESP_DOCS_ENV_IMAGE
+  needs:
+    - deploy_docs_preview
+  script:
+    - ls -al logs
+    - python3 ${CI_PROJECT_DIR}/tools/ci/post-mr-note.py $GITLAB_MR_NOTE_TOKEN $CI_PROJECT_PATH $CI_MERGE_REQUEST_IID
+
+# Up to 50 jobs can needs
+# Please modify tools/ci/launchpad/upload_project_config.yml at same time.
+pack-upload_files:
+  stage: deploy
+  image: espressif/idf:release-v5.3
+  tags: ['build']
+  needs:
+    - job: "build_example_display_lcd_lcd_with_te: [espressif/idf:release-v5.1]"
+    - job: "build_example_display_lcd_qspi_with_ram: [espressif/idf:release-v5.1]"
+    - job: "build_example_display_lcd_qspi_without_ram: [espressif/idf:release-v5.3]"
+    - job: "build_example_display_lcd_rgb_avoid_tearing: [espressif/idf:release-v5.3]"
+    - job: "build_example_display_lcd_rgb_lcd_8bit: [espressif/idf:release-v5.3]"
+    - job: "build_example_keyboard: [espressif/idf:release-v5.3]"
+    - job: "build_example_usb_device_bootloader_uf2: [espressif/idf:release-v5.3]"
+    - job: "build_example_usb_device_usb_dongle: [espressif/idf:release-v5.3]"
+    - job: "build_example_usb_device_usb_dual_uvc_device: [espressif/idf:release-v5.3]"
+    - job: "build_example_usb_device_usb_extend_screen: [espressif/idf:release-v5.4]"
+    - job: "build_example_usb_device_usb_hid_device: [espressif/idf:release-v5.0]"
+    - job: "build_example_usb_device_usb_lcd_display"
+    - job: "build_example_usb_device_usb_msc_wireless_disk: [espressif/idf:release-v5.0]"
+    - job: "build_example_usb_device_usb_surface_dial: [espressif/idf:release-v5.0]"
+    - job: "build_example_usb_device_usb_uac: [espressif/idf:release-v5.3]"
+    - job: "build_example_usb_device_usb_uart_bridge: [espressif/idf:release-v5.0]"
+    - job: "build_example_usb_device_usb_uf2_nvs: [espressif/idf:release-v5.2]"
+    - job: "build_example_usb_device_usb_uf2_ota: [espressif/idf:release-v5.2]"
+    - job: "build_example_usb_device_usb_webcam: [espressif/idf:release-v5.3]"
+    - job: "build_example_usb_host_usb_audio_player: [espressif/idf:release-v5.0]"
+    - job: "build_example_usb_host_usb_camera_lcd_display: [espressif/idf:release-v5.1]"
+    - job: "build_example_usb_host_usb_camera_mic_spk: [espressif/idf:release-v5.1]"
+    - job: "build_example_usb_host_usb_cdc_4g_module: [espressif/idf:release-v5.1]"
+    - job: "build_example_usb_host_usb_cdc_basic: [espressif/idf:release-v5.1]"
+    - job: "build_example_usb_host_usb_hub_dual_camera: [espressif/idf:release-v5.4]"
+    - job: "build_example_usb_host_usb_msc_ota: [espressif/idf:release-v5.1]"
+    - job: "build_example_vision_opencv_color_tracker: [espressif/idf:release-v5.4]"
+
+  artifacts:
+    when: always
+    paths:
+      - binaries/
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+  script:
+    - pip install rtoml ruamel.yaml --upgrade
+    - pip install idf_build_apps
+    - python tools/build_apps.py . --find -o output.json -t all
+    - echo "Merging binaries and generating config.toml..."
+    - python tools/ci/launchpad/generateFiles.py output.json
+
+include:
+  - project: 'ae_group/test-related/ae_upload_dl'
+    # Use ref to specify the branch name (etc: ref: 'feat/add_esp-dev-kits')
+    file: 'trigger.yml'
+
+upload-dl-trigger:
+  needs:
+    - job: "pack-upload_files"
+      artifacts: false
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+  environment:
+    name: esp-iot-solution_launchpad
+    url: https://espressif.github.io/esp-launchpad/?flashConfigURL=https://dl.espressif.com/AE/esp-iot-solution/config.toml
+  variables:
+    SOURCE_PROJECT_TOKEN: ${UPLOAD_ACCESS_TOKEN}
+    # Use TRIGGER_REPO_REF to specify the branch name (etc: TRIGGER_REPO_REF: 'feat/add_esp-iot-solution')
+    # Use UPLOAD_TO_DBG_DIR to specify the directory name (etc: UPLOAD_TO_DBG_DIR: '1')

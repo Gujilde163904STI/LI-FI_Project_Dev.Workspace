@@ -1,0 +1,35 @@
+# Copyright (c) 2020 Inria
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+config CPU_FAM_FE310
+    bool
+    select CPU_CORE_RV32IMAC
+
+config CPU_MODEL_FE310_G000
+    bool
+    select CPU_FAM_FE310
+
+config CPU_MODEL_FE310_G002
+    bool
+    select CPU_FAM_FE310
+
+config CPU_FAM
+    default "fe310" if CPU_FAM_FE310
+
+config CPU_MODEL
+    default "fe310_g000"  if CPU_MODEL_FE310_G000
+    default "fe310_g002"  if CPU_MODEL_FE310_G002
+
+config CPU
+    default "fe310" if CPU_FAM_FE310
+
+config CPU_CORE
+    default "rv32imac" if CPU_CORE_RV32IMAC
+
+rsource "Kconfig.clk"
+
+source "$(RIOTCPU)/riscv_common/Kconfig"

@@ -1,0 +1,38 @@
+From 46b7c587fe47fa73811d7cd9b453ee32f7ba8ad8 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Tue, 27 Dec 2022 15:30:12 +0900
+Subject: [PATCH] xtensa: Generate density instructions in set_frame_ptr
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (set_frame_ptr): Fix to reflect
+	TARGET_DENSITY.
+---
+ gcc/config/xtensa/xtensa.md | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 08fb6f312..06fda8aa5 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -2567,12 +2567,15 @@
+   ""
+ {
+   if (frame_pointer_needed)
+-    return "mov\ta7, sp";
++    return (TARGET_DENSITY ? "mov.n\ta7, sp" : "mov\ta7, sp");
+   return "";
+ }
+   [(set_attr "type"	"move")
+    (set_attr "mode"	"SI")
+-   (set_attr "length"	"3")])
++   (set (attr "length")
++	(if_then_else (match_test "TARGET_DENSITY")
++		      (const_int 2)
++		      (const_int 3)))])
+ 
+ ;; Post-reload splitter to remove fp assignment when it's not needed.
+ (define_split
+-- 
+2.30.2
+

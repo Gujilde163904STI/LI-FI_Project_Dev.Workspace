@@ -1,0 +1,211 @@
+== Secure your Raspberry Pi
+
+Here, we describe some common ways to improve the security of your Raspberry Pi.
+
+=== Require a password for `sudo` commands
+
+Prefixing a command with `sudo` runs it as a superuser. By default, that does not need a password. However, you can make your Raspberry Pi more secure by requiring a password for all commands run with `sudo`.
+
+To force `sudo` to require a password, edit the `010_pi-nopasswd` sudoers file:
+
+[source,console]
+----
+$ sudo visudo /etc/sudoers.d/010_pi-nopasswd
+----
+
+Change the `<username>` entry to the following, replacing `<username>` with your username:
+
+[source,bash]
+----
+<username> ALL=(ALL) PASSWD: ALL
+----
+
+Save the file. Your new preference should take effect immediately.
+
+=== Update Raspberry Pi OS
+
+Only the latest OS distribution contains all the latest security fixes. Always keep your device xref:os.adoc#update-software[updated] to the latest version of Raspberry Pi OS.
+
+=== Automatically update your SSH server
+
+If you use SSH to connect to your Raspberry Pi, it can be worthwhile to add a `cron` job that specifically updates the SSH server. The following command, perhaps run as a daily `cron` job, ensures you have the latest SSH security fixes promptly, independent of your normal update process.
+
+[source,console]
+----
+$ apt install openssh-server
+----
+
+=== Improve SSH security
+
+SSH is a common way to remotely access a Raspberry Pi. By default, SSH requires a username and password. To make SSH even more secure, use xref:remote-access.adoc#configure-ssh-without-a-password[key-based authentication].
+
+==== Enable and disable SSH users
+
+You can also *allow* or *deny* specific users by altering the `sshd` configuration.
+
+[source,console]
+----
+$ sudo nano /etc/ssh/sshd_config
+----
+
+Add, edit, or append to the end of the file the following line, which contains the usernames you wish to allow to log in:
+
+[source,bash]
+----
+AllowUsers alice bob
+----
+
+You can also use `DenyUsers` to specifically stop some usernames from logging in:
+
+[source,bash]
+----
+DenyUsers jane john
+----
+
+After the change, restart the `sshd` service with the following command to put your changes into effect:
+
+[source,console]
+----
+$ sudo systemctl restart ssh
+----
+
+=== Use a firewall
+
+There are many firewall solutions available for Linux. Most use the underlying http://www.netfilter.org/projects/iptables/index.html[iptables] project to provide packet filtering. This project sits over the Linux netfiltering system. By default, `iptables` is installed on Raspberry Pi OS, but is not set up. Setting it up can be a complicated task, and one project that offers a simpler interface than `iptables` is https://www.linux.com/learn/introduction-uncomplicated-firewall-ufw[Uncomplicated Firewall (UFW)]. This is the default firewall tool in Ubuntu, and can be installed on your Raspberry Pi:
+
+[source,console]
+----
+$ sudo apt install ufw
+----
+
+`ufw` is a command-line tool, although there are some GUIs available for it. Note that `ufw` needs to be run with superuser privileges, so all commands are preceded with `sudo`. It is also possible to use the option `--dry-run` any `ufw` commands, which indicates the results of the command without actually making any changes.
+
+To enable the firewall, which will also ensure it starts up on boot, use:
+
+[source,console]
+----
+$ sudo ufw enable
+----
+
+To disable the firewall, and disable start up on boot, use:
+
+[source,console]
+----
+$ sudo ufw disable
+----
+
+Allow a particular port to have access (we have used port 22 in our example):
+
+[source,console]
+----
+$ sudo ufw allow 22
+----
+
+Denying access on a port is also very simple (again, we have used port 22 as an example):
+
+[source,console]
+----
+$ sudo ufw deny 22
+----
+
+You can also specify which service you are allowing or denying on a port. In this example, we are denying TCP on port 22:
+
+[source,console]
+----
+$ sudo ufw deny 22/tcp
+----
+
+You can specify the service even if you do not know which port it uses. This example allows the ssh service access through the firewall:
+
+[source,console]
+----
+$ sudo ufw allow ssh
+----
+
+The status command lists all current settings for the firewall:
+
+[source,console]
+----
+$ sudo ufw status
+----
+
+The rules can be quite complicated, allowing specific IP addresses to be blocked, specifying in which direction traffic is allowed, or limiting the number of attempts to connect (for example to help defeat a DDoS attack). You can also specify the device rules are to be applied to (e.g. eth0, wlan0). Please refer to the `ufw` man page (`man ufw`) for full details beyond the commands below.
+
+Limit login attempts on ssh port using TCP. This denies connection if an IP address has attempted to connect six or more times in the last 30 seconds:
+
+[source,console]
+----
+$ sudo ufw limit ssh/tcp
+----
+
+Deny access to port 30 from IP address 192.168.2.1
+
+[source,console]
+----
+$ sudo ufw deny from 192.168.2.1 port 30
+----
+
+=== Block suspicious activity with `fail2ban`
+
+When using a Raspberry Pi as a server, you must create deliberate holes in your firewall to allow server traffic. http://www.fail2ban.org[Fail2ban] can help secure your server. Fail2ban examines log files and checks for suspicious activity, like multiple brute-force login attempts. It saves you having to manually check log files for intrusion attempts and then update the firewall (via `iptables`) to prevent them.
+
+To install `fail2ban`, run the following command:
+
+[source,console]
+----
+$ sudo apt install fail2ban
+----
+
+On installation, Fail2ban creates `/etc/fail2ban/jail.conf`. To enable Fail2ban, copy `jail.conf` to `jail.local`:
+
+[source,console]
+----
+$ sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+----
+
+Inside this configuration file are a set of default options, together with options for checking specific services for abnormalities. To examine the rules used for `ssh`, open `jail.local` in an editor:
+
+[source,console]
+----
+$ sudo nano /etc/fail2ban/jail.local
+----
+
+Create the `[ssh]` section if it does not already exist and add the following lines to the section:
+
+[source,ini]
+----
+[ssh]
+enabled  = true
+port     = ssh
+filter   = sshd
+backend  = systemd
+maxretry = 6
+----
+
+This enables Fail2ban checks for suspicious `ssh` activity, including system log checks, and allows six retries before blocking activity.
+
+The `[default]` section in this same file defines the default banning action, `iptables-multiport`, which runs the `/etc/fail2ban/action.d/iptables-multiport.conf` file when the detection threshold is reached:
+
+[source,ini]
+----
+# Default banning action (e.g. iptables, iptables-new,
+# iptables-multiport, shorewall, etc) It is used to define
+# action_* variables. Can be overridden globally or per
+# section within jail.local file
+banaction = iptables-multiport
+----
+
+Multiport bans all access on all ports. The `action.d` folder contains a number of alternative action configuration files you can use to customise your server's response to suspicious activity.
+
+For instance, to permanently ban an IP address after three failed attempts, change the `maxretry` value in the `[ssh]` section to `3` and set the `bantime` to a negative number:
+
+[source,ini]
+----
+[ssh]
+enabled  = true
+port     = ssh
+filter   = sshd
+backend  = systemd
+maxretry = 3
+bantime  = -1
+----

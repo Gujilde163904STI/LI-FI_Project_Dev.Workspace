@@ -1,0 +1,88 @@
+(function () {
+  'use strict';
+
+  $(document).ready(function () {
+    addToc();
+    replaceRelativeLinksWithStaticGitHubUrl();
+  });
+
+  /**
+   * Adds a TOC-style table to each page in the 'Modules' section.
+   */
+  function addToc() {
+    let func, intro, tocHtmlTable;
+    if (isModulePage()) {
+      tocHtmlTable = '<table class="docutils">';
+      $('h2').each(function () {
+        // 'slice' cuts off the single permalink character at the end of the text (e.g. '¶')
+        func = $(this).text().slice(0, -1);
+        // get the first sentence of the paragraph directly below h2
+        intro = $(this).next().text();
+        intro = intro.substring(0, intro.indexOf('.') + 1);
+        tocHtmlTable += createTocTableRow(func, intro);
+      });
+      tocHtmlTable += '</table>';
+      $(tocHtmlTable).insertBefore($('h2').first())
+    }
+    function isModulePage() {
+      // if the breadcrumb contains 'Modules »' it must be an API page
+      return $("ul.wy-breadcrumbs li:contains('C Modules')").length > 0;
+    }
+    function createTocTableRow(func, intro) {
+      // fragile attempt to auto-create the in-page anchor
+      // good tests: file.md,
+      const href = func.replace(/[\.:\(\)]/g, '').replace(/ --|, | /g, '-');
+      const link = '<a href="#' + href.toLowerCase() + '">' + func + '</a>';
+      return '<tr><td>' + link + '</td><td>' + intro + '</td></tr>';
+    }
+  }
+
+  /**
+   * The module doc pages contain relative links to artifacts in the GitHub repository. For those links to work both
+   * on GitHub (i.e. when the page is viewed on GitHub) and on RTD they are defined with a relative URL. This function
+   * replaces the relative path with an absolute path based on the selected branch.
+   */
+  function replaceRelativeLinksWithStaticGitHubUrl() {
+    if (isOnRtd()) {
+      const ignoredUrlSegments = ["/lua-modules/", "/modules/"];
+      const relativePath = "../..";
+      const gitHubPath = "https://github.com/nodemcu/nodemcu-firmware/tree/" + determineSelectedBranch();
+      // 'div.section' denotes the container into which doc pages are integrated i.e. "the content" w/o navigation,
+      // header, breadcrumbs, footer, etc. It's important that only links in this very section are manipulated.
+      $("div.section a[href^='" + relativePath + "']").each(function () {
+        const url = $(this).attr('href');
+        // do not change the URL to artifacts that reside inside the /docs folder as they are correctly managed by
+        // MkDocs
+        if (!ignoredUrlSegments.some(segment => url.startsWith(relativePath + segment))) {
+          $(this).attr('href', url.replace(relativePath, gitHubPath));
+        }
+      });
+    }
+  }
+
+  /**
+   * Analyzes the URL of the current page to find out what the selected GitHub branch is. It's usually
+   * part of the location path. The code needs to distinguish between running MkDocs standalone
+   * and docs served from RTD. If no valid branch could be determined 'dev' returned.
+   *
+   * @returns GitHub branch name
+   */
+  function determineSelectedBranch() {
+    let branch = 'dev';
+    const path = window.location.pathname;
+    if (isOnRtd()) {
+      // path is like /en/<branch>/<lang>/build/ -> extract 'lang'
+      // split[0] is an '' because the path starts with the separator
+      const thirdPathSegment = path.split('/')[2];
+      // 'latest' is an alias on RTD for the 'dev' branch - which is the default for 'branch' here
+      if (thirdPathSegment !== 'latest') {
+        branch = thirdPathSegment;
+      }
+    }
+    return branch;
+  }
+
+  function isOnRtd() {
+    return window.location.origin.indexOf('readthedocs') > -1;
+  }
+}());

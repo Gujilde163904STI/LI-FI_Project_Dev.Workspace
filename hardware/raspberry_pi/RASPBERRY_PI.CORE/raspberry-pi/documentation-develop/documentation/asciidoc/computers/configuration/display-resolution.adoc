@@ -1,0 +1,86 @@
+== Displays
+
+To configure your Raspberry Pi to use a non-default display mode, set the resolution or rotation manually.
+
+=== Support for HDMI monitors
+
+With most HDMI monitors, Raspberry Pi OS uses the highest resolution and refresh rate supported by the monitor.
+
+The Raspberry Pi Zero, Zero W and Zero 2 W have a mini HDMI port, so you need a mini-HDMI-to-full-size-HDMI lead or adapter.
+
+Flagship models since Raspberry Pi 4B and Keyboard models have two micro HDMI ports, so you need a micro-HDMI-to-full-size-HDMI lead or adapter for each display you wish to attach. Connect the cables before turning on the Raspberry Pi.
+
+Flagship models since Raspberry Pi 4B, Compute Modules since CM4 (except for CM4S), and Keyboard models can drive up to two displays.
+
+4-series devices support resolutions up to 1080p at a 60Hz refresh rate, or two 4K displays at a 30Hz refresh rate. You can also drive a single display at 4K with a 60Hz refresh rate if you connect the display to the `HDMI0` port and set the `hdmi_enable_4kp60=1` flag in xref:../computers/config_txt.adoc#what-is-config-txt[`/boot/firmware/config.txt`].
+
+5-series devices support up to two displays at 4K resolution at a 60hz refresh rate with no additional configuration.
+
+=== Set resolution and rotation
+
+On the Raspberry Pi Desktop, open the *Preferences* menu and select the **Screen Configuration** utility. You should see a graphical representation of the displays connected to the Raspberry Pi. Right click on the display you wish to modify, and select an option. Click **Apply** to and close **Screen Configuration** to save your changes.
+
+Alternatively, use the following command to open the **Screen Configuration** utility:
+
+[source,console]
+----
+$ raindrop
+----
+
+[TIP]
+====
+If your installation of Raspberry Pi OS doesn't already include `raindrop`, you can install it with the following command:
+
+[source,console]
+----
+$ sudo apt install raindrop
+----
+
+Older versions of Raspberry Pi OS used a different screen configuration utility named `arandr`. To uninstall `arandr`, run the following command:
+
+[source,console]
+----
+$ sudo apt purge arandr
+----
+====
+
+=== Manually set resolution and rotation
+
+==== Determine display device name
+
+To manually configure resolution and rotation, you'll need to know the names of your display devices. To determine the device names, run the following command to display information about attached devices:
+
+[source,console]
+----
+$ kmsprint | grep Connector
+----
+
+==== Set a custom resolution
+
+To set a custom resolution, use our Screen Configuration tool, `raindrop`. If your Raspberry Pi OS installation doesn't already include `raindrop` (for instance, if you're still using the previous Screen Configuration tool, `arandr`), you can download `raindrop` from `apt` or the Recommended Software GUI.
+
+==== Set a custom rotation
+
+To set a custom resolution, use our Screen Configuration tool, `raindrop`. If your Raspberry Pi OS installation doesn't already include `raindrop` (for instance, if you're still using the previous Screen Configuration tool, `arandr`), you can download `raindrop` from `apt` or the Recommended Software GUI.
+
+If you run the Wayland desktop compositor, you can set a custom display rotation with `wlr-randr`. The following commands rotate the display by 0°, 90°, 180°, and 270°:
+
+[source,console]
+----
+$ wlr-randr --output HDMI-A-1 --transform normal
+$ wlr-randr --output HDMI-A-1 --transform 90
+$ wlr-randr --output HDMI-A-1 --transform 180
+$ wlr-randr --output HDMI-A-1 --transform 270
+----
+
+The `--output` option specifies the device to be rotated.
+
+NOTE: To run this command over SSH, add the following prefix: `WAYLAND_DISPLAY=wayland-1`, e.g. `WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90`.
+
+You can also use one of the following `--transform` options to mirror the display at the same time as rotating it: `flipped`, `flipped-90`, `flipped-180`, `flipped-270`.
+
+=== Console resolution and rotation
+
+To change the resolution and rotation of your Raspberry Pi in console mode, use the KMS settings. For more information, see <<kernel-command-line-cmdline-txt,configuring the kernel command line>>.
+
+NOTE: When using console mode with multiple displays, all connected displays share the same rotation settings.

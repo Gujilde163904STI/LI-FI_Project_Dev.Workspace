@@ -1,0 +1,7 @@
+USEMODULE += arm7_common
+
+ifneq (,$(filter stdio_default,$(USEMODULE)))
+  USEMODULE += stdio_fb
+endif
+
+include $(RIOTCPU)/arm7_common/Makefile.dep

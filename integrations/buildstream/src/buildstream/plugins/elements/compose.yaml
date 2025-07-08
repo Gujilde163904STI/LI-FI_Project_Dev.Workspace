@@ -1,0 +1,45 @@
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+# Compose element configuration
+config:
+
+  # Whether to run the integration commands for the
+  # staged dependencies.
+  #
+  integrate: True
+
+  # A list of domains to include from each artifact, as
+  # they were defined in the element's 'split-rules'.
+  #
+  # Since domains can be added, it is not an error to
+  # specify domains which may not exist for all of the
+  # elements in this composition.
+  #
+  # The default empty list indicates that all domains
+  # from each dependency should be included.
+  #
+  include: []
+
+  # A list of domains to exclude from each artifact, as
+  # they were defined in the element's 'split-rules'.
+  #
+  # In the case that a file is spoken for by a domain
+  # in the 'include' list and another in the 'exclude'
+  # list, then the file will be excluded.
+  exclude: []
+
+  # Whether to include orphan files which are not
+  # included by any of the 'split-rules' present on
+  # a given element.
+  #
+  include-orphans: True

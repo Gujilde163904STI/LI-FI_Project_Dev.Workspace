@@ -1,0 +1,24 @@
+.TH "BST WORKSPACE OPEN" "1" "2025-05-09" "2.5" "bst workspace open Manual"
+.SH NAME
+bst\-workspace\-open \- Open a new workspace
+.SH SYNOPSIS
+.B bst workspace open
+[OPTIONS] ELEMENTS...
+.SH DESCRIPTION
+Open a workspace for manual source modification
+.SH OPTIONS
+.TP
+\fB\-\-no\-checkout\fP
+Do not checkout the source, only link to the given directory
+.TP
+\fB\-f,\fP \-\-force
+The workspace will be created even if the directory in which it will be created is not empty or if a workspace for that element already exists
+.TP
+\fB\-\-directory\fP DIRECTORY
+Only for use when a single Element is given: Set the directory to use to create the workspace
+.TP
+\fB\-\-source\-remote\fP REMOTE
+A remote for downloading cached sources
+.TP
+\fB\-\-ignore\-project\-source\-remotes\fP
+Ignore remote source cache servers recommended by projects

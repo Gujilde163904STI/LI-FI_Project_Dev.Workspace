@@ -1,0 +1,11 @@
+if (NOT FREERTOS_KERNEL_PATH AND NOT DEFINED ENV{FREERTOS_KERNEL_PATH})
+    message("Skipping Pico W FreeRTOS examples as FREERTOS_KERNEL_PATH not defined")
+else()
+    include(FreeRTOS_Kernel_import.cmake)
+
+    add_subdirectory_exclude_platforms(httpd)
+    add_subdirectory_exclude_platforms(iperf)
+    add_subdirectory_exclude_platforms(ntp_client_socket)
+    add_subdirectory_exclude_platforms(ping)
+    add_subdirectory_exclude_platforms(http_client)
+endif()

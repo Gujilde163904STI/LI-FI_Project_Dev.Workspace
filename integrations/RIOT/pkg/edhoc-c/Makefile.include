@@ -1,0 +1,24 @@
+# Using -isystem instead of -I to prevent warnings for the following headers
+INCLUDES += -isystem$(PKGDIRBASE)/EDHOC-C/include \
+            -isystem$(PKGDIRBASE)/EDHOC-C/src \
+            -isystem$(RIOTBASE)/pkg/edhoc-c/include \
+            #
+
+ifneq (,$(filter edhoc-c_crypto_wolfssl,$(USEMODULE)))
+  CFLAGS += -DHAVE_AESCCM
+  CFLAGS += -DHAVE_HKDF
+  CFLAGS += -DWOLFSSL
+endif
+
+ifneq (,$(filter edhoc-c_crypto_tinycrypt,$(USEMODULE)))
+  CFLAGS += -DTINYCRYPT
+endif
+
+ifneq (,$(filter edhoc-c_cbor_nanocbor,$(USEMODULE)))
+  CFLAGS += -DNANOCBOR
+endif
+
+# EDHOC-C configuration file for RIOT
+CFLAGS += -DEDHOC_CONFIG_FILE=\"edhoc_config.h\"
+# X509 backend in EDHOC-C is mbedtls currently not supported in RIOT
+CFLAGS += -DEMPTY_X509

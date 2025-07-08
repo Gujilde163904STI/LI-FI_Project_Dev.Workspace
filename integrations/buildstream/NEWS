@@ -1,0 +1,1107 @@
+=================
+buildstream 2.5.0
+=================
+
+  o Fix directory mtime to support latest buildbox-casd (#2001)
+
+  o Fix test cases to work with latest buildbox (#1999)
+
+  o Support gRPC retry and timeout configuration for all remote services (#1987)
+
+  o Fix our setup.py for surprise update of setuptools (#2007)
+
+  o Add Source.collect_source_info() and SourceFetcher.get_source_info() methods,
+    support showing introspected source provenance information in `bst show`,
+    make it possible for absence of implementations of these new methods be fatal,
+    and export some related utilities to help plugins support such (#1997, #2008, #2016, #2018)
+
+  o Some minor fixes to documentation (#1992)
+
+  o Support showing artifact content digests in `bst show` (#1994)
+
+  o Better support for parsing boolean configuration that is exported from
+    project options (#2011, #2006)
+
+  o Better error handling in remote execution if services do not support
+    required sandbox options (#2013)
+
+  o Fix pushing artifacts with remote caches (#2015)
+
+  o Fix build warnings stemming from using outdated grpcio tools (#2017)
+
+  o Fix additional jobs being scheduled after the user has asked to quit (#2005, #1787)
+
+=================
+buildstream 2.4.1
+=================
+
+  o Update default min-version for bst init to 2.4 (#1978)
+
+  o Use subprocess umask support (#1754)
+
+  o Don't use `preexec_fn` on Python 3.11+ (#1980)
+
+  o contrib/bst-graph: Escape names when using as node_id (#1979)
+
+  o _loader: Use the sort algorithm from Python 3.12 for dependencies (#1993)
+
+=================
+buildstream 2.4.0
+=================
+
+  o Add new user configuration for the cache (#1950)
+
+  o docs: fix link to docker install instructions (#1952)
+
+  o Fix console warnings in newer python versions (#1958)
+
+  o Update github CI workflow actions (#1957)
+
+  o Fix `bst artifact show --long` for artifacts with symlinks (#1959)
+
+  o Fix race condition in public data handling (#1955)
+
+  o Cleanup deadcode (#1954)
+
+  o Make remote execution directory fetching more robust (#1962)
+
+  o Disable logging for frequent cache query jobs (#1963)
+
+  o Improve performance when using `storage-service` (#1966)
+
+  o Fixed issues with nested junctions (#1891, #1969, #1975)
+
+  o Drop support for Python 3.8 and add support for Python 3.13 (#1971)
+
+  o Load time optimization for commands which don't require cache queries (#1965)
+
+  o Address deprecation warnings from deprecated pkg_resources (#1948)
+
+=================
+buildstream 2.3.0
+=================
+
+  o Proxy remote asset and remote execution requests via buildbox-casd (#1922, #1926)
+
+  o Optimize bst show when no cached state is needed (#1923)
+
+  o Support %{description} in bst show commands
+
+  o Support HTTP Bearer authentication for remote API servers (#1925)
+
+  o Drop support for Python 3.7 (#1933, #1934, #1936)
+
+  o downloadablefilesource: Add 10 minutes timeout (#1928)
+
+  o tar.py: Always check member paths (#1932)
+
+  o Ensure blobs are available locally when using storage-service (#1938)
+
+  o Support loading source mirror plugins from pip and junction origins (#1931)
+
+  o Restore terminal after exiting a bst shell (#1786)
+
+  o Fail early if buildbox-run is present but non-functional (#1746)
+
+=================
+buildstream 2.2.1
+=================
+
+  o Fix parsing of keepalive time (#1916)
+
+  o Fix alias mapping when using source mirror plugins (#1918)
+
+  o Fix typing of SourceFetcher.fetch() and Source.translate_url():
+    the `alias_override` parameter should be considered opaque.
+
+  o Update documentation regarding the buildbox merge (#1919)
+
+=================
+buildstream 2.2.0
+=================
+
+  o Support Python 3.12 (#1881, #1884)
+
+  o Add suffix parameter to `Source.translate_url()` (#1899)
+
+  o Error out if a YAML mapping has duplicate keys (#1877)
+
+  o New configuration option to set the grpc keepalive time (#1879)
+
+  o Add SourceMirror plugins to allow more flexibility when defining mirrors (#1903)
+
+  o Use system-installed buildbox components over bundled ones if available (#1902)
+
+  o Support bearer authentication in DownloadableFileSource (#1911)
+
+  o Support mapping aliases from subprojects to parent project to ease mirroring (#1910)
+
+=================
+buildstream 2.1.0
+=================
+
+  o Support new architecture name "la64v100" (#1811)
+
+  o Fix race condition when downloading sources (#1831)
+
+  o Properly handle partial download errors (#1846)
+
+  o Fix regressed ETag handling to prevent redundant file downloads (#1834)
+
+  o Fix parsing remotes specified on the command line (#1850)
+
+  o Fix bug when tracking ref-less sources (like local sources) when using project.refs (#1858)
+
+  o Follow semantic versioning more strictly (#1854)
+
+  o New `bst build --retry-failed` feature (#1849)
+
+  o Fix parsing override-project-caches configuration (#1861)
+
+  o Fix crashes when instructed to only download from mirrors, and
+    some sources have no mirrors defined (#1862)
+
+  o Drop unnecessary dependency on dateutil (#1867)
+
+  o Fix severe hangs when can occur when running out of disk
+    space specifically when attempting to open and write to
+    a new log file (#1865)
+
+=================
+buildstream 2.0.1
+=================
+
+  o Stop including generated C code in releases (#1777)
+
+  o Support completions for Zsh shells (#558)
+
+  o Support Python 3.11 (#1782, #1806, #1815, #1759)
+
+  o Fix git submodule tests to work with recent git (#1816)
+
+  o Enable coverage collection in tests (#1817)
+
+  o Optimize file copies where possible (#1793)
+
+  o Some fixes for downloadable file sources (#1826, #1814)
+
+  o Various cleanups of deprecated code and documentation
+
+=================
+buildstream 2.0.0
+=================
+
+No changes since 1.95.6, releasing voted upon 2.0.0
+
+==================
+buildstream 1.95.6
+==================
+
+  o Adding missing license headers to some files in the _testing module
+
+==================
+buildstream 1.95.5
+==================
+
+  o Fixed remaining license header issues (in sources and also docs)
+
+  o Documenting how to prepare BuildStream for new python versions
+
+  o Remove generated GPL files from autotools test tarballs
+
+  o Update package metadata urls and author
+
+==================
+buildstream 1.95.4
+==================
+
+  o Fixed license headers in source files
+
+  o Attribute third party licenses etc properly in the LICENCE
+    and NOTICE files and ensure they are included in source distributions
+
+  o Removed obsolete update_committers.py script in contrib
+
+  o Require at least the first cython version which properly supported python 3.10
+
+  o Update copyright year and attribution in generated documentation
+
+==================
+buildstream 1.95.3
+==================
+
+  o Some fixes to the CI (#1736, #1737)
+
+  o Fix errors passing certs/keys to casd (#1748)
+
+  o Update installation instructions for 2.0 (#1741)
+
+  o Fix issues using `storage-service` (#1750)
+
+  o Revert to previous mirror ordering behavior when tracking (#1765)
+
+
+==================
+buildstream 1.95.2
+==================
+
+  o Fix stack traces in tab completion of `bst artifact` commands (#1718)
+
+  o Document new link to obtain latest static buildbox binaries (#1721)
+
+  o Allow `bst shell --build` directly on artifacts without needing a project (#1711)
+
+  o Refactor out some unused methods (#781)
+
+  o Continue pushing build results if builds fail when --on-error=quit (#534)
+
+  o Fix issue which sometimes caused messages to get lost in the master log (#1728)
+
+  o Fix remaining ruamel.yaml deprecation warnings (#1731)
+
+  o Only print the last failure for retried failed elements (#517)
+
+  o Enhance BuildElement documentation (#1734)
+
+  o Automatically publish binary wheels which contain static BuildBox binaries when releasing (#1712)
+
+
+==================
+buildstream 1.95.1
+==================
+
+  o Fixed issue loading refs from project.refs files in subprojects (#1655)
+
+  o Fixed `bst artifact checkout` on machines which do not support the
+    artifact's build architecture (#1352)
+
+  o Rebuild protos to support newer grpc versions (#1665)
+
+  o Support the RISC-V machine architecture name (#1577)
+
+  o Record date and buildstream version in all build logs (#184)
+
+  o Updated internals to be compliant with REAPI v2.2 (#1676)
+
+  o Avoid adding unnecessary data to CAS (#1677, #1678)
+
+  o Disable unneeded gRPC fork support which sometimes causes crashes (#1679)
+
+  o Added runtime version checks against buildbox-casd (#1189)
+
+  o Resolve variables in include files in the context of their project (#1485)
+
+  o Retry failed builds in non-strict mode (#1460)
+
+  o Optimize staging of sources (#1680)
+
+  o Fixed `bst artifact delete` in non-strict mode (#1461)
+
+  o Allow conditional statements in toplevel of project.conf (#1683)
+
+  o Fix crashes related to cross-project includes / plugin loading (#1686)
+
+  o Fix addressing of subproject elements on command line (#1455)
+
+  o Ensure CAS does not get corrupted on systems without buildbox-fuse (#1700)
+
+  o Optimization when importing files to/from CAS (#1697, #1698)
+
+  o Print errors in advance of the interactive prompt (#1394)
+
+  o Fixed Source.set_ref() code to behave as documented (#1685)
+
+  o Updated installation instructions (#1705, #1710)
+
+  o Support interactive build shells with all elements (#1263)
+
+  o Reduce information encoded in cache keys for elements which do not use the sandbox (#1687)
+
+
+==================
+buildstream 1.95.0
+==================
+
+Core
+----
+  o BuildStream now requires Python >= 3.7 and also supports Python 3.10.
+
+
+API
+---
+  o BREAKING CHANGE: Removed SandboxFlags from public API, replaced this
+    with a `root_read_only` boolean parameter to relevant Sandbox APIs.
+
+
+Format
+------
+  o BREAKING CHANGE: Element names must now bare the `.bst` suffix and not
+    contain invalid characters, as was already documented. Now the warning
+    is replaced by an unconditional error.
+
+  o User configuration now has the ability to override source mirrors defined
+    by project configuration.
+
+  o User configuration now has fetch source and track source configurations to
+    control what mirrors/URIs can be accessed to obtain sources.
+
+CLI
+---
+  o BREAKING CHANGE: Removed `--deps plan` from all commands
+
+  o The `--pull` option is removed from the `bst shell` and `bst artifact checkout`
+    commands, which will now unconditionally try to pull required artifacts.
+
+  o BREAKING CHANGE: Now the artifact commands only accept element names if specified
+    with a `.bst` suffix (including wildcard expressions), and otherwise assumes the
+    command means to specify an artifact name.
+
+
+==================
+buildstream 1.93.6
+==================
+
+Format
+------
+  o The `script` element no longer has a `layout` configuration directly, and now
+    exposes a new `location` dependency configuration instead.
+
+  o The BuildElement now has a new `location` dependency configuration, allowing
+    BuildElement plugins to also stage dependencies into custom locations in
+    the sandbox.
+
+  o BREAKING CHANGE: Stack element dependencies are now hard required to be
+    both build and runtime dependencies.
+
+  o BREAKING CHANGE: The old and deprecated "remote-execution" configuration style
+    is no longer supported, one must now specify the "execution-service" block
+    and cannot specify a "url" in the "remote-execution" dictionary anymore.
+
+  o BREAKING CHANGE: Full redesign of remote cache configurations, junction
+    configurations related to artifact pulling/pushing policies have been
+    removed, users will need to view the new documentation and update
+    cache configuration accordingly.
+
+Core
+----
+
+  o BuildStream now also supports Python 3.9.
+
+  o BREAKING CHANGE: Changed API signatures to remove Scope type from the API
+    - Element.dependencies()
+    - Element.stage_dependency_artifacts()
+    - Element.search()
+    Elements now can only ever see dependencies in their build scope.
+
+  * BREAKING CHANGE: Changed ScriptElement.layout_add() API to take Element instances
+                     in place of Element names
+
+CLI
+---
+
+  o BREAKING CHANGE: `bst shell --use-buildtree` is now a boolean flag.
+    `--use-buildtree=ask` and `--use-buildtree=try` are no longer supported.
+
+  o BREAKING CHANGE: `--remote` options removed, replaced by `--artifact-remote` or `--source-remote`
+
+  o BREAKING CHANGE: All old obsolete/deprecated commands removed, including:
+    - bst fetch (now bst source fetch)
+    - bst track (now bst source track)
+    - bst checkout (now bst artifact checkout)
+    - bst pull (now bst artifact pull)
+    - bst push (now bst artifact push)
+
+
+==================
+buildstream 1.93.5
+==================
+
+Format
+------
+
+  o BREAKING CHANGE: Some project.conf keys are no longer allowed to be specified outside
+    of the project.conf file (they cannot be specified in an include file), these include:
+    - name
+    - element-path
+    - min-version
+    - plugins
+
+CLI
+---
+
+  o Add `bst source push` subcommand. This command pushes element sources to a
+    remote source cache.
+  o `bst source track` now also accepts "build" and "run" as inputs.
+
+Artifacts
+---------
+
+  o BREAKING CHANGE: Use Remote Asset API for remote artifact and source caches.
+    Existing artifact servers are not compatible and need to be updated to the
+    latest version which will then allow them to be repopulated with new
+    artifacts.
+
+Plugins
+-------
+
+  o tar: filter out 'dev' nodes from the tar archives when extracting them
+
+  o `buildstream.testing` module now requires pytest >= 6.0.1.
+
+
+==================
+buildstream 1.93.4
+==================
+
+Core
+----
+
+  o The bwrap sandboxing backend and the SafeHardlinks FUSE filesystem
+    have been dropped. buildbox-run is now the only sandboxing backend.
+
+
+CLI
+---
+
+  o `bst shell --build` will now automatically fetch missing sources.
+  o `bst build --deps` now also accepts "build" as an input.
+  o `bst source fetch --deps` now also accepts "build" and "run" as inputs.
+  o `bst artifact pull --deps` now also accepts "build" and "run" as inputs.
+  o `bst artifact push --deps` now also accepts "build" and "run" as inputs.
+  o Full paths can now be used to address elements across multiple junction boundaries
+
+
+Format
+------
+
+  o BREAKING CHANGE: Now deprecation warnings are suppressed using the `allow-deprecated`
+    configuration with the plugin origins in project.conf, instead of on the
+    source/element overrides section (See issue #1291)
+  o BREAKING CHANGE: The `target` option of junctions has been completely removed,
+    Use `link` elements instead.
+  o Variables from an element can now be used in source configurations
+  o Full paths can now be used to address elements across multiple junction boundaries
+  o A new "junction" plugin origin allows loading of plugins across junction boundaries
+  o Support buildstream2.conf as a user configuration, allowing parallel installation
+    of bst 1 & bst 2
+
+
+Plugins
+-------
+
+  o Cache keys will change for all elements that have defined the
+    `command-subdir` variable. This is the result of fixing a bug where this
+    variable was not included in the cache key correctly.
+  o The `pip` element has been removed. Please use the one from bst-plugins-experimental
+  o Introduced new `link` element which can be used as a symbolic link to other
+    elements or junctions, in the local project or in subprojects.
+  o The DownloadableFileSource is now public API
+
+API
+---
+
+  o `Element.node_subst_vars` and `Element.node_subst_sequence_vars` are now deprecated
+     and will get removed in the next version. All config entries are now resolved so there
+     is no need to use them anymore.
+
+
+==================
+buildstream 1.93.3
+==================
+
+  o BREAKING CHANGE: Removed BST_REQUIRED_VERSION_[MAJOR/MINOR] from plugin base class,
+    this is now replaced with BST_MIN_VERSION which is now a hard requirement.
+
+  o BREAKING CHANGE: Removed BST_FORMAT_VERSION from plugin base class, this is no
+    longer supported.
+
+  o buildbox-run is now the default sandbox backend on all platforms
+
+
+==================
+buildstream 1.93.2
+==================
+
+Core
+----
+
+  o BuildStream now requires Python >= 3.6.
+
+  o BREAKING CHANGE: Conditional directives `(?)` from files included
+    through junctions are evaluated with the options defined in the
+    sub project the file comes from.
+
+  o BREAKING CHANGE: "format-version" is removed and replaced with "min-version",
+    which is now required to be specified in project.conf.
+
+  o Incremental workspace builds are supported again.
+
+CLI
+---
+
+  o BREAKING CHANGE: `bst shell --sysroot` has been removed. This is no longer
+    needed now that we support caching buildtrees in CAS.
+
+API
+---
+
+  o The `Directory` API has been extended to cover the use cases of more
+    element plugins.
+
+
+==================
+buildstream 1.93.1
+==================
+
+API
+---
+
+  o `ErrorDomain` and `LoadErrorReason` are now available in the public
+    `buildstream.exceptions` module for use in test suites of external plugins.
+
+Plugins
+-------
+
+  o The 'git' source will now only fetch a single revision when its ref is set
+    to an exact tag in git-describe format (...-0-g...).
+
+  o When a 'git' source has a ref in git-describe format, only the commit
+    ID is used when calculating the element's cache key. This means you can
+    change between ref formats without having to rebuild the element.
+
+
+==================
+buildstream 1.93.0
+==================
+
+CLI
+---
+
+  o BREAKING CHANGE: `bst show` will now output `junction` instead
+    of `buildable` for the state of junction elements, as they can't
+    be built.
+
+API
+---
+
+  o BREAKING CHANGE: The entry point groups used for element and source plugins
+    are now separate. Elements must be defined in `buildstream.plugins.elements`
+    group, and sources in `buildstream.plugins.sources`.
+
+  o External plugins can now register a `buildstream.tests.source_plugins` entrypoint.
+    The entry point can have an arbitrary name, but its value should point to a module
+    containing a `register_sources()` method.
+    This method should call `register_repo_kind` for all sources you want to have
+    tested in BuildStream.
+    Plugins authors that do this and believe BuildStream should be testing that
+    part of their plugins should open an issue on BuildStream.
+
+  o BREAKING CHANGE: `Consistency` has been removed and
+    `Source.get_consistency()` has been replaced by `Source.is_resolved()`
+    and `Source.is_cached()`.
+
+    `Source.is_resolved()` has a default of `self.get_ref() is not None`,
+    so if the only thing your plugin requires for being resolved is to
+    have a valid ref, you don't need to do anything there.
+
+    `Source.is_cached()` is there to replace a `Consistency.CACHED`
+    implementation and will need to be implemented by plugin authors.
+
+Core
+----
+
+  o BREAKING CHANGE: Once a source has been put in the internal BuildStream
+    cache, its content will not get checked for validity unless a workspace
+    is opened on it. If you see a warning that was not fatal as you fetch
+    your source and want to re-test it to make sure it's gone without changing
+    its ref (most plugins would handle that correctly), you will need to delete
+    the internal source cache first.
+
+Plugins
+-------
+
+  o BREAKING CHANGE: deb plugin have been moved to the bst-plugins-experimental
+    repository.
+
+Miscellaneous
+-------------
+
+  o By default the update rate of builstream console output
+    (e.g. messages & status updates) when executing a scheduler driven task is
+    restricted to once per second, known as the tick, with messages being batched
+    in the intervening periods if necessary. This restriction can be lifted with
+    `throttle-ui-updates: False` in user configuration. Logging behaviour remains
+    unaffected by this configuration.
+
+
+==================
+buildstream 1.91.3
+==================
+
+CLI
+---
+
+  o BREAKING CHANGE: Commands no longer accept any options related to
+    tracking. Please use `bst source track` separately prior to
+    running commands, if you need similar functionality. The full list
+    of removed options is as follows:
+
+      * `bst build --track`
+      * `bst build --track-all`
+      * `bst build --track-except`
+      * `bst build --track-cross-junctions` / `bst build -J`
+      * `bst build --track-save`
+      * `bst source fetch --track`
+      * `bst source fetch --track-cross-junctions` / `bst source fetch -J`
+      * `bst workspace open --track`
+      * `bst workspace reset --track`
+
+Plugins
+-------
+
+  o The 'git' source will now fetch submodules recursively when
+    its 'checkout-submodules' option is enabled.
+
+API
+---
+
+  o Sources may force early staging to cache by advertising
+    `BST_KEY_REQUIRES_STAGE`. Sources setting this are staged to the cache to
+    generate unique keys. `WorkspaceSource` and `LocalSource` set this.
+
+Core
+----
+
+  o BuildStream now supports Python 3.8. Note that due to a bug in the 3.8.0
+    series, BuildStream requires Python >= 3.8.1 when running on Python 3.8.
+
+  o BuildStream now also supports the following machine architectures:
+
+    * powerpc
+    * powerpc64
+    * powerpc64le
+    * sun4v
+
+
+==================
+buildstream 1.91.2
+==================
+
+  o Various bug fixes.
+
+
+==================
+buildstream 1.91.1
+==================
+
+API
+---
+
+  o BREAKING CHANGE: 'Element.node_subst_member' has been removed. Please use
+    'Element.node_subst_vars' instead.
+
+  o BREAKING CHANGE: 'Element.node_subst_list' has been removed. Please use
+    'Element.node_subst_sequence_vars' instead.
+
+  o BREAKING CHANGE: Workspace incremental builds have been temporarily disabled
+
+  o A new 'Node.strip_node_info()' is available and allows getting the
+    underlying data structure for the given node.
+
+  o BuildStream now requires Buildbox-casd 0.0.3 at minimum
+
+
+==================
+buildstream 1.91.0
+==================
+This release is a development snapshot, without any compatibility guarantees.
+(The list of changes is non-exhaustive)
+
+CLI
+---
+
+  o BREAKING CHANGE: `bst track` and `bst fetch` commands are now obsolete.
+    Their functionality is provided by `bst source track` and
+    `bst source fetch` respectively.
+
+  o BREAKING CHANGE: The top level commands `checkout`, `push` and `pull` have
+    been moved to the `bst artifact` subcommand group and are now obsolete.
+    For example, you must now use `bst artifact pull hello.bst`.
+
+    The behaviour of `checkout` has changed. The previously mandatory LOCATION
+    argument should now be specified with the `--directory` option. In addition
+    to this, `--tar` is no longer a flag, it is a mutually incompatible option
+    to `--directory`. For example, `bst artifact checkout foo.bst --tar foo.tar.gz`.
+
+  o BREAKING CHANGE: `bst workspace open` now supports the creation of multiple
+    elements and allows the user to set a default location for their creation.
+    This has meant that the new CLI is no longer backwards compatible with
+    BuildStream 1.2.
+
+  o BREAKING CHANGE: The `bst build` command no longer accepts the `--all`
+    option. It now accepts `--deps` with a choice of 'plan' (default) and
+    'all', for equivalent behaviour.
+
+  o BREAKING CHANGE: `bst init` no longer uses the `--directory` or `-C`
+    option. Instead, it (optionally) takes a directory as an argument.
+
+  o BREAKING CHANGE: The `bst source-bundle` command has been removed. The
+    functionality it provided has been replaced by the `--include-build-scripts`
+    option of the `bst source checkout` command. To produce a tarball containing
+    an element's sources and generated build scripts you can do the command
+    `bst source checkout --include-build-scripts --tar foo.tar foo.bst`.
+
+    A `--compression` option is also supported when using `--tar` which supports
+    xz, gz and bz2 compression.
+
+  o BREAKING CHANGE: The 'auto-init' functionality has been removed. This would
+    offer to create a project in the event that bst was run against a directory
+    without a project, to be friendly to new users. It has been replaced with
+    an error message and a hint instead, to avoid bothering folks that just
+    made a mistake.
+
+  o BREAKING CHANGE: The unconditional 'Are you sure?' prompts have been
+    removed. These would always ask you if you were sure when running
+    'bst workspace close --remove-dir' or 'bst workspace reset'. They got in
+    the way too often.
+
+  o Added `bst artifact show` subcommand which shows the cached status
+    of an artifact. If project/user remotes are available, they are checked
+    for the target elements (and their deps, if specified). Artifacts available
+    in remotes are displayed as "available".
+
+  o Added `bst artifact list-contents` subcommand which can display the names
+    of files in artifacts in your artifact cache, either by element name
+    or by direct artifact reference. --long option can be used to display more
+    information; file type and size.
+
+  o Added `bst artifact delete` subcommand. This command removes artifacts from
+    the local cache. Multiple element names and artifact refs can be specified
+    as arguments.
+
+  o Added `bst artifact log` subcommand for viewing build logs.
+
+  o Added new `bst source checkout` command to checkout sources of an element.
+
+  o Running commands without elements specified will now attempt to use
+    the default targets defined in the project configuration.
+    If no default target is defined, all elements in the project will be used.
+
+  o bst 'build' now has '--remote, -r' option, inline with bst 'push' & 'pull'.
+    Providing a remote will limit build's pull/push remote actions to the given
+    remote specifically, ignoring those defined via user or project configuration.
+
+  o `bst shell --sysroot` now takes any directory that contains a sysroot,
+    instead of just a specially-formatted build-root with a `root` and `scratch`
+    subdirectory.
+
+  o Creating a build shell through the interactive mode or `bst shell --build`
+    will now use the cached build tree if available locally. It is now easier to
+    debug local build failures.
+
+
+Plugins
+-------
+
+  o BREAKING CHANGE: cmake, make, makemaker, meson, modulebuild and qmake
+    plugins have been moved to the bst-plugins-experimental repository.
+
+  o BREAKING CHANGE: The 'manual' element lost its default 'MAKEFLAGS' and 'V'
+    environment variables. There is already a 'make' element with the same
+    variables. Note that this is a breaking change, it will require users to
+    make changes to their .bst files if they are expecting these environment
+    variables to be set.
+
+  o BREAKING CHANGE: The `git` plugin does not create a local `.git`
+    repository by default.  If `git describe` is required to work, the
+    plugin has now a tag tracking feature instead. This can be enabled
+    by setting 'track-tags'.
+
+  o Added new `pip` source plugin for downloading python packages using pip,
+    based on requirements files from previous sources.
+
+
+API
+---
+
+  o BREAKING CHANGE: The yaml API has been rewritten entirely. When accessing
+    configuration from YAML, please use the new `Node` classes exposed in the
+    `buildstream` package. See the documentation for how to use it.
+
+    This change has also removed the need of a YAML cache as it proved to no
+    longer be of benefit.
+
+  o There is a new sandbox API for command batching. It is used for build,
+    script, and compose elements.
+
+  o Source plugins may now request access access to previous during track and
+    fetch by setting `BST_REQUIRES_PREVIOUS_SOURCES_TRACK` and/or
+    `BST_REQUIRES_PREVIOUS_SOURCES_FETCH` attributes.
+
+
+Configuration Format
+--------------------
+
+  o Elements may now specify 'build-depends' and 'runtime-depends' fields
+    to avoid having to specify the dependency type for every entry in
+    'depends'.
+
+  o Junction elements may now specify another junction as their target, using
+    the `target` configuration option.
+
+  o Elements may now specify cross-junction dependencies as simple strings
+    using the format '{junction-name}:{element-name}'.
+
+
+Core
+----
+
+  o BREAKING CHANGE: Reverted the default behaviour of junctions. Subproject
+    elements will no longer interact with the parent project's remote (by
+    default). To enable this behaviour, a new "cache-junction-elements" boolean
+    can be optionally declared as part of your junction element's configuration.
+    Additionally, a new "ignore-junction-remotes" option has also been
+    introduced. This allows you to completely ignore subproject remotes when
+    using the parent project.
+
+  o BREAKING CHANGE: Symlinks are no longer resolved during staging and absolute
+    symlinks are now preserved instead of being converted to relative symlinks.
+
+  o BREAKING CHANGE: Overlap whitelists now require absolute paths. This allows
+    use of variables such as %{prefix} and matches the documentation.
+
+  o BREAKING CHANGE: Default strip-commands have been removed as they are too
+    specific. Recommendation if you are building in Linux is to use the
+    ones being used in freedesktop-sdk project, for example
+
+  o All elements should now be suffixed with `.bst`.
+    Attempting to use an element that does not have the `.bst` extension,
+    will result in a warning.
+
+  o Failed builds are included in the cache as well.
+    `bst artifact checkout` will provide anything in `%{install-root}`.
+    A build including cached fails will cause any dependant elements
+    to not be scheduled and fail during artifact assembly,
+    and display the retry prompt during an interactive session.
+
+  o Added Basic support for the BuildBox sandbox. The sand box will only be
+    used if the environment variable BST_FORCE_SANDBOX is set to `buildbox`.
+    This is the first step in transitioning to only using BuildBox for local
+    sandboxing.
+
+
+Artifacts
+---------
+
+  o BREAKING CHANGE: Artifact as a Proto. The caching of BuildStream artifacts
+    has changed from a reference based impelementation. Existing artifacts and
+    artifact servers are not compatible, as such remote artifact servers need to
+    be updated to the latest version which will then allow them to be repopulated
+    with new artifacts.
+
+  o BREAKING CHANGE: The project name of dependencies have been included when
+    calculating the cache key. This was required to keep inline with the
+    artifact proto. Additionally, for strict mode, the name of dependencies have
+    also been included in the calculation of the cache key. This is again to
+    keep inline with the proto, but also to maintain symmetry in the behaviour
+    between the strict and non-strict modes.
+
+  o Due to the element `build tree` being cached in the respective artifact their
+    size in some cases has significantly increased. In *most* cases the build trees
+    are not utilised when building targets, as such by default bst 'pull' & 'build'
+    will not fetch build trees from remotes. This behaviour can be overridden with
+    the cli main option '--pull-buildtrees', or the user configuration cache group
+    option 'pull-buildtrees = True'. The override will also add the build tree to
+    already cached artifacts. When attempting to populate an artifactcache server
+    with cached artifacts, only 'complete' elements can be pushed. If the element
+    is expected to have a populated build tree then it must be cached before pushing.
+
+  o Artifacts can now be cached explicitly with an empty `build tree` when built.
+    Element types without a build-root were already cached with an empty build tree
+    directory, this can now be extended to all or successful artifacts to save on cache
+    overheads. The cli main option '--cache-buildtrees' or the user configuration cache
+    group option 'cache-buildtrees' can be set as 'always', 'auto' or 'never', with
+    the default being 'auto'. Note, as the cache-key for the artifact is independent of
+    the cached build tree input it will remain unaltered, however the availbility of the
+    build tree content may differ.
+
+
+Workspaces
+----------
+
+  o Due to enabling the use of relative workspaces, "Legacy" workspaces
+    may need to be closed and remade before the changes will affect them.
+    Downgrading after using this feature may result in workspaces
+    not functioning correctly
+
+  o Opening a workspace now creates a .bstproject.yaml file that allows BuildStream
+    commands to be run from a workspace that is not inside a project.
+
+  o Specifying an element is now optional for most commands when BuildStream is run
+    from inside a workspace. See CLI reference for more details.
+
+  o Added Documentation on how to create out of source builds. This includes the
+    new the `conf-root` variable to make the process easier. And there has been
+    a bug fix to workspaces so they can be build in workspaces too.
+
+
+Miscellaneous
+-------------
+
+  o Generate Docker images from built artifacts using
+    `contrib/bst-docker-import` script.
+
+
+=================
+buildstream 1.1.5
+=================
+
+  o Added a `--tar` option to `bst checkout` which allows a tarball to be
+    created from the artifact contents.
+
+  o Fetching and tracking will consult mirrors defined in project config,
+    and the preferred mirror to fetch from can be defined in the command
+    line or user config.
+
+  o Added new `remote` source plugin for downloading file blobs
+
+  o Added support for the new include '(@)' directive in project.conf and .bst files
+
+
+=================
+buildstream 1.1.4
+=================
+
+  o `bst workspace` commands and `bst track` will substitute their
+    source elements when performing those operations, e.g. performing
+    `bst track` on a filter element will track the sources on the
+    element that it depends on (if it has sources).
+
+  o Added new simple `make` element
+
+  o Switch to Remote Execution CAS-based artifact cache on all platforms.
+
+    Artifact servers need to be migrated.
+
+  o BuildStream now requires python version >= 3.5
+
+  o BuildStream will now automatically clean up old artifacts when it
+    runs out of space. The exact behavior is configurable in the user's
+    buildstream.conf.
+
+
+=================
+buildstream 1.1.3
+=================
+
+  o Added new `bst init` command to initialize a new project.
+
+  o Cross junction tracking is now disabled by default for projects
+    which can support this by using project.refs ref-storage
+
+    New options have been added to explicitly enable cross-junction
+    tracking.
+
+  o Failed jobs are now summarised at the end of a build.
+
+    Use `--verbose` and `--no-verbose` to adjust the amount of detail given.
+
+  o BuildElements' `configure-commands` are only run once for
+    workspaces now, which allows for incremental builds.
+
+    Appropriate API for plugins is also exposed through
+    `Element.prepare`.
+
+  o The `cmake` plugin now supports building with ninja with the
+    newly added `generator` configuration option.
+
+  o `bst workspace close` and `bst workspace reset` now support multiple
+    elements. All elements can be specified using `--all`.
+
+  o The elements whose cache keys had to be determined during the build
+    are summarised at the end of the build.
+
+  o Fixed versioning introspection to be dynamic, many users use
+    a developer install mode so they can update with git, now the
+    version information is always up to date in logs.
+
+    This causes a minor API break: The --version output now only
+    outputs the version.
+
+
+=================
+buildstream 1.1.2
+=================
+
+  o New ref-storage option allows one to store source refs, such
+    as git shas, in one central project.refs file instead of inline
+    with the source declarations.
+
+  o Deprecated `--track-save` optionality in `bst build`, this
+    does not make sense to support now that we have project.refs.
+
+  o Added the `sandbox` configuration option which can be used in
+    `project.conf` and elements, to control the user ID and group ID
+    used in build sandboxes.
+
+  o Added new `deb` source implementation, for staging of downloaded
+    deb package files.
+
+
+=================
+buildstream 1.1.1
+=================
+
+  o New project configuration controlling how the sandbox behaves
+    when `bst shell` is used; allowing projects to provide a more
+    functional shell environment.
+
+  o The `bst shell` command now has a `--mount` option allowing
+    users to mount files and directories into the sandbox for
+    testing purposes.
+
+  o Log lines are now configurable with the new "message-format"
+    user configuration, allowing one to express optional fields
+    such as microsecond precision and wallclock time.
+
+  o Newly added filter element
+
+  o Git source plugin now allows disabling of submodule checkouts
+
+  o In the same way we allow overriding element configurations
+    by their 'kind' in project.conf, we now support the same
+    for source plugin configurations.
+
+  o Tar and zip sources now automatically recall an `etag`
+    from the http headers, optimizing tracking of tarballs
+    significantly (issue #62)
+
+
+=================
+buildstream 1.1.0
+=================
+
+  o Multiple artifact caches are now supported in project and
+    user configuration with a priority order (issue #85)
+  o Add junction support for subprojects
+  o Changes towards incremental builds in workspaces
+  o `bst shell --build` now creates true build sandbox
+  o Many bug fixes
+
+
+=================
+buildstream 1.0.0
+=================
+First stable release of BuildStream
+
+BuildStream 1.0.0 is all about API stability - for the past months we
+have been reviewing our various API surfaces, implementing strategies
+for revisioning of our interfaces and cleaning up. Long term stability
+is very important for build reproducibility over time, and this release
+is the first promise we are making on any API surfaces.
+
+Stable API surfaces include:
+  o The command line interface
+  o The YAML user configuration file format
+  o The YAML project `.bst` file format
+  o The core Python module imported by external plugins

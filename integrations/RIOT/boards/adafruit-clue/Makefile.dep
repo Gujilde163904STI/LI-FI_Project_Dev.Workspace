@@ -1,0 +1,15 @@
+ifneq (,$(filter saul_default,$(USEMODULE)))
+  USEMODULE += saul_gpio
+  USEMODULE += apds9960
+  USEMODULE += bmp280_i2c
+  USEMODULE += lis3mdl
+  USEMODULE += sht3x
+endif
+
+ifneq (,$(filter disp_dev,$(USEMODULE)))
+  USEMODULE += ili9341
+endif
+
+USEMODULE += boards_common_adafruit-nrf52-bootloader
+
+include $(RIOTBOARD)/common/nrf52/Makefile.dep

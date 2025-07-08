@@ -1,0 +1,31 @@
+.TH "BST-ARTIFACT-SERVER" "1" "2020-10-14" "" "bst-artifact-server Manual"
+.SH NAME
+bst-artifact-server \- CAS Artifact Server
+.SH SYNOPSIS
+.B bst-artifact-server
+[OPTIONS] REPO
+.SH OPTIONS
+.TP
+\fB\-p,\fP \-\-port INTEGER
+Port number  [required]
+.TP
+\fB\-\-server\-key\fP TEXT
+Private server key for TLS (PEM-encoded)
+.TP
+\fB\-\-server\-cert\fP TEXT
+Public server certificate for TLS (PEM-encoded)
+.TP
+\fB\-\-client\-certs\fP TEXT
+Public client certificates for TLS (PEM-encoded)
+.TP
+\fB\-\-enable\-push\fP
+Allow clients to upload blobs and update artifact cache
+.TP
+\fB\-\-quota\fP INTEGER
+Maximum disk usage in bytes  [default: 10000000000.0]
+.TP
+\fB\-\-index\-only\fP
+Only provide the BuildStream artifact and source services ("index"), not the CAS ("storage")
+.TP
+\fB\-\-log\-level\fP [warning|info|trace]
+The log level to launch with

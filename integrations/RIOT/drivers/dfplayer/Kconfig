@@ -1,0 +1,15 @@
+menu "DFPLAYER: MP3 Player"
+    depends on USEMODULE_DFPLAYER
+
+config DFPLAYER_NO_STRERROR
+    bool
+    prompt "Avoid using strerror in shell command" if !(HAS_ARCH_AVR8 || HAS_ARCH_MSP430)
+
+    depends on USEMODULE_SHELL_CMDS
+    # no strerror() on AVR and MSP430
+    default y if (HAS_ARCH_AVR8 || HAS_ARCH_MSP430)
+    help
+        Say y to print error codes as numbers when using the shell, instead of the corresponding
+        standard error string.
+
+endmenu # DFPLAYER: MP3 Player

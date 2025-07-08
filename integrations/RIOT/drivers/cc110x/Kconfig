@@ -1,0 +1,19 @@
+# Copyright (c) 2020 Freie Universitaet Berlin
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+menu "CC110X driver"
+    depends on USEMODULE_CC110X
+
+config CC110X_DEFAULT_CHANNEL
+    int "Configure default channel"
+    range 0 7
+    default 0
+    help
+        Set the default channel for transmission from the allowed
+        maximum of 8 (0-7) Channels.
+        Default channel is 0.
+
+endmenu # CC110X driver

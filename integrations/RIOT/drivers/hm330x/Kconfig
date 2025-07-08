@@ -1,0 +1,19 @@
+# Copyright (c) 2021 Inria
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+menu "HM330X driver"
+    depends on USEMODULE_HM330X
+
+config HM330X_INDOOR_ENVIRONMENT
+    bool "Indoor environment calibration"
+    default 500
+    help
+        The HM330X sensor outputs two set of PM* values, one calibrated for indoor
+        environment and another one for atmospheric environment, set this value
+        according to your deployment.
+
+endmenu # HM330X driver

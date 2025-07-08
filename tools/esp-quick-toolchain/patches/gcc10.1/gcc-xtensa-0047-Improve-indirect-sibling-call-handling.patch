@@ -1,0 +1,166 @@
+From d8f7137070d92c297e1deecd6dabdb471ddaa9ab Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Thu, 18 Aug 2022 01:11:32 +0900
+Subject: [PATCH] xtensa: Improve indirect sibling call handling
+
+No longer needs the dedicated hard register (A11) for the address of the
+call and the split patterns for fixups, due to the introduction of appropriate
+register class and constraint.
+
+(Note: "ISC_REGS" contains a hard register A8 used as a "static chain"
+ pointer for nested functions, but no problem;  Pointer to nested function
+ actually points to "trampoline", and trampoline itself doesn't receive
+ "static chain" pointer to its parent's stack frame from the caller.)
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.h
+	(enum reg_class, REG_CLASS_NAMES, REG_CLASS_CONTENTS):
+	Add new register class "ISC_REGS".
+	* config/xtensa/constraints.md (c): Add new register constraint.
+	* config/xtensa/xtensa.md (define_constants): Remove "A11_REG".
+	(sibcall_internal, sibcall_value_internal):
+	Change to use the new register constraint, and remove two split
+	patterns for fixups that are no longer needed.
+
+gcc/testsuite/ChangeLog:
+
+	* gcc.target/xtensa/sibcalls.c: Add a new test function to ensure
+	that registers for arguments (occupy from A2 to A7) and for indirect
+	sibcall (should be assigned to A8) neither conflict nor spill out.
+---
+ gcc/config/xtensa/constraints.md           |  5 ++++
+ gcc/config/xtensa/xtensa.h                 |  3 +++
+ gcc/config/xtensa/xtensa.md                | 29 ++--------------------
+ gcc/testsuite/gcc.target/xtensa/sibcalls.c |  5 ++++
+ 4 files changed, 15 insertions(+), 27 deletions(-)
+
+diff --git a/gcc/config/xtensa/constraints.md b/gcc/config/xtensa/constraints.md
+index 13b3daafc..f590dcf3a 100644
+--- a/gcc/config/xtensa/constraints.md
++++ b/gcc/config/xtensa/constraints.md
+@@ -27,6 +27,11 @@
+  "Boolean registers @code{b0}-@code{b15}; only available if the Xtensa
+   Boolean Option is configured.")
+ 
++(define_register_constraint "c" "TARGET_WINDOWED_ABI ? NO_REGS : ISC_REGS"
++ "@internal
++  General-purpose AR registers for indirect sibling calls, @code{a2}-
++  @code{a8}.")
++
+ (define_register_constraint "d" "TARGET_DENSITY ? AR_REGS: NO_REGS"
+  "@internal
+   All AR registers, including sp, but only if the Xtensa Code Density
+diff --git a/gcc/config/xtensa/xtensa.h b/gcc/config/xtensa/xtensa.h
+index 3e9cbc943..ee2238606 100644
+--- a/gcc/config/xtensa/xtensa.h
++++ b/gcc/config/xtensa/xtensa.h
+@@ -372,6 +372,7 @@ enum reg_class
+   FP_REGS,			/* floating point registers */
+   ACC_REG,			/* MAC16 accumulator */
+   SP_REG,			/* sp register (aka a1) */
++  ISC_REGS,			/* registers for indirect sibling calls */
+   RL_REGS,			/* preferred reload regs (not sp or fp) */
+   GR_REGS,			/* integer registers except sp */
+   AR_REGS,			/* all integer registers */
+@@ -393,6 +394,7 @@ enum reg_class
+   "FP_REGS",								\
+   "ACC_REG",								\
+   "SP_REG",								\
++  "ISC_REGS",								\
+   "RL_REGS",								\
+   "GR_REGS",								\
+   "AR_REGS",								\
+@@ -409,6 +411,7 @@ enum reg_class
+   { 0xfff80000, 0x00000007 }, /* floating-point registers */ \
+   { 0x00000000, 0x00000008 }, /* MAC16 accumulator */ \
+   { 0x00000002, 0x00000000 }, /* stack pointer register */ \
++  { 0x000001fc, 0x00000000 }, /* registers for indirect sibling calls */ \
+   { 0x0000fffd, 0x00000000 }, /* preferred reload registers */ \
+   { 0x0000fffd, 0x00000000 }, /* general-purpose registers */ \
+   { 0x0003ffff, 0x00000000 }, /* integer registers */ \
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 9eeb73915..0c05c16b1 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -25,7 +25,6 @@
+   (A7_REG		7)
+   (A8_REG		8)
+   (A9_REG		9)
+-  (A11_REG		11)
+ 
+   (UNSPEC_NOP		2)
+   (UNSPEC_PLT		3)
+@@ -2284,7 +2283,7 @@
+ })
+ 
+ (define_insn "sibcall_internal"
+-  [(call (mem:SI (match_operand:SI 0 "call_insn_operand" "nir"))
++  [(call (mem:SI (match_operand:SI 0 "call_insn_operand" "nic"))
+ 	 (match_operand 1 "" "i"))]
+   "!TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)"
+ {
+@@ -2294,17 +2293,6 @@
+    (set_attr "mode"	"none")
+    (set_attr "length"	"3")])
+ 
+-(define_split
+-  [(call (mem:SI (match_operand:SI 0 "register_operand"))
+-	 (match_operand 1 ""))]
+-  "reload_completed
+-   && !TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)
+-   && ! call_used_or_fixed_reg_p (REGNO (operands[0]))"
+-  [(set (reg:SI A11_REG)
+-	(match_dup 0))
+-   (call (mem:SI (reg:SI A11_REG))
+-	 (match_dup 1))])
+-
+ (define_expand "sibcall_value"
+   [(set (match_operand 0 "register_operand" "")
+ 	(call (match_operand 1 "memory_operand" "")
+@@ -2316,7 +2304,7 @@
+ 
+ (define_insn "sibcall_value_internal"
+   [(set (match_operand 0 "register_operand" "=a")
+-	(call (mem:SI (match_operand:SI 1 "call_insn_operand" "nir"))
++	(call (mem:SI (match_operand:SI 1 "call_insn_operand" "nic"))
+ 	      (match_operand 2 "" "i")))]
+   "!TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)"
+ {
+@@ -2326,19 +2314,6 @@
+    (set_attr "mode"	"none")
+    (set_attr "length"	"3")])
+ 
+-(define_split
+-  [(set (match_operand 0 "register_operand")
+-	(call (mem:SI (match_operand:SI 1 "register_operand"))
+-	      (match_operand 2 "")))]
+-  "reload_completed
+-   && !TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)
+-   && ! call_used_or_fixed_reg_p (REGNO (operands[1]))"
+-  [(set (reg:SI A11_REG)
+-	(match_dup 1))
+-   (set (match_dup 0)
+-	(call (mem:SI (reg:SI A11_REG))
+-	      (match_dup 2)))])
+-
+ (define_insn "entry"
+   [(set (reg:SI A1_REG)
+ 	(unspec_volatile:SI [(match_operand:SI 0 "const_int_operand" "i")]
+diff --git a/gcc/testsuite/gcc.target/xtensa/sibcalls.c b/gcc/testsuite/gcc.target/xtensa/sibcalls.c
+index d2b3fccf1..dff6750e2 100644
+--- a/gcc/testsuite/gcc.target/xtensa/sibcalls.c
++++ b/gcc/testsuite/gcc.target/xtensa/sibcalls.c
+@@ -17,4 +17,9 @@ int test_2(int (*a)(void)) {
+     return a();
+ }
+ 
++_Complex double test_3(_Complex double a, _Complex double (*b)(_Complex double, double)) {
++  bar(-1);
++  return b(a, 3.141592653589795);
++}
++
+ /* { dg-final { scan-assembler-not "ret" } } */
+-- 
+2.20.1
+

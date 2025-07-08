@@ -1,0 +1,11 @@
+out
+build
+dns_sd.node
+demangle.node
+.lock-wscript
+node_modules
+*.sln
+*.vcxproj*
+.pulse2.properties
+Release
+Debug

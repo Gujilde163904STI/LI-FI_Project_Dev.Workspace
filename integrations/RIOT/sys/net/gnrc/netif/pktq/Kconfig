@@ -1,0 +1,15 @@
+menu "packet queues for GNRC network interface"
+    depends on USEMODULE_GNRC_NETIF_PKTQ
+
+config GNRC_NETIF_PKTQ_POOL_SIZE
+    int "Packet queue pool size for all network interfaces"
+    default 16
+
+config GNRC_NETIF_PKTQ_TIMER_US
+    int "Time in microseconds for when to try to send a queued packet at the latest"
+    default 5000
+    help
+        Set to -1 to deactivate dequeuing by timer. For this it has to be ensured
+        that none of the notifications by the driver are missed!
+
+endmenu # packet queues for GNRC network interface

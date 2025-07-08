@@ -1,0 +1,39 @@
+From 7ef080074a2c422e20a8e4dae50f6f002c6c2928 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Mon, 30 Jan 2023 18:37:55 +0900
+Subject: [PATCH] xtensa: Enforce return address saving when -Og is
+ specified
+
+Leaf function often omits saving its return address to the stack slot,
+and this feature often makes debugging very confusing, especially for
+stack dump analysis.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.c (xtensa_call_save_reg): Change to return
+	true if register A0 (return address register) when -Og is specified.
+---
+ gcc/config/xtensa/xtensa.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index db7ac3599..5c6ee7a8f 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -3258,8 +3258,11 @@ xtensa_call_save_reg (int regno)
+     return false;
+ 
+   if (regno == A0_REG)
+-    return crtl->profile || !crtl->is_leaf || crtl->calls_eh_return ||
+-      df_regs_ever_live_p (regno);
++    /* Ensure the return address to be saved to the stack slot in order
++       to assist stack dump analysis when -Og is specified.  */
++    return optimize_debug
++	   || crtl->profile || !crtl->is_leaf || crtl->calls_eh_return
++	   || df_regs_ever_live_p (regno);
+ 
+   if (crtl->calls_eh_return && IN_RANGE (regno, 2, 3))
+     return true;
+-- 
+2.30.2
+

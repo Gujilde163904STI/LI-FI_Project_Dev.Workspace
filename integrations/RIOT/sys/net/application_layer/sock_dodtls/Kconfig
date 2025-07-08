@@ -1,0 +1,19 @@
+# Copyright (C) 2021 Freie Universität Berlin
+#
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+menu "DNS over DTLS"
+    depends on USEMODULE_SOCK_DODTLS
+
+config SOCK_DODTLS_RETRIES
+    int "Number of DNS over DTLS query retries"
+    default 2
+
+config SOCK_DODTLS_TIMEOUT_MS
+    int "Timeout for DNS over DTLS queries in milliseconds"
+    default 1000
+
+endmenu # DNS over DTLS

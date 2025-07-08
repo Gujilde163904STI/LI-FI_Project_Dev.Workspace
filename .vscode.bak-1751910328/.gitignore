@@ -1,0 +1,21 @@
+# Workspace .gitignore additions to prevent .NET project detection
+*.csproj
+*.sln
+*.vbproj
+*.fsproj
+*.nupkg
+*.nuspec
+project.json
+packages.config
+Directory.Build.props
+Directory.Build.targets
+global.json
+nuget.config
+.dotnet/
+obj/
+bin/
+*.dll
+*.exe
+*.pdb
+*.manifest
+*.cache

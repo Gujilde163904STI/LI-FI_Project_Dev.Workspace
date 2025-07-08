@@ -1,0 +1,105 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: lifi-multitarget
+
+profiles:
+  - name: local-dev
+    build:
+      local:
+        push: false
+    deploy:
+      helm:
+        releases:
+          - name: lifi-dev
+            chartPath: helm/lifi
+    # Before running 'skaffold deploy', run: bash tools/dev/check_skaffold_service.sh
+  - name: gke-cloudbuild
+    build:
+      googleCloudBuild:
+        projectId: galahadd-lifi-dev
+        diskSizeGb: 100
+        machineType: E2_HIGHCPU_8
+        timeout: 20m
+      artifacts:
+        - image: gcr.io/galahadd-lifi-dev/lifi/esp8266
+        - image: gcr.io/galahadd-lifi-dev/lifi/rpi3
+        - image: gcr.io/galahadd-lifi-dev/lifi/rpi4
+    deploy:
+      helm:
+        releases:
+          - name: lifi-dev
+            chartPath: helm/lifi
+  - name: helm-deploy
+    deploy:
+      helm:
+        releases:
+          - name: lifi-dev
+            chartPath: helm/lifi
+
+modules:
+  - name: esp8266
+    build:
+      artifacts:
+        - image: gcr.io/galahadd-lifi-dev/lifi/esp8266
+          context: ESP8266/
+          docker:
+            dockerfile: Dockerfile
+    deploy:
+      helm:
+        releases:
+          - name: esp8266
+            chartPath: helm/esp8266
+    sync:
+      manual:
+        - src: "ESP8266/src/**"
+          dest: "/workspace/src/"
+          exclude:
+            - "**/node_modules/**"
+            - "**/.git/**"
+            - "**/__pycache__/**"
+    portForward:
+      - resourceType: pod
+        resourceName: esp8266
+        port: 23 # Serial passthrough (example)
+        localPort: 2323
+  - name: rpi3
+    build:
+      artifacts:
+        - image: gcr.io/galahadd-lifi-dev/lifi/rpi3
+          context: RPI3/
+          docker:
+            dockerfile: Dockerfile
+    deploy:
+      helm:
+        releases:
+          - name: rpi3
+            chartPath: helm/rpi3
+    sync:
+      manual:
+        - src: "RPI3/src/**"
+          dest: "/workspace/src/"
+          exclude:
+            - "**/node_modules/**"
+            - "**/.git/**"
+            - "**/__pycache__/**"
+  - name: rpi4
+    build:
+      artifacts:
+        - image: gcr.io/galahadd-lifi-dev/lifi/rpi4
+          context: RPI4/
+          docker:
+            dockerfile: Dockerfile
+    deploy:
+      helm:
+        releases:
+          - name: rpi4
+            chartPath: helm/rpi4
+    sync:
+      manual:
+        - src: "RPI4/src/**"
+          dest: "/workspace/src/"
+          exclude:
+            - "**/node_modules/**"
+            - "**/.git/**"
+            - "**/__pycache__/**" 

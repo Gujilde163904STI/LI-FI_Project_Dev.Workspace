@@ -1,0 +1,47 @@
+---
+title: LI-FI Receiver Wiring
+---
+flowchart TD
+    subgraph NodeMCU_ESP8266_RX [NodeMCU ESP8266 (RX)]
+        A0[A0 (Analog In)]
+        GND2[GND]
+    end
+    subgraph Photodiode
+        PD[Photodiode]
+        R1[10kΩ Resistor]
+    end
+    subgraph Raspberry_Pi
+        USB_RX[USB Port]
+    end
+    PD --|Cathode| GND2
+    PD --|Anode| R1 --|to| A0
+    USB_RX -- Serial --> NodeMCU_ESP8266_RX
+    note2(("Photodiode: Connect in series with 10kΩ resistor to A0.\nNodeMCU to Pi via USB for serial."))
+
+%%
+%% Reference Folders for Networking, Protocol, and Integration Development
+%%
+%% Networking & Protocol Development:
+%%   NETWORK.DEV@DNS-SEC
+%%   NETWORK.DEV@PROTOCOL
+%%   NETWORK.DEV@BINARY-LIBRARY
+%%   NETWORK.DEV@DATABASE
+%%   NETWORK.DEV@DTLS-TLS
+%%   NETWORK.DEV@FRAMEWORKS
+%% Raspberry Pi & OS:
+%%   RASPBERRY_PI.CORE
+%%   rpi-custom-build
+%%   CUSTOM-OS-BUILDS
+%%   rpi_manager_module
+%% Li-Fi & IoT:
+%%   LIFI-CORE
+%%   LIFI_FIRMWARE_BUILD
+%%   IOT
+%% Hardware & Tools:
+%%   HARDWARES
+%%   TOOLS
+%% ESP8266:
+%%   ESP8266.CORE
+%%   ESP8266-WIKI
+%%
+%% These folders are resource bases for integrated, standalone, and protocol-driven RPI3/RPI4 builds, WiFi, TCP/UDP, and Li-Fi development.

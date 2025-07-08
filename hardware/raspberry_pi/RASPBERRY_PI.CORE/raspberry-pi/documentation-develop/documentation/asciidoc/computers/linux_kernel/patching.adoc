@@ -1,0 +1,67 @@
+== Patch the kernel
+
+When building your custom kernel, you may wish to apply patches or collections of patches (patchsets) to the Linux kernel.
+
+Hardware makers sometimes provide patchsets as a temporary measure to support new hardware before the patches make it into the Linux kernel and the Raspberry Pi kernel. However, patchsets for other purposes exist, for instance to enable a fully pre-emptible kernel for real-time usage.
+
+=== Identify your kernel version
+
+To check the kernel version currently running on your device, run the following command:
+
+[source,console]
+----
+$ uname -r
+----
+
+Always check your version of the kernel before applying patches. In a kernel source directory, run the following command to see the kernel version:
+
+[source,console]
+----
+$ head Makefile -n 4
+----
+
+You should see output similar to the following:
+
+----
+# SPDX-License-Identifier: GPL-2.0
+VERSION = 6
+PATCHLEVEL = 1
+SUBLEVEL = 38
+----
+
+In this instance, the sources are for a 6.1.38 kernel.
+
+=== Apply patches
+
+The application of patches depends on the format used to distribute the patch.
+
+Developers distribute most patches as a single file. Use the `patch` utility to apply these patches. The following commands download, uncompress, and patch our example kernel version with real-time kernel patches:
+
+[source,console]
+----
+$ wget https://www.kernel.org/pub/linux/kernel/projects/rt/6.1/patch-6.1.38-rt13-rc1.patch.gz
+$ gunzip patch-6.1.38-rt13-rc1.patch.gz
+$ cat patch-6.1.38-rt13-rc1.patch | patch -p1
+----
+
+Some developers distribute patches in the *mailbox format*, a folder containing multiple patch files. Use Git to apply these patches.
+
+[NOTE]
+====
+Before using Git to apply mailbox patches, configure your local Git installation with a name and email:
+
+[source,console]
+----
+$ git config --global user.name "your name"
+$ git config --global user.email "your email"
+----
+====
+
+To apply the mailbox formatted patches with Git, run the following command:
+
+[source,console]
+----
+$ git am -3 /path/to/patches/*
+----
+
+Always follow the instructions provided by the patch distributor. For instance, some patchsets require patching against a specific commit.

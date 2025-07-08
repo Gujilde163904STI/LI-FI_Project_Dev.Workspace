@@ -1,0 +1,171 @@
+From 745e9839f8d18724f31015a1dcbde2c2c513d3c5 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Wed, 17 Aug 2022 14:54:16 +0900
+Subject: [PATCH] xtensa: Optimize stack pointer updates in function
+ pro/epilogue under certain conditions
+
+This patch enforces the use of "addmi" machine instruction instead of
+addition/subtraction with two source registers for adjusting the stack
+pointer, if the adjustment fits into a signed 16-bit and is also a multiple
+of 256.
+
+    /* example */
+    void test(void) {
+      char buffer[4096];
+      __asm__(""::"m"(buffer));
+    }
+
+    ;; before
+    test:
+	movi.n	a9, 1
+	slli	a9, a9, 12
+	sub	sp, sp, a9
+	movi.n	a9, 1
+	slli	a9, a9, 12
+	add.n	sp, sp, a9
+	addi	sp, sp, 0
+	ret.n
+
+    ;; after
+    test:
+	addmi	sp, sp, -0x1000
+	addmi	sp, sp, 0x1000
+	ret.n
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.c (xtensa_expand_prologue):
+	Use an "addmi" machine instruction for updating the stack pointer
+	rather than addition/subtraction via hard register A9, if the amount
+	of change satisfies the literal value conditions of that instruction
+	when the CALL0 ABI is used.
+	(xtensa_expand_epilogue): Ditto.
+	And also inhibit the stack pointer addition of constant zero.
+---
+ gcc/config/xtensa/xtensa.c | 79 ++++++++++++++++++++++++++------------
+ 1 file changed, 54 insertions(+), 25 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index b6f41a478..a93b15f4d 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -3186,7 +3186,6 @@ xtensa_expand_prologue (void)
+   rtx_insn *insn = NULL;
+   rtx note_rtx;
+ 
+-
+   total_size = compute_frame_size (get_frame_size ());
+ 
+   if (flag_stack_usage_info)
+@@ -3242,10 +3241,17 @@ xtensa_expand_prologue (void)
+ 	    }
+ 	  else
+ 	    {
+-	      rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
+-	      emit_move_insn (tmp_reg, GEN_INT (total_size));
+-	      insn = emit_insn (gen_subsi3 (stack_pointer_rtx,
+-					    stack_pointer_rtx, tmp_reg));
++	      if (xtensa_simm8x256 (-total_size))
++		insn = emit_insn (gen_addsi3 (stack_pointer_rtx,
++					      stack_pointer_rtx,
++					      GEN_INT (-total_size)));
++	      else
++		{
++		  rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
++		  emit_move_insn (tmp_reg, GEN_INT (total_size));
++		  insn = emit_insn (gen_subsi3 (stack_pointer_rtx,
++						stack_pointer_rtx, tmp_reg));
++		}
+ 	      RTX_FRAME_RELATED_P (insn) = 1;
+ 	      note_rtx = gen_rtx_SET (stack_pointer_rtx,
+ 				      plus_constant (Pmode, stack_pointer_rtx,
+@@ -3273,11 +3279,19 @@ xtensa_expand_prologue (void)
+       if (total_size > 1024
+ 	  || (!callee_save_size && total_size > 128))
+ 	{
+-	  rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
+-	  emit_move_insn (tmp_reg, GEN_INT (total_size -
+-					    callee_save_size));
+-	  insn = emit_insn (gen_subsi3 (stack_pointer_rtx,
+-					stack_pointer_rtx, tmp_reg));
++	  if (xtensa_simm8x256 (callee_save_size - total_size))
++	    insn = emit_insn (gen_addsi3 (stack_pointer_rtx,
++					  stack_pointer_rtx,
++					  GEN_INT (callee_save_size -
++						   total_size)));
++	  else
++	    {
++	      rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
++	      emit_move_insn (tmp_reg, GEN_INT (total_size -
++						callee_save_size));
++	      insn = emit_insn (gen_subsi3 (stack_pointer_rtx,
++					    stack_pointer_rtx, tmp_reg));
++	    }
+ 	  RTX_FRAME_RELATED_P (insn) = 1;
+ 	  note_rtx = gen_rtx_SET (stack_pointer_rtx,
+ 				  plus_constant (Pmode, stack_pointer_rtx,
+@@ -3351,12 +3365,21 @@ xtensa_expand_epilogue (bool sibcall_p)
+ 
+       if (cfun->machine->current_frame_size > (frame_pointer_needed ? 127 : 1024))
+ 	{
+-	  rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
+-	  emit_move_insn (tmp_reg, GEN_INT (cfun->machine->current_frame_size -
+-					    cfun->machine->callee_save_size));
+-	  emit_insn (gen_addsi3 (stack_pointer_rtx, frame_pointer_needed ?
+-				 hard_frame_pointer_rtx : stack_pointer_rtx,
+-				 tmp_reg));
++	  if (xtensa_simm8x256 (cfun->machine->current_frame_size -
++				cfun->machine->callee_save_size))
++	    emit_insn (gen_addsi3 (stack_pointer_rtx, frame_pointer_needed ?
++				   hard_frame_pointer_rtx : stack_pointer_rtx,
++				   GEN_INT (cfun->machine->current_frame_size -
++					    cfun->machine->callee_save_size)));
++	  else
++	    {
++	      rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
++	      emit_move_insn (tmp_reg, GEN_INT (cfun->machine->current_frame_size -
++						cfun->machine->callee_save_size));
++	      emit_insn (gen_addsi3 (stack_pointer_rtx, frame_pointer_needed ?
++				     hard_frame_pointer_rtx : stack_pointer_rtx,
++				     tmp_reg));
++	    }
+ 	  offset = cfun->machine->callee_save_size - UNITS_PER_WORD;
+ 	}
+       else
+@@ -3396,18 +3419,24 @@ xtensa_expand_epilogue (bool sibcall_p)
+ 		offset = cfun->machine->current_frame_size;
+ 	      else
+ 		offset = cfun->machine->callee_save_size;
+-
+-	      emit_insn (gen_addsi3 (stack_pointer_rtx,
+-				     stack_pointer_rtx,
+-				     GEN_INT (offset)));
++	      if (offset)
++		emit_insn (gen_addsi3 (stack_pointer_rtx,
++				       stack_pointer_rtx,
++				       GEN_INT (offset)));
+ 	    }
+ 	  else
+ 	    {
+-	      rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
+-	      emit_move_insn (tmp_reg,
+-			      GEN_INT (cfun->machine->current_frame_size));
+-	      emit_insn (gen_addsi3 (stack_pointer_rtx, stack_pointer_rtx,
+-				     tmp_reg));
++	      if (xtensa_simm8x256 (cfun->machine->current_frame_size))
++		emit_insn (gen_addsi3 (stack_pointer_rtx, stack_pointer_rtx,
++				       GEN_INT (cfun->machine->current_frame_size)));
++	      else
++		{
++		  rtx tmp_reg = gen_rtx_REG (Pmode, A9_REG);
++		  emit_move_insn (tmp_reg,
++				  GEN_INT (cfun->machine->current_frame_size));
++		  emit_insn (gen_addsi3 (stack_pointer_rtx, stack_pointer_rtx,
++					 tmp_reg));
++		}
+ 	    }
+ 	}
+ 
+-- 
+2.20.1
+

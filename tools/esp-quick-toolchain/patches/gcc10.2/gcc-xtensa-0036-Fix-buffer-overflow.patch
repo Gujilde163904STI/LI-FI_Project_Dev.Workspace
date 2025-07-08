@@ -1,0 +1,33 @@
+From 75c341c7de5c6f325d6ded7bd91d77793fe358d5 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Wed, 22 Jun 2022 04:04:45 +0900
+Subject: [PATCH 31/31] xtensa: Fix buffer overflow
+
+Fortify buffer overflow message reported.
+(see https://github.com/earlephilhower/esp-quick-toolchain/issues/36)
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (bswapsi2_internal):
+	Enlarge the buffer that is obviously smaller than the template
+	string given to sprintf().
+---
+ gcc/config/xtensa/xtensa.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 6f51a5357..81b016859 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -536,7 +536,7 @@
+ {
+   rtx_insn *prev_insn = prev_nonnote_nondebug_insn (insn);
+   const char *init = "ssai\t8\;";
+-  static char result[64];
++  static char result[128];
+   if (prev_insn && NONJUMP_INSN_P (prev_insn))
+     {
+       rtx x = PATTERN (prev_insn);
+-- 
+2.20.1
+

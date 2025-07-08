@@ -1,0 +1,13 @@
+*.deb
+
+# macOS Finder intermediates
+*.DS_Store
+
+*/__pycache__
+
+build
+*.egg-info
+debian/rpi-sb-provisioner.1
+debian/*.debhelper.log
+obj-*-gnu/
+.vscode/

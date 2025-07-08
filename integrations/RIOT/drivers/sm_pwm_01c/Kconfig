@@ -1,0 +1,33 @@
+
+menu "SM_PWM_01C driver"
+    depends on USEMODULE_SM_PWM_01C
+
+config SM_PWM_01C_WINDOW_TIME
+    int "Measuring Window length"
+    default 10000000
+    help
+        Length in time of the measuring window in microseconds,
+        recommended 5-30s.
+
+config SM_PWM_01C_SAMPLE_TIME
+    int "PWM occupancy sampling period"
+    default 100000
+    help
+        Time, expressed in microseconds, at witch LPO is occupancy is
+        sampled and converted into particle matter concentration
+
+if !USEMODULE_SM_PWM_01C_MA
+
+config SM_PWM_01C_EXP_WEIGHT
+    int "Weight of the exponential"
+    default 100000
+    help
+        Weight of the exponential average filter where:
+        SM_PWM_01C_EXP_WEIGHT = 1 / (1 - alpha).
+
+        Should be chosen wisely, it can be done my minimizing MSE
+        or other algorithms as Marquardt procedure.
+
+endif # USEMODULE_SM_PWM_01C_MA
+
+endmenu # SM_PWM_01C driver

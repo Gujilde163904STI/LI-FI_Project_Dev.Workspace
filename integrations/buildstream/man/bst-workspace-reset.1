@@ -1,0 +1,15 @@
+.TH "BST WORKSPACE RESET" "1" "2025-05-09" "2.5" "bst workspace reset Manual"
+.SH NAME
+bst\-workspace\-reset \- Reset a workspace to its original state
+.SH SYNOPSIS
+.B bst workspace reset
+[OPTIONS] [ELEMENTS]...
+.SH DESCRIPTION
+Reset a workspace to its original state
+.SH OPTIONS
+.TP
+\fB\-\-soft\fP
+Mark workspace to re-execute configuration steps (if any) on next build. Does not alter workspace contents.
+.TP
+\fB\-a,\fP \-\-all
+Reset all open workspaces

@@ -1,0 +1,7 @@
+BOARD_INSUFFICIENT_MEMORY := \
+    airfy-beacon \
+    calliope-mini \
+    microbit \
+    nrf51dongle \
+    yunjia-nrf51822 \
+    #

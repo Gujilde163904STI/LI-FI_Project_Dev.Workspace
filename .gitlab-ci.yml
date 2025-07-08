@@ -1,0 +1,27 @@
+stages:
+  - test
+  - deploy
+
+# Example: Python tests (customize as needed)
+test:python:
+  stage: test
+  image: python:3.11
+  before_script:
+    - python --version
+    - pip install -r requirements.txt || true
+  script:
+    - echo "No Python tests defined. Add your test commands here."
+
+# Example: Arduino build (customize as needed)
+test:arduino:
+  stage: test
+  image: arduino/arduino-cli:latest
+  script:
+    - echo "No Arduino build defined. Add your build commands here."
+
+# Deploy: Push to GitLab Pages or other (customize as needed)
+deploy:manual:
+  stage: deploy
+  script:
+    - echo "Manual deploy step. Customize as needed."
+  when: manual

@@ -1,0 +1,45 @@
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+# The script element allows staging elements into specific locations
+# via it's "location" dependency configuration
+#
+# For example, if you want to stage "foo-tools.bst" into the "/" of
+# the sandbox at buildtime, and the "foo-system.bst" element into
+# the %{build-root}, you can do so as follows:
+#
+# build-depends:
+# - foo-tools.bst
+# - filename: foo-system.bst
+#   config:
+#     location: "%{build-root}"
+#
+# Note: the default of the "location" parameter is "/", so it is not
+#       necessary to specify the location if you want to stage the
+#       element in "/"
+#
+
+# Common script element variables
+variables:
+  # Defines the directory commands will be run from.
+  cwd: /
+
+# Script element configuration
+config:
+
+  # Defines whether to run the sandbox with '/' read-only.
+  # It is recommended to set root as read-only wherever possible.
+  root-read-only: False
+
+  # List of commands to run in the sandbox.
+  commands: []
+

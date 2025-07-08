@@ -1,0 +1,176 @@
+# === OS-Specific ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+*.pyo
+*.pyd
+*.egg-info/
+.env
+.env.*
+
+# === PlatformIO ===
+.pio/
+.pioenvs/
+.build/
+.clang_complete
+.gcc-flags.json
+
+# === Arduino / ESP8266 / Embedded ===
+*.bin
+*.elf
+*.hex
+*.eep
+*.map
+*.lst
+*.o
+*.a
+*.lib
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.d
+*.bak
+
+# === Build Outputs ===
+build/
+BUILDS/
+target/
+dist/
+out/
+bin/
+obj/
+*.log
+*.tmp
+
+# === Archives ===
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# === Logs & Temp Files ===
+*.log
+*.swp
+*.swo
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+.#*
+\#*#
+logs/
+
+# === IDEs & Editors ===
+.vscode/
+.idea/
+*.code-workspace
+.project
+.classpath
+.settings/
+
+# === Environment variables ===
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.devcontainer/.env
+
+# === Package managers ===
+node_modules/
+*.lock
+
+# === Documentation generated files ===
+docs/_build/
+
+# === Git & LFS Support ===
+.gitattributes
+.gitignore.bak
+.git/
+
+# === Cursor / AI Tools ===
+.cursor/
+.history/
+.cursorindexingignore
+.cursorignore
+cursor.mdc
+*.mdc
+
+# === CI/CD, Debug, Setup Scripts (tracked separately if needed) ===
+test_gcloud_storage.py
+gcs_upload_errors.log
+gcs_upload.log
+setup_gcloud_auth.py
+sync_to_windows.sh
+update_lib_jars.sh
+
+# === Jupyter or Notebook Related ===
+*.ipynb_checkpoints/
+
+# === Conda ===
+*.conda
+*.lock
+conda-meta/
+*.json
+
+# === Temporary Testing or Simulation ===
+to_review/
+WOKWI_*/  # Wokwi simulation folders
+GALAHADD.PROJECTS-SIMULATION/
+node_modules
+archive/
+
+.fake
+
+# === New additions from the code block ===
+*.img
+*.iso
+*.dmg
+*.exe
+*.dll
+*.pyc
+*.pyo
+*.out
+*.o
+*.a
+*.so
+*.class
+*.jar
+*.war
+*.ear
+*.db
+*.sqlite
+*.sublime-workspace
+*.sublime-project

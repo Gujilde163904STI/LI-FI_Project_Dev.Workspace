@@ -1,0 +1,39 @@
+# Copyright (c) 2019 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+mainmenu "RIOT Configuration"
+
+# Load macro definitions
+rsource "kconfigs/Kconfig.consts"
+
+# For now, get used modules as macros from this file (see kconfig.mk)
+osource "$(KCONFIG_GENERATED_DEPENDENCIES)"
+
+# Load first the application configuration, as it may declare symbols in priority
+osource "$(APPDIR)/Kconfig"
+
+# Load board configurations, which might override CPU's
+orsource "$(BOARDDIR)/Kconfig"
+orsource "$(RIOTCPU)/$(CPU)/Kconfig"
+
+rsource "$(RIOTBOARD)/Kconfig"
+rsource "$(RIOTCPU)/Kconfig"
+
+rsource "core/Kconfig"
+rsource "drivers/Kconfig"
+rsource "sys/Kconfig"
+rsource "pkg/Kconfig"
+
+menu "External Modules"
+osource "$(KCONFIG_EXTERNAL_MODULE_CONFIGS)"
+endmenu # External Modules
+
+menu "External Packages"
+osource "$(KCONFIG_EXTERNAL_PKG_CONFIGS)"
+endmenu # External Packages
+
+comment "Some configuration options may not be here. Use CFLAGS instead."
+comment "Ideally, make a PR to add them to the Kconfig."

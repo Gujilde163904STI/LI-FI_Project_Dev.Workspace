@@ -1,0 +1,39 @@
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+[run]
+concurrency = multiprocessing
+plugins = Cython.Coverage
+
+omit =
+  # Omit some internals
+  */buildstream/_profile.py
+  */buildstream/__main__.py
+  */buildstream/_version.py
+  # Omit generated code
+  */buildstream/_protos/*
+  */.eggs/*
+  # Omit .tox directory
+  */.tox/*
+  # Omit a dynamically generated Cython file
+  */stringsource
+
+[report]
+show_missing = True
+precision = 2
+
+[paths]
+source =
+    src/buildstream/
+    buildstream/
+    */site-packages/buildstream/

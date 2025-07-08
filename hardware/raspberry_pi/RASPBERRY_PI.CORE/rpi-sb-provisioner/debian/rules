@@ -1,0 +1,59 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+
+# Enable all hardening options available in Debian
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# Allow network access during the build
+export DEB_BUILD_NETWORK = yes
+
+# Target to generate the man page
+debian/rpi-sb-provisioner.1:
+	# First create the content from the README
+	asciidoctor -b docbook --attribute leveloffset=+1 --out-file - README.adoc |\
+	  pandoc -f docbook -s -t man --shift-heading-level-by=-1 > debian/rpi-sb-provisioner.1.tmp
+	  
+	# Now add proper NAME section with awk and create final man page
+	awk 'BEGIN { print ".TH \"rpi-sb-provisioner\" \"1\" \"\" \"\" \"User Commands\""; \
+	             print ".SH NAME"; \
+	             print "rpi-sb-provisioner \\- Raspberry Pi Secure Boot Provisioner"; \
+	             first_section = 1; } \
+	     /^\.SH / { if (first_section) { first_section = 0; } else { print; } next; } \
+	     /^\.TH / { next; } \
+	     /^\.hy/ { next; } \
+	     { if (!first_section) print; }' debian/rpi-sb-provisioner.1.tmp > debian/rpi-sb-provisioner.1
+	     
+	# Clean up temporary file
+	rm -f debian/rpi-sb-provisioner.1.tmp
+
+%:
+	# Generate the man page before running dh
+	$(MAKE) -f debian/rules debian/rpi-sb-provisioner.1
+	dh $@
+
+# Configure the CMake project with network fetch enabled
+override_dh_auto_configure:
+	dh_auto_configure --sourcedirectory=provisioner-service -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DFETCHCONTENT_FULLY_DISCONNECTED=OFF \
+		-DFETCHCONTENT_QUIET=OFF
+
+# Build the CMake project
+override_dh_auto_build:
+	dh_auto_build --sourcedirectory=provisioner-service
+
+# Install the CMake project but exclude drogon tools
+override_dh_auto_install:
+	dh_auto_install --sourcedirectory=provisioner-service
+
+# Enable and start the UI service by default
+override_dh_installsystemd:
+	dh_installsystemd --restart-after-upgrade --name=rpi-provisioner-ui
+	dh_installsystemd --name=rpi-sb-provisioner@
+	dh_installsystemd --name=rpi-fde-provisioner@
+	dh_installsystemd --name=rpi-naked-provisioner@
+	dh_installsystemd --name=rpi-sb-bootstrap@
+	dh_installsystemd --name=rpi-sb-triage@
+	dh_installsystemd --no-enable --name=fetch-repo-package-list@
+	dh_installsystemd --no-enable --name=rpi-package-download@

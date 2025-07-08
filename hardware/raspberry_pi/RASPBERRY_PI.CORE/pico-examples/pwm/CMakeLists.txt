@@ -1,0 +1,7 @@
+if (TARGET hardware_pwm)
+    add_subdirectory_exclude_platforms(hello_pwm)
+    add_subdirectory_exclude_platforms(led_fade)
+    add_subdirectory_exclude_platforms(measure_duty_cycle)
+else()
+    message("Skipping PWM examples as hardware_pwm is unavailable on this platform")
+endif()

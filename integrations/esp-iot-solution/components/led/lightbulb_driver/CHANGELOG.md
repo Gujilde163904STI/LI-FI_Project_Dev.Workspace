@@ -1,0 +1,369 @@
+# ChangeLog
+
+## v1.8.3 - 2025-06-19
+
+### Bug Fix:
+
+- Fixed a compilation issue on IDF 6.0
+
+## v1.8.2 - 2025-04-17
+
+### Bug Fix:
+
+- Adjust the power calculation algorithm
+- Adjust the upper limit of pwm resolution to 12bit
+
+## v1.8.1 - 2025-04-17
+
+### Bug Fix:
+
+- Modify some compilation conditions
+
+## v1.8.0 - 2025-03-28
+
+### Improve:
+
+- Added new dimming driver SM2182E
+- Modify some kconfig names. Please refer to [sdkconfig.rename](./sdkconfig.rename)
+
+## v1.7.1 - 2025-03-05
+
+### Bug Fix:
+
+* Enable new IIC driver in v5.2.6 instead of v5.2.4
+* Fixed the color power calculation error
+
+## v1.7.0 - 2025-02-24
+
+### Improve:
+
+- Update the version of dependent cmake_utilities to *
+
+## v1.6.1 - 2025-02-19
+
+### Bug Fix:
+
+* Change led*num to uint16*t for ws2812
+
+## v1.6.0 - 2025-01-13
+
+### Enhancements:
+
+* Update to the latest version of I2C driver
+
+## v1.5.0 - 2024-12-25
+
+### Enhancements:
+
+* Remove linear dimming, default to enabling curve dimming for all. 
+
+## v1.4.0 - 2024-11-15
+
+### Enhancements:
+
+* Example adapted to ESP32-C5 chip
+
+## v1.3.3 - 2024-11-07
+
+### Bug Fixes:
+
+* Fixed the issue of low power output in CCT mode.
+
+## v1.3.2 - 2024-09-19
+
+### Enhancements:
+
+* Added CCT range check in precision mode
+
+## v1.3.1 - 2024-08-28
+
+### Bug Fixes:
+
+* Delete some conditional judgments and allow external input mix table
+
+## v1.3.0 - 2024-06-05
+
+### Enhancements:
+
+* Add precise color control capability.
+
+## v1.2.0 - 2024-05-22
+
+### Enhancements:
+
+* Add more printing to facilitate debugging
+* Refactor the KP18058 code to facilitate configuration by referring to the datasheet
+* The effect interface no longer supports actions with a period of 0ms
+
+## v1.1.5 - 2024-05-10
+
+### Improvement:
+
+* Add the configuration option to enable print very little log with ESP_LOGW.
+
+## v1.1.4 - 2024-05-07
+
+### Bug Fixes:
+
+* Reconfigure KP18052 parameters
+* When the IIC dimming gray scale data size is 0, skip sending the data and only send the address.
+
+## v1.1.3 - 2024-04-24
+
+### Bug Fixes:
+
+* Fix KP18058 chip current data range error
+
+## v1.1.2 - 2024-02-05
+
+### Bug Fixes:
+
+* fix(lightbulb): incorrect type.
+
+## v1.1.1 - 2024-02-04
+
+### Bug Fixes:
+
+* Add CCT data range check.
+* Fixed the issue of setting interrupt_forbidden to true but the effect is still interrupted.
+
+## v1.1.0 - 2024-01-30
+
+### Enhancements:
+
+* Added the conversion function of IIC current values to the enumeration values required by the driver.
+* Added driver layer parameter checking macro and allowed configuring the detail level of the output log through menuconfig.
+
+## v1.0.0 - 2024-01-16
+
+### Enhancements:
+
+* The driver provides LED bead combination options and supports different types of lightbulbs.
+* Added feature to count IIC driver transmission failures, aiding in hardware health monitoring.
+* Discontinued support for SM2135E driver, removing related files and code.
+* Updated BP5758D driver files to BP57X8D for consistency with SM2X35EGH.
+* The driver now supports setting white balance parameters for all channels. This means that you can adjust the white balance individually for each channel, allowing for precise control and customization of the lighting output.
+* Increased the power limit range from 100-300 to 100-500, facilitating power setting for RGBWW beads.
+* Introduced CCT output modes: standard mode (consistent with original scheme, mapping percentage to Kelvin values proportionally) and precise mode (setting individual percentages for each Kelvin value and predetermining current coefficients for each channel, scaling these coefficients proportionally during writing).
+* Some configuration changes: 
+  * Removed mode*mask from capability, now using led*beads to set the LED panel bead combination
+  * Renamed enable*mix*cct to enable*hardware*cct, fades*ms to fade*time*ms, and enable*fades to enable_fade
+  * Removed hardware*monitor*cb
+
+## v0.5.5 - 2024-01-15
+
+### Bug Fixes:
+
+* Update conditions for CI tests
+
+## v0.5.4 - 2024-01-12
+
+### Bug Fixes:
+
+* fix: stack overflow in task fade*tick*task on xtensa architecture
+
+## v0.5.3 - 2024-01-10
+
+### Bug Fixes:
+
+* fix: function declaration isn't a prototype [-Werror=strict-prototypes]
+
+## v0.5.2 - 2023-10-28
+
+### Enhancements:
+
+* Update LEDC low power code logic.
+* Modify the test cases and use the pytest tool for real hardware testing.
+
+## v0.5.1 - 2023-10-26
+
+### Bug Fixes:
+
+* Fix phase delay for pwm cw channel.
+
+## v0.5.0 - 2023-10-09
+
+### Enhancements:
+
+* Add a phase delay function to the PWM drive, and after enabling this function, all channel outputs will be in a complementary state.
+
+## v0.4.1 - 2023-8-30
+### Bug Fixes:
+
+* Fixed a thread safety issue.
+* Fixed fade direction being reversed.
+
+## v0.4.0 - 2023-7-10
+
+### Enhancements:
+
+* The PWM driver will update the timer resolution based on the incoming PWM frequency to accommodate a wider range of frequencies.
+* Remove the blocking check of the timer status in `lightbulb*basic*effect_start` to allow for subsequent calls within the callback.
+
+## v0.3.3 - 2023-7-04
+
+### Bug Fixes:
+
+* Fixed a compilation problem caused by a macro naming error.
+
+## v0.3.2 - 2023-6-02
+
+### Bug Fixes:
+
+* Fixed a thread safety issue
+
+## v0.3.1 - 2023-5-15
+
+### Enhancements:
+
+* Add an active flag to gptimer to reduce invalid error print in the IDF gptimer driver
+
+### Bug Fixes:
+
+* Fixed a wrong error on kelvin range
+
+## v0.3.0 - 2023-5-8
+
+### Enhancements:
+
+* Provide an option to use gptimer instead of esptimer to generate ticks for the fade process
+
+### Bug Fixes:
+
+* Fixed a wrong conversion on `percentage*convert*to_kelvin`
+
+## v0.2.2 - 2023-3-10
+
+### Bug Fixes:
+
+* Fixed some wrong data types
+* Provides configuration options for the iic task instead of hardcoding
+* Added null pointer judgment to effect timer
+
+## v0.2.1 - 2023-2-21
+
+### Bug Fixes:
+
+* Provide a workaround solution to temporarily solve the issue that LEDC hardware fade API calls are blocked
+  Please read some description of the macro PWM*ENABLE*HW_FADE in Kconfig
+* Effect interrupt*forbidden flag will allow to set when total*ms == 0
+
+## v0.2.0 - 2023-2-8
+
+### Enhancements:
+
+* Add interrupt_forbidden flag in effect
+* Provide Yxy color model conversion function
+
+### Bug Fixes:
+
+* Fix nvs structure naming error
+
+## v0.1.0 - 2023-1-11
+
+### Enhancements:
+
+* Support running on ESP32-C6
+
+### Bug Fixes:
+
+* Fix kelvin 2 percentage
+* Fix effect timer time
+* Modify the logic of low power mode entry and exit
+
+## v0.0.9 - 2022-12-28
+
+### Enhancements:
+
+* Provide an effect timer
+
+## v0.0.8 - 2022-12-22
+
+### Enhancements:
+
+* Provide new application layer capability: enable/disable auto-open
+
+## v0.0.7 - 2022-12-15
+
+### Enhancements:
+
+* Support running on ESP32-H2
+
+## v0.0.6 - 2022-12-05
+
+### Enhancements:
+
+* Support running on ESP32-C2
+* Provide PWM signal invert
+
+### Bug Fixes:
+
+* Fix LEDC output is disabled after the software reset
+
+## v0.0.5 - 2022-12-02
+
+### Enhancements:
+
+* Support compiling with IDF 5.0
+
+### Bug Fixes:
+
+* Fix some drivers being power halved in white light mode
+* Fix some configuration errors in the demo
+
+## v0.0.4 - 2022-11-10
+
+### Enhancements:
+
+* Support BP1658CJ IIC dimming chip
+
+## v0.0.3 - 2022-10-26
+
+### Enhancements:
+
+* Support KP18058 IIC dimming chip
+
+## v0.0.2 - 2022-10-26
+
+### Enhancements:
+
+* Support running on ESP32-S3
+
+### Bug Fixes:
+
+* Fix API `lightbulb_rgb2hsv` conversion error
+* Update some typo
+  * `basis` -> `basic`
+  * `mix` -> `min`
+
+## v0.0.1 - 2022-8-29
+
+### Enhancements:
+
+* Initial version
+
+* The following dimming solutions are supported
+  * PWM
+    * RGB + CW
+    * RGB + CCT/Brightness
+  * IIC dimming IC
+    * SM2135E
+    * SM2135EH
+    * SM2235EGH
+    * SM2335EGH
+    * BP5758/BP5758D/BP5768D
+  * Single Line
+    * WS2812
+
+* Support for power limit
+* Support for color calibration
+* Support for effect
+  * Blink
+  * Breathe
+* Support for application layer capability configuration
+  * Status memory
+  * Fade
+  * Mix CCT
+  * Low-power
+  * Light mode select
+  * Sync change

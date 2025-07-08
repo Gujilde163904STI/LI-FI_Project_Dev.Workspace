@@ -1,0 +1,29 @@
+From b552c4e601c7fdc4d341e29cc1ed6081d42b00d0 Mon Sep 17 00:00:00 2001
+From: Max Filippov <jcmvbkbc@gmail.com>
+Date: Tue, 7 Sep 2021 15:40:00 -0700
+Subject: [PATCH] gcc: xtensa: fix PR target/102115
+
+2021-09-07  Takayuki 'January June' Suwa  <jjsuwa_sys3175@yahoo.co.jp>
+gcc/
+	PR target/102115
+	* config/xtensa/xtensa.c (xtensa_emit_move_sequence): Add
+	'CONST_INT_P (src)' to the condition of the block that tries to
+	eliminate literal when loading integer contant.
+---
+ gcc/config/xtensa/xtensa.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index f4f8f1975c55a..8d6755144c120 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -1084,7 +1084,8 @@ xtensa_emit_move_sequence (rtx *operands, machine_mode mode)
+ 	{
+ 	  /* Try to emit MOVI + SLLI sequence, that is smaller
+ 	     than L32R + literal.  */
+-	  if (optimize_size && mode == SImode && register_operand (dst, mode))
++	  if (optimize_size && mode == SImode && CONST_INT_P (src)
++	      && register_operand (dst, mode))
+ 	    {
+ 	      HOST_WIDE_INT srcval = INTVAL (src);
+ 	      int shift = ctz_hwi (srcval);

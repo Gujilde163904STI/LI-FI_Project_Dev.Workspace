@@ -1,0 +1,19 @@
+## IDF Component Manager Manifest File
+dependencies:
+  ## Required IDF version
+  idf:
+    version: ">=5.0"
+  espressif/button:
+    version: ">=2.3.0"
+    override_path: "../../../../../components/button"
+  espressif/tinyusb:
+    version: ">=0.15.0~2"
+  espressif/knob:
+    version: ">=0.1.0"
+    override_path: "../../../../../components/knob"
+  espressif/esp32_s3_usb_otg:
+    version: "^1.5.1"
+    rules:
+      - if: "target in [esp32s3]"
+  lvgl/lvgl: #temp to workaround bsp issue
+    version: "9.2.0"

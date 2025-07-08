@@ -1,0 +1,53 @@
+.TH "BST SHELL" "1" "2025-05-09" "2.5" "bst shell Manual"
+.SH NAME
+bst\-shell \- Shell into an element's sandbox environment
+.SH SYNOPSIS
+.B bst shell
+[OPTIONS] [TARGET] [COMMAND]...
+.SH DESCRIPTION
+Run a command in the target element's sandbox environment
+.PP
+    When this command is executed from a workspace directory, the default
+    is to shell into the workspace element.
+.PP
+    This will stage a temporary sysroot for running the target
+    element, assuming it has already been built and all required
+    artifacts are in the local cache.
+.PP
+    Use '--' to separate a command from the options to bst,
+    otherwise bst may respond to them instead. e.g.
+.PP
+    
+        bst shell example.bst -- df -h
+.PP
+    Use the --build option to create a temporary sysroot for
+    building the element instead.
+.PP
+    If no COMMAND is specified, the default is to attempt
+    to run an interactive shell.
+    
+.SH OPTIONS
+.TP
+\fB\-b,\fP \-\-build
+Stage dependencies and sources to build
+.TP
+\fB\-\-mount\fP HOSTPATH PATH
+Mount a file or directory into the sandbox
+.TP
+\fB\-\-isolate\fP
+Create an isolated build sandbox
+.TP
+\fB\-t,\fP \-\-use\-buildtree
+Stage a buildtree. Will fail if a buildtree is not available. pull-buildtrees configuration is needed if the buildtree is not available locally.
+.TP
+\fB\-\-artifact\-remote\fP REMOTE
+A remote for uploading and downloading artifacts
+.TP
+\fB\-\-source\-remote\fP REMOTE
+A remote for uploading and downloading cached sources
+.TP
+\fB\-\-ignore\-project\-artifact\-remotes\fP
+Ignore remote artifact cache servers recommended by projects
+.TP
+\fB\-\-ignore\-project\-source\-remotes\fP
+Ignore remote source cache servers recommended by projects

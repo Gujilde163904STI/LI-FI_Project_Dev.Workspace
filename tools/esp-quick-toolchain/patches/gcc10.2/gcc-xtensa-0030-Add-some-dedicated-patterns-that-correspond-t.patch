@@ -1,0 +1,81 @@
+From 16878066a57f917814a8d6fe45f7f7d2eebdbbc0 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Tue, 14 Jun 2022 12:37:54 +0900
+Subject: [PATCH 25/31] xtensa: Add some dedicated patterns that correspond to
+ GIMPLE canonicalizations
+
+This patch offers better RTL representations against straightforward
+derivations from some tree optimizers' canonicalized forms.
+
+- rounding up to even, such as '(x + (x & 1))', is canonicalized to
+  '((x + 1) & -2)', but the former is one instruction less than the latter
+  in Xtensa ISA.
+- signed greater or equal to zero as logical value '((signed)x >= 0)',
+  is canonicalized to '((unsigned)(x ^ -1) >> 31)', but the equivalent
+  '(((signed)x >> 31) + 1)' is one instruction less.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (*round_up_to_even):
+	New insn-and-split pattern.
+	(*signed_ge_zero): Ditto.
+---
+ gcc/config/xtensa/xtensa.md | 45 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 2a11d1c86..3e8e2e76f 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -2709,3 +2709,48 @@
+   xtensa_expand_atomic (<CODE>, operands[0], operands[1], operands[2], true);
+   DONE;
+ })
++
++(define_insn_and_split "*round_up_to_even"
++  [(set (match_operand:SI 0 "register_operand" "=a")
++	(and:SI (plus:SI (match_operand:SI 1 "register_operand" "r")
++			 (const_int 1))
++		(const_int -2)))]
++  ""
++  "#"
++  "can_create_pseudo_p ()"
++  [(set (match_dup 2)
++	(and:SI (match_dup 1)
++		(const_int 1)))
++   (set (match_dup 0)
++	(plus:SI (match_dup 2)
++		 (match_dup 1)))]
++{
++  operands[2] = gen_reg_rtx (SImode);
++}
++  [(set_attr "type"	"arith")
++   (set_attr "mode"	"SI")
++   (set (attr "length")
++	(if_then_else (match_test "TARGET_DENSITY")
++		      (const_int 5)
++		      (const_int 6)))])
++
++(define_insn_and_split "*signed_ge_zero"
++  [(set (match_operand:SI 0 "register_operand" "=a")
++	(ge:SI (match_operand:SI 1 "register_operand" "r")
++	       (const_int 0)))]
++  ""
++  "#"
++  ""
++  [(set (match_dup 0)
++	(ashiftrt:SI (match_dup 1)
++		     (const_int 31)))
++   (set (match_dup 0)
++	(plus:SI (match_dup 0)
++		 (const_int 1)))]
++  ""
++  [(set_attr "type"	"arith")
++   (set_attr "mode"	"SI")
++   (set (attr "length")
++	(if_then_else (match_test "TARGET_DENSITY")
++		      (const_int 5)
++		      (const_int 6)))])
+-- 
+2.20.1
+

@@ -1,0 +1,24 @@
+# Copyright (c) 2021 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+choice ESP_FLASHPAGE_CAPACITY
+    bool "Flashpage capacity"
+    default ESP_FLASHPAGE_CAPACITY_512K
+    depends on USEMODULE_PERIPH_FLASHPAGE
+    config ESP_FLASHPAGE_CAPACITY_64K
+        bool "64 kByte"
+    config ESP_FLASHPAGE_CAPACITY_128K
+        bool "128 kByte"
+    config ESP_FLASHPAGE_CAPACITY_256K
+        bool "256 kByte"
+    config ESP_FLASHPAGE_CAPACITY_512K
+        bool "512 kByte"
+    config ESP_FLASHPAGE_CAPACITY_1M
+        bool "1 MByte"
+    config ESP_FLASHPAGE_CAPACITY_2M
+        bool "2 MByte"
+endchoice

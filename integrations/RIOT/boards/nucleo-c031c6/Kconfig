@@ -1,0 +1,17 @@
+# Copyright (C) 2024 BISSELL Homecare, Inc.
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+config BOARD
+    default "nucleo-c031c6" if BOARD_NUCLEO_C031C6
+
+config BOARD_NUCLEO_C031C6
+    bool
+    default y
+    select BOARD_COMMON_NUCLEO64
+    select CPU_MODEL_STM32C031C6
+
+source "$(RIOTBOARD)/common/nucleo64/Kconfig"

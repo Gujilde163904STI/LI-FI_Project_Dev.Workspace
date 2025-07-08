@@ -1,0 +1,40 @@
+.TH "BST ARTIFACT CHECKOUT" "1" "2025-05-09" "2.5" "bst artifact checkout Manual"
+.SH NAME
+bst\-artifact\-checkout \- Checkout contents of an artifact
+.SH SYNOPSIS
+.B bst artifact checkout
+[OPTIONS] [TARGET]
+.SH DESCRIPTION
+Checkout contents of an artifact
+.PP
+    When this command is executed from a workspace directory, the default
+    is to checkout the artifact of the workspace element.
+    
+.SH OPTIONS
+.TP
+\fB\-f,\fP \-\-force
+Allow files to be overwritten
+.TP
+\fB\-d,\fP \-\-deps [run|build|none|all]
+The dependencies to checkout  [default: run]
+.TP
+\fB\-\-integrate\fP / \-\-no\-integrate
+Whether to run integration commands
+.TP
+\fB\-\-hardlinks\fP
+Checkout hardlinks instead of copying if possible
+.TP
+\fB\-\-tar\fP LOCATION
+Create a tarball from the artifact contents instead of a file tree. If LOCATION is '-', the tarball will be dumped to the standard output.
+.TP
+\fB\-\-compression\fP [gz|xz|bz2]
+The compression option of the tarball created.
+.TP
+\fB\-\-directory\fP DIRECTORY
+The directory to checkout the artifact to
+.TP
+\fB\-\-artifact\-remote\fP REMOTE
+A remote for downloading artifacts
+.TP
+\fB\-\-ignore\-project\-artifact\-remotes\fP
+Ignore remote artifact cache servers recommended by projects

@@ -1,0 +1,14 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+if USEMODULE_AUTO_INIT
+
+config AUTO_INIT_ENABLE_DEBUG
+    bool "Print a debug message before a module is initialized"
+    default n
+
+endif # USEMODULE_AUTO_INIT

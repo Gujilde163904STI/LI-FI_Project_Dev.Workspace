@@ -1,0 +1,59 @@
+From 97538d16c11c17764aab63695ce3b5275fd50d56 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Wed, 18 Jan 2023 09:53:38 +0900
+Subject: [PATCH] xtensa: Optimize inversion of the MSB
+
+Such operation can be done either bitwise-XOR or addition with -2147483648,
+but the latter is one byte less if TARGET_DENSITY.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (xorsi3_internal):
+	Rename from the original of "xorsi3".
+	(xorsi3): New expansion pattern that emits addition rather than
+	bitwise-XOR when the second source is a constant of -2147483648
+	if TARGET_DENSITY.
+---
+ gcc/config/xtensa/xtensa.md | 26 +++++++++++++++++++++++++-
+ 1 file changed, 25 insertions(+), 1 deletion(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 4f1e8fd13..c6a299cc1 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -736,7 +736,31 @@
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"3")])
+ 
+-(define_insn "xorsi3"
++(define_expand "xorsi3"
++  [(set (match_operand:SI 0 "register_operand")
++	(xor:SI (match_operand:SI 1 "register_operand")
++		(match_operand:SI 2 "nonmemory_operand")))]
++  ""
++{
++  if (register_operand (operands[2], SImode))
++    emit_insn (gen_xorsi3_internal (operands[0], operands[1],
++				    operands[2]));
++  else
++    {
++      rtx (*gen_op)(rtx, rtx, rtx);
++      if (TARGET_DENSITY
++	  && CONST_INT_P (operands[2])
++	  && INTVAL (operands[2]) == -2147483648L)
++	gen_op = gen_addsi3;
++      else
++	gen_op = gen_xorsi3_internal;
++      emit_insn (gen_op (operands[0], operands[1],
++			 force_reg (SImode, operands[2])));
++    }
++  DONE;
++})
++
++(define_insn "xorsi3_internal"
+   [(set (match_operand:SI 0 "register_operand" "=a")
+ 	(xor:SI (match_operand:SI 1 "register_operand" "%r")
+ 		(match_operand:SI 2 "register_operand" "r")))]
+-- 
+2.30.2
+

@@ -1,0 +1,21 @@
+# Copyright (c) 2020 Freie Universitaet Berlin
+#               2020 HAW Hamburg
+#               2023 Gunar Schorcht
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+menu "MTD_SDMMC driver"
+    depends on USEMODULE_MTD_SDMMC
+
+config SDMMC_GENERIC_MTD_OFFSET
+    depends on USEMODULE_MTD_SDMMC_DEFAULT
+    int "Index of first auto-configured MTD SD/MMC device"
+    default 0
+    help
+        If you have other MTD devices defined, set this number so that
+        the auto-configured SD Memory Card(s) or MMCs/eMMCs from
+        mtd_sdmmc_default will come after them.
+
+endmenu # MTD_SDMMC driver

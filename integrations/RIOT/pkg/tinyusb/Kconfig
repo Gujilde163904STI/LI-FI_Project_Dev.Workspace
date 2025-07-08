@@ -1,0 +1,48 @@
+# Copyright (c) 2022 Gunar Schorcht
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+if USEPKG_TINYUSB
+
+menu "Device Classes"
+
+    rsource "Kconfig.cdc"
+    rsource "dfu/Kconfig.dfu"
+    rsource "dfu/Kconfig.dfu_rt"
+    rsource "Kconfig.hid"
+    rsource "Kconfig.msc"
+
+endmenu
+
+if USEMODULE_TINYUSB_DEVICE
+
+config TUSBD_EP0_SIZE
+    int "Device control endpoint (EP0) size [byte]"
+    default 64
+
+config TUSBD_FS_EP_SIZE
+    int "Device endpoint size in Full-Speed mode [byte]"
+    default 64
+
+config TUSBD_HS_EP_SIZE
+    int "Device endpoint size in High-Speed mode [byte]"
+    default 512
+
+config TUSBD_USE_CUSTOM_DESC
+    bool "Custom device descriptors"
+    depends on USEMODULE_TINYUSB_DEVICE
+    help
+        Enable this option to define custom descriptors for the selected
+        device classes. Otherwise, generic descriptors will be generated
+        according to the selected device classes.
+        At the moment, the generation of generic descriptors is only supported
+        for all combinations of up to two CDC interfaces, up to two generic
+        In/Out HID interfaces, up to one MSC interface and up to one vendor
+        interface. In all other cases, custom descriptors must be implemented
+        and handled.
+
+endif # USEMODULE_TINYUSB_DEVICE
+endif # USEPKG_TINYUSB

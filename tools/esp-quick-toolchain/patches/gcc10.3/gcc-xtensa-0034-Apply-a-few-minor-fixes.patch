@@ -1,0 +1,129 @@
+From dfaefed18297218392071039325baabac59d5c43 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sun, 19 Jun 2022 22:32:45 +0900
+Subject: [PATCH 29/31] xtensa: Apply a few minor fixes
+
+No functional changes.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.c (xtensa_emit_move_sequence):
+	Use can_create_pseudo_p(), instead of using individual
+	reload_in_progress and reload_completed.
+	(xtensa_expand_block_set_small_loop): Use xtensa_simm8x256(),
+	the existing predicate function.
+	(xtensa_is_insn_L32R_p, gen_int_relational, xtensa_emit_sibcall):
+	Use the standard RTX code predicate macros such as MEM_P,
+	SYMBOL_REF_P and/or CONST_INT_P.
+	* config/xtensa/xtensa.md: Avoid using numeric literals to determine
+	if callee-saved register, at the split patterns for indirect sibcall
+	fixups.
+---
+ gcc/config/xtensa/xtensa.c  | 16 ++++++++--------
+ gcc/config/xtensa/xtensa.md |  8 ++++----
+ 2 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 1d64e2c76..595c5f96f 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -743,7 +743,7 @@ gen_int_relational (enum rtx_code test_code, /* relational test (EQ, etc) */
+     }
+ 
+   /* See if we need to invert the result.  */
+-  invert = ((GET_CODE (cmp1) == CONST_INT)
++  invert = (CONST_INT_P (cmp1)
+ 	    ? p_info->invert_const
+ 	    : p_info->invert_reg);
+ 
+@@ -1200,7 +1200,7 @@ xtensa_emit_move_sequence (rtx *operands, machine_mode mode)
+ 	}
+     }
+ 
+-  if (!(reload_in_progress | reload_completed)
++  if (can_create_pseudo_p ()
+       && !xtensa_valid_move (mode, operands))
+     operands[1] = force_reg (mode, operands[1]);
+ 
+@@ -1603,7 +1603,7 @@ xtensa_expand_block_set_small_loop (rtx *operands)
+ 	 thus limited to only offset to the end address for ADDI/ADDMI
+ 	 instruction.  */
+       if (align == 4
+-	  && ! (bytes <= 127 || (bytes <= 32512 && bytes % 256 == 0)))
++	  && ! (bytes <= 127 || xtensa_simm8x256 (bytes)))
+ 	return 0;
+ 
+       /* If no 4-byte aligned, loop count should be treated as the
+@@ -2160,7 +2160,7 @@ xtensa_emit_sibcall (int callop, rtx *operands)
+   static char result[64];
+   rtx tgt = operands[callop];
+ 
+-  if (GET_CODE (tgt) == CONST_INT)
++  if (CONST_INT_P (tgt))
+     sprintf (result, "j.l\t" HOST_WIDE_INT_PRINT_HEX ", a9",
+ 	     INTVAL (tgt));
+   else if (register_operand (tgt, VOIDmode))
+@@ -4318,17 +4318,17 @@ xtensa_rtx_costs (rtx x, machine_mode mode, int outer_code,
+ }
+ 
+ static bool
+-xtensa_is_insn_L32R_p(const rtx_insn *insn)
++xtensa_is_insn_L32R_p (const rtx_insn *insn)
+ {
+   rtx x = PATTERN (insn);
+ 
+   if (GET_CODE (x) == SET)
+     {
+-      x = XEXP (x, 1);
+-      if (GET_CODE (x) == MEM)
++      x = SET_SRC (x);
++      if (MEM_P (x))
+ 	{
+ 	  x = XEXP (x, 0);
+-	  return (GET_CODE (x) == SYMBOL_REF || CONST_INT_P (x))
++	  return (SYMBOL_REF_P (x) || CONST_INT_P (x))
+ 		 && CONSTANT_POOL_ADDRESS_P (x);
+ 	}
+     }
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 124548dfe..6f51a5357 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -1251,14 +1251,14 @@
+   int i = 0;
+   rtx x = XEXP (operands[1], 0);
+   long l[2];
+-  if (GET_CODE (x) == SYMBOL_REF
++  if (SYMBOL_REF_P (x)
+       && CONSTANT_POOL_ADDRESS_P (x))
+     x = get_pool_constant (x);
+   else if (GET_CODE (x) == CONST)
+     {
+       x = XEXP (x, 0);
+       gcc_assert (GET_CODE (x) == PLUS
+-		  && GET_CODE (XEXP (x, 0)) == SYMBOL_REF
++		  && SYMBOL_REF_P (XEXP (x, 0))
+ 		  && CONSTANT_POOL_ADDRESS_P (XEXP (x, 0))
+ 		  && CONST_INT_P (XEXP (x, 1)));
+       i = INTVAL (XEXP (x, 1));
+@@ -2217,7 +2217,7 @@
+ 	 (match_operand 1 ""))]
+   "reload_completed
+    && !TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)
+-   && IN_RANGE (REGNO (operands[0]), 12, 15)"
++   && ! call_used_or_fixed_reg_p (REGNO (operands[0]))"
+   [(set (reg:SI A10_REG)
+ 	(match_dup 0))
+    (call (mem:SI (reg:SI A10_REG))
+@@ -2250,7 +2250,7 @@
+ 	      (match_operand 2 "")))]
+   "reload_completed
+    && !TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)
+-   && IN_RANGE (REGNO (operands[1]), 12, 15)"
++   && ! call_used_or_fixed_reg_p (REGNO (operands[1]))"
+   [(set (reg:SI A10_REG)
+ 	(match_dup 1))
+    (set (match_dup 0)
+-- 
+2.20.1
+

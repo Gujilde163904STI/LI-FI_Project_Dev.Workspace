@@ -1,0 +1,19 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+menu "LCD"
+    depends on USEMODULE_LCD
+
+config LCD_LE_MODE
+    bool "Enable little endian to big endian conversion"
+    help
+        Enable this configuration to convert little endian colors to big endian.
+        LCD device requires colors to be send in big endian RGB-565 format.
+        Enabling this option allows for little endian colors. Enabling this
+        however will slow down the driver as it cannot use DMA anymore.
+
+endmenu # LCD

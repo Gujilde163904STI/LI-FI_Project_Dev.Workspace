@@ -1,0 +1,882 @@
+#!/bin/bash
+
+set -o nounset
+set -o errexit
+
+for i in $*; do
+  if [[ $i == -* ]]; then
+    echo "rpi-update does not accept command line dash parameters."
+    echo "See: https://github.com/raspberrypi/rpi-update/blob/master/README.md"
+    exit 1
+  fi
+done
+
+# REPO_URI variable is here for backwards-compatibility
+REPO_URI=${REPO_URI:-"https://github.com/raspberrypi/rpi-firmware"}
+FIRMWARE_REPO_URI=${FIRMWARE_REPO_URI:-$REPO_URI}
+FIRMWARE_REPO_API_URI=${FIRMWARE_REPO_URI/github.com/api.github.com\/repos}
+FIRMWARE_REPO_CONTENT_URI=${FIRMWARE_REPO_URI/github.com/raw.githubusercontent.com}
+
+BOOTLOADER_REPO_URI=${BOOTLOADER_REPO_URI:-"https://github.com/raspberrypi/rpi-eeprom"}
+BOOTLOADER_REPO_API_URI=${BOOTLOADER_REPO_URI/github.com/api.github.com\/repos}
+BOOTLOADER_REPO_CONTENT_URI=${BOOTLOADER_REPO_URI/github.com/raw.githubusercontent.com}
+
+LINUX_REPO_URI=${LINUX_REPO_URI:-"https://github.com/raspberrypi/linux"}
+LINUX_REPO_API_URI=${LINUX_REPO_URI/github.com/api.github.com\/repos}
+
+UPDATE_SELF=${UPDATE_SELF:-1}
+UPDATE_REPO_URI=${UPDATE_REPO_URI:-"https://github.com/raspberrypi/rpi-update"}
+UPDATE_REPO_CONTENT_URI=${UPDATE_REPO_URI/github.com/raw.githubusercontent.com}
+UPDATE_URI="${UPDATE_REPO_CONTENT_URI}/master/rpi-update"
+
+if [[ "${BOOT_PATH:-"unset"}" == "unset" && "${ROOT_PATH:-"unset"}" != "unset" ]] ||
+[[ "${BOOT_PATH:-"unset"}" != "unset" && "${ROOT_PATH:-"unset"}" == "unset" ]]; then
+	echo " *** You need to specify both ROOT_PATH and BOOT_PATH, or neither"
+	exit 1
+fi
+
+if [[ "${BOOT_PATH:-"unset"}" == "unset" ]]; then
+	NOOBS_CHECK=${NOOBS_CHECK:-1}
+else
+	NOOBS_CHECK=${NOOBS_CHECK:-0}
+fi
+
+ROOT_PATH=${ROOT_PATH:-"/"}
+if command -v vcgencmd > /dev/null; then
+	CUR_FW_SUBDIR="/$(echo =$(vcgencmd get_config os_prefix) | cut -d'=' -f3)"
+else
+	CUR_FW_SUBDIR="/"
+fi
+FW_SUBDIR=${FW_SUBDIR:-${CUR_FW_SUBDIR}}
+if [[ "${FW_SUBDIR}" != "" ]]; then
+	if [[ "${FW_SUBDIR::1}" != "/" ]]; then
+		FW_SUBDIR="/$FW_SUBDIR"
+	fi
+	if [[ "${FW_SUBDIR: -1}" == "/" ]]; then
+		FW_SUBDIR=${FW_SUBDIR: : -1}
+	fi
+fi
+if mountpoint -q /boot/firmware ; then
+        BOOT_PATH=${BOOT_PATH:-"/boot/firmware"}
+else
+        BOOT_PATH=${BOOT_PATH:-"/boot"}
+fi
+WORK_PATH=${WORK_PATH:-"${ROOT_PATH}/root"}
+SKIP_KERNEL=${SKIP_KERNEL:-}
+SKIP_BOOTLOADER=${SKIP_BOOTLOADER:-0}
+SKIP_FIRMWARE=${SKIP_FIRMWARE:-0}
+SKIP_SDK=${SKIP_SDK:-0}
+SKIP_VCLIBS=${SKIP_VCLIBS:-0}
+SKIP_REPODELETE=${SKIP_REPODELETE:-0}
+SKIP_BACKUP=${SKIP_BACKUP:-0}
+SKIP_DOWNLOAD=${SKIP_DOWNLOAD:-0}
+SKIP_WARNING=${SKIP_WARNING:-0}
+SKIP_CHECK_PARTITION=${SKIP_CHECK_PARTITION:-0}
+WANT_SYMVERS=${WANT_SYMVERS:-0}
+PRUNE_MODULES=${PRUNE_MODULES:-0}
+RPI_UPDATE_UNSUPPORTED=${RPI_UPDATE_UNSUPPORTED:-0}
+JUST_CHECK=${JUST_CHECK:-0}
+RPI_REBOOT=${RPI_REBOOT:-0}
+CURL_OPTIONS=${CURL_OPTIONS:-""}
+GITHUB_API_TOKEN=${GITHUB_API_TOKEN:-""}
+# REDIRECTOR variable is here for backwards-compatibility
+REDIRECTOR=${REDIRECTOR:-"https://builds.raspberrypi.com/github/linux"}
+REDIRECTOR_URI=${REDIRECTOR_URI:-$REDIRECTOR}
+
+FW_REPO="${REPO_URI}.git"
+FW_REPOLOCAL=${FW_REPOLOCAL:-"${WORK_PATH}/.rpi-firmware"}
+FW_PATH="${BOOT_PATH}${FW_SUBDIR}"
+FW_MODPATH="${ROOT_PATH}/lib/modules"
+FW_REV_IN=${1:-""}
+FW_REVFILE="${FW_PATH}/.firmware_revision"
+SELFUPDATE_SCRIPT="${WORK_PATH}/.updateScript.sh"
+BOOTLOADER_REV_IN=${2:-""}
+BOOTLOADER_REVFILE="${FW_PATH}/.bootloader_revision"
+
+[ "${RPI_UPDATE_UNSUPPORTED}" -ne 0 ] && echo -e "You appear to be trying to update firmware on an incompatible distribution. To force update, run the following:\nsudo -E RPI_UPDATE_UNSUPPORTED=0 rpi-update" && exit 1
+
+if [[ "$SKIP_KERNEL" == "" ]]; then
+	SKIP_KERNEL=0
+	if command -v vcgencmd > /dev/null; then
+		KERNEL=$(vcgencmd get_config str | grep -E "^kernel=" | cut -d= -f2)
+		case $KERNEL in
+			"" | kernel8_rt.img | kernel8.img | kernel_2712.img) ;;
+			*) echo -e "You appear to be using a custom kernel file (kernel=$KERNEL in config.txt).\nSkipping installation of new kernel, as bundled dtb files may be incompatible with your kernel." && SKIP_KERNEL=1
+			sleep 1
+		esac
+	fi
+fi
+
+# Always follow redirects
+CURL_OPTIONS="${CURL_OPTIONS} -L"
+
+# api.github.com requires a User-Agent header
+CURL_OPTIONS_API="${CURL_OPTIONS_API:-"-A curl"}"
+
+# Support for custom GitHub Auth Tokens
+if [[ -n "${GITHUB_API_TOKEN}" ]]; then
+	echo " *** Using GitHub token for all requests."
+	CURL_OPTIONS_API="${CURL_OPTIONS_API} --header \"Authorization: token ${GITHUB_API_TOKEN}\""
+fi
+
+GITHUB_API_LIMITED=$(eval curl ${CURL_OPTIONS_API} -s ${CURL_OPTIONS} "https://api.github.com/rate_limit" | tr -d "," | awk 'BEGIN {reset=0;} { if ($1 == "\"limit\":") limit=$2; else if ($1 == "\"remaining\":") remaining=$2; else if ($1 == "\"reset\":" && limit>0 && remaining==0) reset=$2;} END { print reset }')
+if [ ${GITHUB_API_LIMITED} -gt 0 ]; then
+	echo " *** Github API is currently rate limited - please try again after $(date --date @${GITHUB_API_LIMITED})"
+	exit 1
+fi
+
+
+function update_self() {
+	echo " *** Performing self-update"
+	local _tempFileName="$0.tmp"
+
+	if ! eval curl -fs ${CURL_OPTIONS} --output "${_tempFileName}" "${UPDATE_URI}"; then
+		echo " !!! Failed to download update for rpi-update!"
+		echo " !!! Make sure you are connected to the internet, have ca-certificates installed and that the time is set correctly"
+		exit 1
+	fi
+
+	if [[ "$(head -1 ${_tempFileName})" != '#!/bin/bash' ]]; then
+		echo " !!! Failed to download update for rpi-update!"
+		echo " !!! Contents of file is not as expected - github may be down"
+		exit 1
+	fi
+
+	local OCTAL_MODE=$(stat -c '%a' "$0")
+	if ! chmod ${OCTAL_MODE} "${_tempFileName}" ; then
+		echo " !!! Failed: Error while trying to set mode on ${_tempFileName}"
+		exit 1
+	fi
+
+	cat > "${SELFUPDATE_SCRIPT}" << EOF
+	if mv "${_tempFileName}" "$0"; then
+		rm -- "\$0"
+		exec env UPDATE_SELF=0 /bin/bash "$0" "${FW_REV_IN}" "${BOOTLOADER_REV_IN}"
+	else
+		echo " !!! Failed!"
+	fi
+EOF
+
+	echo " *** Relaunching after update"
+	exec /bin/bash "${SELFUPDATE_SCRIPT}"
+}
+
+function update_modules {
+	if [[ ${SKIP_KERNEL} -eq 0 ]]; then
+		echo " *** Updating kernel modules"
+		find "${FW_REPOLOCAL}/modules" -mindepth 1 -maxdepth 1 -type d | while read DIR; do
+			BASEDIR=$(basename "${DIR}")
+			rm -rf "${FW_MODPATH}/${BASEDIR}/kernel"
+		done
+
+		if [[ ${PRUNE_MODULES} -ne 0 ]]; then
+			find "${FW_MODPATH}" -mindepth 1 -maxdepth 1 -type d | while read DIR; do
+				COUNT=$(find "${DIR}" -type f ! \( -name '*.ko' -o -name '*.ko.xz' -o -name 'modules.*' \) | wc -l);
+				if [[ ${COUNT} -eq 0 ]]; then
+					echo "Pruning ${DIR}"
+					rm -rf "${DIR}"
+				else
+					echo "Keeping ${DIR}"
+				fi
+			done
+		fi
+
+		find "${FW_REPOLOCAL}/modules" -mindepth 1 -maxdepth 1 -type d | while read DIR; do
+			BASEDIR="$(basename "${DIR}")"
+			# get the v7l from 5.15.78-v7l+ and null from 5.15.78+
+			VERSION=$(echo $BASEDIR | cut -sd "-" -f2)
+			if [[ ${WANT_32BIT} -ne 1 ]]; then
+				if [[ "${VERSION}" == "" ]] || [[ "${VERSION}" == "v7+" ]] || [[ "${VERSION}" == "v7l+" ]]; then
+					continue;
+				fi
+			fi
+			if [[ ${WANT_64BIT} -ne 1 ]]; then
+				if [[ "${VERSION}" == "v8+" ]]; then
+					continue;
+				fi
+			fi
+			if [[ ${WANT_64BIT_RT} -ne 1 ]]; then
+				if [[ "${VERSION}" == "v8-rt+" ]]; then
+					continue;
+				fi
+			fi
+			if [[ ${WANT_PI4} -ne 1 ]]; then
+				if [[ "${VERSION}" == "v7l+" ]]; then
+					continue;
+				fi
+			fi
+			if [[ ${WANT_PI5} -ne 1 ]]; then
+				if [[ "${VERSION}" == "v8_16k+" ]]; then
+					continue;
+				fi
+			fi
+			cp -R "${DIR}" "${FW_MODPATH}/"
+			echo " *** depmod ${BASEDIR}"
+			depmod -b "${ROOT_PATH}" -a "${BASEDIR}"
+		done
+	else
+		echo " *** As requested, not updating kernel modules"
+	fi
+}
+
+function update_vc_libs {
+	if [[ ${SKIP_VCLIBS} -eq 0 ]]; then
+		echo " *** Updating VideoCore libraries"
+	else
+		echo " *** As requested, not updating VideoCore libraries"
+		return
+	fi
+
+	if [[ -e ${ROOT_PATH}/bin/sh ]]; then
+		local ELFOUTPUT=$(readelf -a "${ROOT_PATH}/bin/sh"; readelf -h "${ROOT_PATH}/bin/sh")
+	else
+		local ELFOUTPUT="VFP_args"
+	fi
+	if [[ "${ELFOUTPUT}" != "${ELFOUTPUT/VFP_args/}" || \
+			"${ELFOUTPUT}" != "${ELFOUTPUT/hard-float/}" ]]; then
+		if [ -d "${FW_REPOLOCAL}/vc/hardfp/" ]; then
+			echo " *** Using HardFP libraries"
+			cp -R "${FW_REPOLOCAL}/vc/hardfp/"* "${ROOT_PATH}/"
+		fi
+	else
+		if [ -d "${FW_REPOLOCAL}/vc/softfp/" ]; then
+			echo " *** Using SoftFP libraries"
+			cp -R "${FW_REPOLOCAL}/vc/softfp/"* "${ROOT_PATH}/"
+		fi
+	fi
+}
+
+function update_sdk {
+	if [[ ${SKIP_SDK} -eq 0 ]]; then
+		if [ -d "${FW_REPOLOCAL}/vc/sdk/" ]; then
+			echo " *** Updating SDK"
+			cp -R "${FW_REPOLOCAL}/vc/sdk/"* "${ROOT_PATH}/"
+		fi
+	else
+		echo " *** As requested, not updating SDK"
+	fi
+}
+
+function download_bootloader_tools {
+	for tool in rpi-eeprom-update rpi-eeprom-config rpi-eeprom-digest; do
+		temp="$(mktemp)"
+		if ! eval curl -fs ${CURL_OPTIONS} "${BOOTLOADER_REPO_CONTENT_URI}/${BOOTLOADER_REV}/${tool}" --output "${temp}"; then
+			echo " !!! Failed to download ${tool}"
+			rm -f "${temp}"
+			exit 1
+		fi
+		mv "${temp}" "/usr/bin/${tool}"
+		chmod a+rx "/usr/bin/${tool}"
+	done
+}
+
+function download_bootloader_images {
+	bcm_chip=$1
+	latest_eeprom=$(eval curl ${CURL_OPTIONS_API} -fs ${CURL_OPTIONS} ${BOOTLOADER_REPO_API_URI}/git/trees/${BOOTLOADER_REV}?recursive=1 | grep "firmware-${bcm_chip}/latest/pieeprom" | sed 's/.*\(pieeprom.*\)".*/\1/' | sort -r | head -n1)
+	if [[ -n "${latest_eeprom}" ]]; then
+		fw_path="/lib/firmware/raspberrypi/bootloader-${bcm_chip}/latest"
+		if [[ ! -d "${fw_path}" ]]; then
+			echo "Path ${fw_path} not found. Please install the rpi-eeprom package first"
+			exit 1
+		fi
+		if [[ "${BOOTLOADER_REV_IN}" != "master" ]]; then
+			echo "Non default bootloader revision specified (${BOOTLOADER_REV_IN}) deleting local bootloader binaries in ${fw_path}"
+			rm -f "${fw_path}/recovery.bin"
+			rm -f "${fw_path}"/pieeprom*.bin
+		fi
+		if [[ ! -f "${fw_path}/${latest_eeprom}" ]]; then
+			eeprom_temp="$(mktemp)"
+			if ! eval curl -fs ${CURL_OPTIONS} "${BOOTLOADER_REPO_CONTENT_URI}/${BOOTLOADER_REV}/firmware-${bcm_chip}/latest/${latest_eeprom}" --output "${eeprom_temp}"; then
+				echo " !!! Failed to download firmware-${bcm_chip}/${latest_eeprom}"
+				rm -rf "${eeprom_temp}"
+				exit 1
+			fi
+			mv "${eeprom_temp}" "${fw_path}/${latest_eeprom}"
+			chmod a+r "${fw_path}/${latest_eeprom}"
+		fi
+
+		# Always download the latest recovery.bin if bootloader_rev has changed.
+		recovery_temp="$(mktemp)"
+		if ! eval curl -fs ${CURL_OPTIONS} "${BOOTLOADER_REPO_CONTENT_URI}/${BOOTLOADER_REV}/firmware-${bcm_chip}/latest/recovery.bin" --output "${recovery_temp}"; then
+			echo " !!! Failed to download ${bcm_chip}/recovery.bin"
+			rm -rf "${recovery_temp}"
+			exit 1
+		fi
+		mv "${recovery_temp}" "${fw_path}/recovery.bin"
+		chmod a+r "${fw_path}/recovery.bin"
+	fi
+}
+
+function download_bootloader {
+	if [[ ${SKIP_BOOTLOADER} -eq 0 ]]; then
+		echo "Downloading bootloader tools"
+		download_bootloader_tools
+
+		echo "Downloading bootloader images"
+		if grep -q "bcm2711" /proc/device-tree/compatible; then
+			download_bootloader_images 2711
+		fi
+		if grep -q "bcm2712" /proc/device-tree/compatible; then
+			download_bootloader_images 2712
+		fi
+	fi
+}
+
+function update_bootloader {
+	if [[ ${SKIP_BOOTLOADER} -eq 0 ]]; then
+		if grep -q "bcm2712" /proc/device-tree/compatible; then
+			# Prefer flashrom on BCM2712. rpi-eeprom-update will failover to recovery.bin
+			# if flashrom is not installed.
+			export RPI_EEPROM_USE_FLASHROM=${RPI_EEPROM_USE_FLASHROM:-1}
+		fi
+		sed /etc/default/rpi-eeprom-update -i -e "s/^FIRMWARE_RELEASE_STATUS.*/FIRMWARE_RELEASE_STATUS=\"latest\"/"
+		if [[ "${BOOTLOADER_REV_IN}" != "master" ]]; then
+			# Use latest according to rpi-eeprom git hash
+			echo "Using latest bootloader from rpi-eeprom ${BOOTLOADER_REV_IN}"
+			config_temp="$(mktemp)"
+			if ! rpi-eeprom-config > "${config_temp}"; then
+				echo "Failed to read current bootloader config"
+				exit 1
+			fi
+			if ! rpi-eeprom-config -a "${config_temp}"; then
+				echo "Failed to update bootloader - rpi-eeprom-rev ${BOOTLOADER_REV_IN}"
+				exit 1
+			fi
+			rm -f "${config_temp}"
+		else
+			# Update if newer
+			rpi-eeprom-update -a
+		fi
+	fi
+}
+
+function show_notice {
+	local NOTICE_URI=${FIRMWARE_REPO_CONTENT_URI}/${FW_REV}/NOTICE.md
+	local FULL_NOTICE=$(eval curl -fs ${CURL_OPTIONS} "${NOTICE_URI}")
+	if [ -z "${FULL_NOTICE}" ]; then
+		return
+	fi
+	local NOTICE_HASH_HEAD=$(echo "${FULL_NOTICE}" | head -1)
+	if [ "$(echo "${NOTICE_HASH_HEAD}" | awk -F: '{print $1}')" == "HASH" ]; then
+		local NOTICE_HASH_EXISTS=true
+		local NOTICE_HASH=$(echo "${NOTICE_HASH_HEAD}" | awk '{print $2}')
+	else
+		local NOTICE_HASH_EXISTS=false
+	fi
+	if ${NOTICE_HASH_EXISTS}; then
+		local NOTICE=$(echo "${FULL_NOTICE}" | tail -n+2)
+		local NEW_HASH=${FW_REV}
+		local LOCAL_lt_NOTICE=$(compare_hashes "${FIRMWARE_REPO_API_URI}" "${LOCAL_HASH}" lt "${NOTICE_HASH}")
+		local NEW_ge_NOTICE=$(compare_hashes "${FIRMWARE_REPO_API_URI}" "${NEW_HASH}" ge "${NOTICE_HASH}")
+		if ! ${LOCAL_lt_NOTICE} && ! ${NEW_ge_NOTICE}; then
+			return
+		fi
+	else
+		local NOTICE=${FULL_NOTICE}
+	fi
+	echo "${NOTICE}"
+	if ! echo "${NOTICE}" | grep -q WARNING; then
+		return
+	fi
+	if [[ ${SKIP_WARNING} -ne 0 ]]; then
+		return
+	fi
+	read -p "Would you like to proceed? (y/N)" -n 1 -r -s
+	echo ""
+	if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+		exit 1;
+	fi
+}
+
+function check_partition {
+	mbs=$1
+	if [[ ${SKIP_CHECK_PARTITION} -ne 0 ]]; then
+		return
+	fi
+	local PARTSIZE=0
+	if command -v df > /dev/null 2>&1 ; then
+		local M=$(df -P ${BOOT_PATH} | awk 'END{print $1}')
+		if [[ $M == /dev/* ]]; then
+			if command -v lsblk > /dev/null 2>&1 ; then
+				PARTSIZE=$(lsblk -bno SIZE ${M})
+			fi
+		fi
+	fi
+	if [ $PARTSIZE -ne 0 ] && [ $PARTSIZE -lt $(( mbs*1024*1024 )) ]; then
+		echo "Partition size $(( $PARTSIZE >> 20 ))M may not be sufficient for all firmware files"
+		echo "This could result in a system that will not boot."
+		echo "${mbs}M FAT partition is recommended. Ensure you have a backup if continuing."
+		if [[ ${SKIP_WARNING} -ne 0 ]]; then
+			return
+		fi
+		read -p "Would you like to proceed? (y/N)" -n 1 -r -s
+		echo ""
+		if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+			exit 1;
+		fi
+	fi
+}
+
+function check_initramfs {
+	local INITRAMFS=""
+	if command -v vcgencmd > /dev/null; then
+		INITRAMFS="$(echo =$(vcgencmd get_config ramfsfile) | cut -d'=' -f3)"
+	fi
+	if [ "$INITRAMFS" == "" ]; then
+		return
+	fi
+	if [[ ${SKIP_WARNING} -ne 0 ]]; then
+		return
+	fi
+	echo "Updating a system with initramfs configured is not supported by rpi-update"
+	echo "This could result in a system that will not boot."
+	read -p "Would you like to proceed? (y/N)" -n 1 -r -s
+	echo ""
+	if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+		exit 1;
+	fi
+}
+
+
+function update_firmware {
+	if [[ ${SKIP_FIRMWARE} -eq 0 ]]; then
+		echo " *** Updating firmware"
+		rm -rf "${FW_PATH}/"start*.elf
+		rm -rf "${FW_PATH}/"fixup*.dat
+		rm -rf "${FW_PATH}/"bootcode.bin
+		if [[ ${WANT_PI4} -eq 1 ]]; then
+			cp "${FW_REPOLOCAL}/"start*.elf "${FW_PATH}/"
+			cp "${FW_REPOLOCAL}/"fixup*.dat "${FW_PATH}/"
+		else
+			cp "${FW_REPOLOCAL}/"start{,[^4]*}.elf "${FW_PATH}/"
+			cp "${FW_REPOLOCAL}/"fixup{,[^4]*}.dat "${FW_PATH}/"
+		fi
+		cp "${FW_REPOLOCAL}/"*.bin "${FW_PATH}/"
+	fi
+	if [[ ${SKIP_KERNEL} -eq 0 ]]; then
+		if [[ ${WANT_32BIT} -eq 1 ]]; then
+			[[ -e "${FW_REPOLOCAL}/"kernel.img ]] && cp "${FW_REPOLOCAL}/"kernel.img "${FW_PATH}/"
+			[[ -e "${FW_REPOLOCAL}/"kernel7.img ]] && cp "${FW_REPOLOCAL}/"kernel7.img "${FW_PATH}/"
+			if [[ ${WANT_PI4} -eq 1 ]]; then
+				[[ -e "${FW_REPOLOCAL}/"kernel7l.img ]] && cp "${FW_REPOLOCAL}/"kernel7l.img "${FW_PATH}/"
+			fi
+		fi
+		if [[ ${WANT_64BIT} -eq 1 ]]; then
+			[[ -e "${FW_REPOLOCAL}/"kernel8.img ]] && cp "${FW_REPOLOCAL}/"kernel8.img "${FW_PATH}/"
+		fi
+		if [[ ${WANT_64BIT_RT} -eq 1 ]]; then
+			[[ -e "${FW_REPOLOCAL}/"kernel8_rt.img ]] && cp "${FW_REPOLOCAL}/"kernel8_rt.img "${FW_PATH}/"
+		fi
+		if [[ ${WANT_PI5} -eq 1 ]]; then
+			[[ -e "${FW_REPOLOCAL}/"kernel_2712.img ]] && cp "${FW_REPOLOCAL}/"kernel_2712.img "${FW_PATH}/"
+			[[ -e "${FW_REPOLOCAL}/"kernel2712.img ]] && cp "${FW_REPOLOCAL}/"kernel2712.img "${FW_PATH}/"kernel_2712.img
+		fi
+		if [[ -n $(shopt -s nullglob; echo "${FW_REPOLOCAL}/"*.dtb*) ]]; then
+			cp "${FW_REPOLOCAL}/"*.dtb* "${FW_PATH}/"
+		fi
+		if [[ -n $(shopt -s nullglob; echo "${FW_REPOLOCAL}/overlays/"*.dtb*) ]]; then
+			mkdir -p "${FW_PATH}/overlays"
+			cp "${FW_REPOLOCAL}/overlays/"*.dtb* "${FW_PATH}/overlays/"
+			if [[ -f "${FW_REPOLOCAL}/overlays/README" ]]; then
+				cp "${FW_REPOLOCAL}/overlays/README" "${FW_PATH}/overlays/"
+			fi
+		fi
+	else
+		echo " *** As requested, not updating kernel"
+	fi
+	if [[ ${WANT_SYMVERS} -ne 0 ]]; then
+		if [[ -f "${FW_REPOLOCAL}/Module.symvers" ]]; then
+			cp "${FW_REPOLOCAL}/Module.symvers" "${FW_PATH}/"
+		fi
+		if [[ -f "${FW_REPOLOCAL}/Module7.symvers" ]]; then
+			cp "${FW_REPOLOCAL}/Module7.symvers" "${FW_PATH}/"
+		fi
+		if [[ -f "${FW_REPOLOCAL}/git_hash" ]]; then
+			cp "${FW_REPOLOCAL}/git_hash" "${FW_PATH}/"
+		fi
+	fi
+}
+
+function finalise {
+	if [[ -f "${FW_PATH}/arm192_start.elf" ]]; then
+		echo " *** Setting 192M ARM split"
+		cp "${FW_PATH}/arm192_start.elf" "${FW_PATH}/start.elf"
+	fi
+	if [[ -e ${ROOT_PATH}/etc ]]; then
+		echo " *** Running ldconfig"
+		ldconfig -r "${ROOT_PATH}"
+	fi
+	echo " *** Storing current firmware revision"
+	echo "${FW_REV}" > "${FW_REVFILE}"
+	echo "${BOOTLOADER_REV}" > "${BOOTLOADER_REVFILE}"
+}
+
+function do_backup {
+	if [[ ${SKIP_BACKUP} -eq 0 ]]; then
+		echo " *** Backing up files (this will take a few minutes)"
+		local OLD_FW_PATH="${BOOT_PATH}.bak"
+		if [[ -d "${OLD_FW_PATH}" ]]; then
+			echo " *** Remove old firmware backup"
+			rm -rf "${OLD_FW_PATH}"
+		fi
+		echo " *** Backing up firmware"
+		cp -a "${FW_PATH}" "${OLD_FW_PATH}"
+		if [[ ${SKIP_KERNEL} -eq 0 ]]; then
+			OLD_FW_MODPATH=${FW_MODPATH}.bak
+			if [[ -d "${OLD_FW_MODPATH}" ]]; then
+				echo " *** Remove old modules backup"
+				rm -rf "${OLD_FW_MODPATH}"
+			fi
+			echo " *** Backing up modules $(uname -r)"
+			local CURRENT_FW_MODPATH=${FW_MODPATH}/$(uname -r)
+			if [[ -d "${CURRENT_FW_MODPATH}" ]]; then
+				mkdir -p "${OLD_FW_MODPATH}" && cp -a "${CURRENT_FW_MODPATH}" "${OLD_FW_MODPATH}"
+			fi
+		fi
+	fi
+}
+
+function do_update {
+	if [ -f ${FW_PATH}/kernel.img ] || [ -f ${FW_PATH}/kernel7.img ]; then
+		WANT_32BIT=${WANT_32BIT:-1}
+	fi
+	if [ -f ${FW_PATH}/kernel7l.img ]; then
+		WANT_32BIT=${WANT_32BIT:-1}
+	fi
+	if [ -f ${FW_PATH}/kernel8.img ]; then
+		WANT_64BIT=${WANT_64BIT:-1}
+	fi
+	if [ -f ${FW_PATH}/kernel8_rt.img ]; then
+		WANT_64BIT_RT=${WANT_64BIT_RT:-1}
+	fi
+	if [ -f ${FW_PATH}/start4.elf ] || [ -f ${BOOT_PATH}/start4.elf ]; then
+		WANT_PI4=${WANT_PI4:-1}
+	fi
+	if [ -f ${FW_PATH}/kernel_2712.img ]; then
+		WANT_PI5=${WANT_PI5:-1}
+	fi
+	WANT_32BIT=${WANT_32BIT:-0}
+	WANT_64BIT=${WANT_64BIT:-0}
+	WANT_64BIT_RT=${WANT_64BIT_RT:-0}
+	WANT_PI4=${WANT_PI4:-0}
+	WANT_PI5=${WANT_PI5:-0}
+	echo "WANT_32BIT:${WANT_32BIT} WANT_64BIT:${WANT_64BIT} WANT_64BIT_RT:${WANT_64BIT_RT} WANT_PI4:${WANT_PI4} WANT_PI5:${WANT_PI5}"
+	if [[ ${WANT_PI5} -eq 1 ]]; then
+		check_partition 512
+	elif [[ ${WANT_PI4} -eq 1 ]]; then
+		check_partition 256
+	fi
+	check_initramfs
+	show_notice
+	download_bootloader
+	download_rev
+	if [[ -f "${FW_REPOLOCAL}/pre-install" ]]; then
+		echo " *** Running pre-install script"
+		source "${FW_REPOLOCAL}/pre-install"
+	fi
+	update_bootloader
+	update_firmware
+	update_modules
+	update_vc_libs
+	update_sdk
+	finalise
+	if [[ -f "${FW_REPOLOCAL}/post-install" ]]; then
+		echo " *** Running post-install script"
+		source "${FW_REPOLOCAL}/post-install"
+	fi
+	remove_rev
+	echo " *** Syncing changes to disk"
+	sync
+	echo " *** If no errors appeared, your firmware was successfully updated to ${FW_REV}"
+	if [[ "${ROOT_PATH}" == "/" ]]; then
+		if [[ ${RPI_REBOOT} -ne 0 ]]; then
+			echo " *** Rebooting to activate the new firmware"
+			reboot
+		else
+			echo " *** A reboot is needed to activate the new firmware"
+		fi
+	fi
+}
+
+function download_rev {
+	if [[ "${ARTIFACT}" != "" ]]; then
+		if [[ -f ${FW_REV_IN} ]]; then
+			GET="cat"
+		else
+			GET="curl ${CURL_OPTIONS}"
+		fi
+		echo " *** Downloading specific artifact revision (this will take a few minutes)"
+		rm -rf "${FW_REPOLOCAL}"
+		mkdir -p "${FW_REPOLOCAL}"
+		for build in ${BUILD}; do
+			if [[ ${FW_REV_IN} != http* ]] && [[ ! -f ${FW_REV_IN} ]]; then
+				A="${REDIRECTOR_URI}/${ARTIFACT}/${build}"
+			else
+				A="${ARTIFACT}"
+			fi
+			echo "${GET} ${A} | zcat | tar xf - -C ${FW_REPOLOCAL} --strip-components=2"
+			if ! eval ${GET} "${A}" | zcat | tar xf - -C "${FW_REPOLOCAL}" --strip-components=2; then
+				if [[ ${GET} = curl* ]]; then
+					echo Invalid artifact specified. Response: $( ${GET} "${A}" -o /dev/null -w "%{http_code}" ).
+				fi
+				exit 1
+			fi
+		done
+	elif [[ ${SKIP_DOWNLOAD} -eq 0 ]]; then
+		local FW_TARBALL_URI=${FIRMWARE_REPO_URI}/tarball/${FW_REV}
+		if ! eval curl -fs ${CURL_OPTIONS} --output /dev/null --head "${FW_TARBALL_URI}"; then
+			echo "Invalid git hash specified"
+			exit 1
+		fi
+		echo " *** Downloading specific firmware revision (this will take a few minutes)"
+		rm -rf "${FW_REPOLOCAL}"
+		mkdir -p "${FW_REPOLOCAL}"
+		eval curl ${CURL_OPTIONS} "${FW_TARBALL_URI}" | tar xzf - -C "${FW_REPOLOCAL}" --strip-components=1
+	fi
+}
+
+function remove_rev {
+	echo " *** Deleting downloaded files"
+	if [[ ${SKIP_REPODELETE} -eq 0 ]]; then
+		rm -rf "${FW_REPOLOCAL}"
+	fi
+}
+
+function noobs_fix {
+	echo " !!! ${BOOT_PATH} appears to contain NOOBS files"
+	echo "     This may occur if fstab contains incorrect entries."
+	echo "     rpi-update will attempt to correct fstab."
+	read -p "Would you like to proceed? (y/N)" -n 1 -r -s
+	echo
+	if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+		exit 1;
+	fi
+
+	if ! grep -qE "/dev/mmcblk0p1\s+/boot" "${ROOT_PATH}/etc/fstab"; then
+		echo "Unexpected fstab entry"
+		exit 1
+	fi
+
+	local ROOTNUM=$(cat "/proc/cmdline" | sed -n 's|.*root=/dev/mmcblk0p\([0-9]*\).*|\1|p')
+	if [ ! "${ROOTNUM}" ];then
+		echo "Could not determine root partition."
+		exit 1
+	fi
+	local BOOT_DEV="/dev/mmcblk0p$((ROOTNUM-1))"
+	local ROOT_DEV="/dev/mmcblk0p${ROOTNUM}"
+	sed "${ROOT_PATH}/etc/fstab" -e "s|^.*[^#].* / |${ROOT_DEV}  / |;s|^.*[^#].* /boot |${BOOT_DEV}  /boot |"
+	read -p "Does this look correct? (y/N)" -n 1 -r -s
+	echo
+	if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+		exit 1;
+	fi
+	sed "${ROOT_PATH}/etc/fstab" -i -e "s|^.*[^#].* / |${ROOT_DEV}  / |;s|^.*[^#].* /boot |${BOOT_DEV}  /boot |"
+
+	umount "${BOOT_PATH}"
+	if [ $? -ne 0 ]; then
+		echo "Failed to umount ${BOOT_PATH}. Remount manually and try again."
+		exit 1
+	else
+		mount "/boot"
+	fi
+
+}
+
+function get_hash_date {
+	local COMMITS_API_URI=${1}/commits/$2
+	eval curl ${CURL_OPTIONS_API} -s ${CURL_OPTIONS} "${COMMITS_API_URI}" | grep "date" | head -1 | awk -F\" '{print $4}'
+}
+
+function compare_hashes {
+	local DATE1=$(get_hash_date "${1}" "$2")
+	local DATE2=$(get_hash_date "${1}" "$4")
+	if [ $(date -d "${DATE1}" +%s) -$3 $(date -d "${DATE2}" +%s) ]; then
+		echo true
+	else
+		echo false
+	fi
+}
+
+function get_long_hash {
+	# ask github for long version hash
+	local COMMITS_API_URI=${1}/commits/$2
+	eval curl ${CURL_OPTIONS_API} -s ${CURL_OPTIONS} "${COMMITS_API_URI}" | awk 'BEGIN {hash=""} { if (hash == "" && $1 == "\"sha\":") {hash=substr($2, 2, 40);} } END {print hash}'
+}
+
+function print_diffs {
+	local DIFF_API_URI="$1"
+	SEPARATOR="======================================================"
+	eval curl ${CURL_OPTIONS_API} -s ${CURL_OPTIONS} "${DIFF_API_URI}" | awk -v SEPARATOR="${SEPARATOR}" -F\" ' { if ($2 == "commits") {commits=1} if (commits && $2 == "message") {print SEPARATOR "\nCommit: " $4} }' | sed 's/\\n\\n/\nCommit:\ /g'
+}
+
+
+if [[ ${EUID} -ne 0 ]]; then
+	echo " !!! This tool must be run as root"
+	exit 1
+fi
+
+echo " *** Raspberry Pi firmware updater by Hexxeh, enhanced by AndrewS and Dom"
+
+if [[ ! -d ${WORK_PATH} ]]; then
+	echo " !!! ${WORK_PATH} doesn't exist - creating"
+	mkdir -p "${WORK_PATH}"
+fi
+
+if [[ ${UPDATE_SELF} -ne 0 ]]; then
+	update_self
+else
+	rm -f "${SELFUPDATE_SCRIPT}"
+fi
+
+if [ "${BRANCH:-"unset"}" != "unset" ]; then
+  echo 'Using the BRANCH variable is deprecated. Just use "rpi-update <branch>"'.
+  exit
+fi
+
+if [[ ! -d "${FW_PATH}" ]]; then
+	echo " !!! ${FW_PATH} doesn't exist - creating"
+	mkdir -p "${FW_PATH}"
+fi
+
+if [[ ${SKIP_KERNEL} -eq 0 ]] && [[ ! -d "${FW_MODPATH}" ]]; then
+	echo " !!! ${FW_MODPATH} doesn't exist - creating"
+	mkdir -p "${FW_MODPATH}"
+fi
+
+if [[ ${NOOBS_CHECK} -eq 1 ]] && [[ -f "${BOOT_PATH}/recovery.elf" ]]; then
+	noobs_fix
+fi
+
+command -v readelf >/dev/null 2>&1 || {
+	echo " !!! This tool requires you have readelf installed, please install it first"
+	echo "     In Debian, try: sudo apt-get install binutils"
+	echo "     In Arch, try: pacman -S binutils"
+	exit 1
+}
+
+FW_REV_IN=${FW_REV_IN:-master}
+BOOTLOADER_REV_IN=${BOOTLOADER_REV_IN:-master}
+
+ARTIFACT=""
+BUILD=""
+FW_REV=""
+if [[ ${FW_REV_IN} != http* ]] && [[ ! -f ${FW_REV_IN} ]]; then
+	FW_REV=$(get_long_hash "${FIRMWARE_REPO_API_URI}" "${FW_REV_IN}")
+fi
+
+echo FW_REV:$FW_REV
+
+BOOTLOADER_REV=""
+BOOTLOADER_LOCAL_HASH=""
+if [[ ${SKIP_BOOTLOADER} -eq 0 ]]; then
+	if [[ ${BOOTLOADER_REV_IN} != http* ]] && [[ ! -f ${BOOTLOADER_REV_IN} ]]; then
+		BOOTLOADER_REV=$(get_long_hash "${BOOTLOADER_REPO_API_URI}" "${BOOTLOADER_REV_IN}")
+	fi
+	echo BOOTLOADER_REV:$BOOTLOADER_REV
+fi
+
+if [[ "${FW_REV}" == "" ]]; then
+	if [[ ${FW_REV_IN} != http* ]] && [[ ! -f ${FW_REV_IN} ]]; then
+		IFS=':' read ARTIFACT BUILD <<<${FW_REV_IN}
+		if [[ "${BUILD}" == "" ]]; then
+			BUILD="bcmrpi bcm2709 bcm2711 bcm2711_rt bcm2712"
+		fi
+		if [[ "${ARTIFACT}" == pulls/* ]]; then
+			PULL=${ARTIFACT##*/}
+			ARTIFACT=$(eval curl ${CURL_OPTIONS_API} -s "${LINUX_REPO_API_URI}/pulls/${PULL}" | awk '/"sha":/ {gsub(/"/, "", $2); gsub(/,/, "", $2); print $2; exit}')
+        else
+			ARTIFACT=$(eval curl ${CURL_OPTIONS_API} -s "${LINUX_REPO_API_URI}/actions/artifacts?per_page=100" | grep -A1 "\"head_branch\": \"${FW_REV_IN}\"" | awk '/"head_sha":/ {gsub(/"/, "", $2); gsub(/,/, "", $2); print $2; exit}')
+		fi
+	else
+		ARTIFACT=${FW_REV_IN}
+		BUILD=dummy
+	fi
+	FW_REV=${ARTIFACT}
+	SKIP_FIRMWARE=1
+	SKIP_SDK=1
+	SKIP_VCLIBS=1
+fi
+
+if [[ "${FW_REV}" == "" ]] && [[ "$FW_REPOLOCAL" == "${WORK_PATH}/.rpi-firmware" ]]; then
+	echo " *** Invalid hash given"
+	exit 1
+fi
+
+if [ ! -d "/lib/firmware/raspberrypi/bootloader-2711/latest" ]; then
+	if [[ "${SKIP_BOOTLOADER}" != 1 ]]; then
+		# The chip specific firmware directory structure is required for rpi-eeprom updates
+		# RPi OS Bookworm or newer required.
+		SKIP_BOOTLOADER=1
+		echo "rpi-eeprom firmware package appears to be too old. Skipping bootloader updates"
+	fi
+fi
+
+if [[ ! -f "${FW_REVFILE}" ]]; then
+	LOCAL_HASH=0
+	echo " *** We're running for the first time"
+	if [[ ${JUST_CHECK} -ne 0 ]]; then
+		echo " *** Firmware update required. No local hash to compare to."
+		exit 2
+	fi
+	do_backup
+else
+	if [[ "${ARTIFACT}" != "" ]]; then
+		LOCAL_HASH=$(cat "${FW_REVFILE}")
+		if [[ "${SKIP_BOOTLOADER}" -eq 0 ]]; then
+			BOOTLOADER_LOCAL_HASH=$(cat "${BOOTLOADER_REVFILE}")
+		fi
+	else
+		LOCAL_HASH=$(get_long_hash ${FIRMWARE_REPO_API_URI} "$(cat "${FW_REVFILE}")")
+		if [[ "${SKIP_BOOTLOADER}" -eq 0 ]]; then
+			if [[ ! -f "${BOOTLOADER_REVFILE}" ]]; then
+				BOOTLOADER_LOCAL_HASH=0
+			else
+				BOOTLOADER_LOCAL_HASH=$(get_long_hash "${BOOTLOADER_REPO_API_URI}"  "$(cat "${BOOTLOADER_REVFILE}")")
+			fi
+		fi
+	fi
+
+	if [[ "${LOCAL_HASH}" == "${FW_REV}" && "${BOOTLOADER_LOCAL_HASH}" == "${BOOTLOADER_REV}" ]] ; then
+		echo " *** Your firmware is already up to date (delete ${FW_REVFILE} and ${BOOTLOADER_REVFILE} to force an update anyway)"
+		exit 0
+	else
+		if [[ "${LOCAL_HASH}" == "${FW_REV}" ]]; then
+			# Skip other components if only the bootloader has changed
+			SKIP_FIRMWARE=1
+			SKIP_KERNEL=1
+			SKIP_VCLIBS=1
+			SKIP_SDK=1
+			SKIP_DOWNLOAD=1
+			ARTIFACT=""
+		elif [[ "${BOOTLOADER_LOCAL_HASH}" == "${BOOTLOADER_REV}" ]] ; then
+			SKIP_BOOTLOADER=1
+		fi
+	fi
+
+	if [[ ${JUST_CHECK} -ne 0 ]]; then
+		if $(compare_hashes "${FIRMWARE_REPO_API_URI}" "${LOCAL_HASH}" lt "${FW_REV}"); then
+			echo " *** Firmware update required. New commits available:"
+			DIFF_URI=${FIRMWARE_REPO_API_URI}/compare/${LOCAL_HASH}...${FW_REV}
+			print_diffs "${DIFF_URI}"
+		elif $(compare_hashes "${FIRMWARE_REPO_API_URI}" "${LOCAL_HASH}" gt "${FW_REV}"); then
+			echo " *** Firmware downgrade requested. Commits to drop:"
+			DIFF_URI=${FIRMWARE_REPO_API_URI}/compare/${FW_REV}...${LOCAL_HASH}
+			print_diffs "${DIFF_URI}"
+		fi
+
+		if [[ ${SKIP_BOOTLOADER} -eq 0 ]]; then
+			if $(compare_hashes "${BOOTLOADER_REPO_API_URI}" "${BOOTLOADER_LOCAL_HASH}" lt "${BOOTLOADER_REV}"); then
+				echo " *** Bootloader update required. New commits available:"
+				DIFF_URI=${BOOTLOADER_REPO_API_URI}/compare/${BOOTLOADER_LOCAL_HASH}...${BOOTLOADER_REV}
+				print_diffs "${DIFF_URI}"
+			elif $(compare_hashes "${BOOTLOADER_REPO_API_URI}" "${BOOTLOADER_LOCAL_HASH}" gt "${BOOTLOADER_REV}"); then
+				echo " *** Bootloader downgrade requested. Commits to drop:"
+				DIFF_URI=${BOOTLOADER_REPO_API_URI}/compare/${BOOTLOADER_REV}...${BOOTLOADER_LOCAL_HASH}
+				print_diffs "${DIFF_URI}"
+			fi
+		fi
+		exit 2
+	fi
+fi
+
+do_update

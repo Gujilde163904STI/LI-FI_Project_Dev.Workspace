@@ -1,0 +1,20 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+config CPU_ARCH_ARMV4T
+    bool
+
+config CPU_CORE_ARM7TDMI_S
+    bool
+    select CPU_ARCH_ARMV4T
+
+## Common CPU symbols
+config CPU_ARCH
+    default "armv4t" if CPU_ARCH_ARMV4T
+
+config CPU_CORE
+    default "arm7tdmi_s" if CPU_CORE_ARM7TDMI_S

@@ -1,0 +1,99 @@
+#!/bin/bash
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#  Authors:
+#        Chandan Singh <csingh43@bloomberg.net>
+
+# This is a helper script to generate Docker images using checkouts of
+# BuildStream elements.
+
+usage() {
+    cat <<EOF
+
+USAGE: $(basename "$0") [-c BST_CMD] [-m MESSAGE] [-t TAG] [-h] ELEMENT
+
+Create a Docker image from bst checkout of an element.
+
+OPTIONS:
+    -c BST_CMD    Path to BuildStream command (default: bst).
+    -m MESSAGE    Commit message for the imported image.
+    -t TAG        Tag of the imported image.
+    -h            Print this help text and exit.
+
+EXAMPLES:
+
+    # Import hello.bst as a Docker image with tag "bst-hello" and message "hello"
+    $(basename "$0") -m hello -t bst-hello hello.bst
+
+    # Import hello.bst as a Docker image with tag "bst-hello" using bst-here
+    $(basename "$0") -c bst-here -t bst-hello hello.bst
+
+EOF
+    exit "$1"
+}
+
+die() {
+    echo "FATAL: $1" >&2
+    exit 1
+}
+
+bst_cmd=bst
+docker_import_cmd=(docker import)
+docker_image_tag=
+
+while getopts c:m:t:h arg
+do
+    case $arg in
+    c)
+        bst_cmd="$OPTARG"
+        ;;
+    m)
+        docker_import_cmd+=('-m' "$OPTARG")
+        ;;
+    t)
+        docker_image_tag="$OPTARG"
+        ;;
+    h)
+        usage 0
+        ;;
+    \?)
+        usage 1
+    esac
+done
+
+shift $((OPTIND-1))
+if [[ "$#" != 1 ]]; then
+    echo "$0: No element specified" >&2
+    usage 1
+fi
+element="$1"
+
+# Dump to a temporary file in the current directory.
+# NOTE: We use current directory to try to ensure compatibility with scripts
+# like bst-here, assuming that the current working directory is mounted
+# inside the container.
+
+checkout_tar="bst-checkout-$(basename "$element")-$RANDOM.tar"
+
+echo "INFO: Checking out $element ..." >&2
+$bst_cmd artifact checkout "$element" --tar "$checkout_tar" || die "Failed to checkout $element"
+echo "INFO: Successfully checked out $element" >&2
+
+echo "INFO: Importing Docker image ..." >&2
+"${docker_import_cmd[@]}" "$checkout_tar" "$docker_image_tag" || die "Failed to import Docker image from tarball"
+echo "INFO: Successfully import Docker image $docker_image_tag" >&2
+
+echo "INFO: Cleaning up ..." >&2
+rm "$checkout_tar" || die "Failed to remove $checkout_tar"
+echo "INFO: Clean up finished" >&2

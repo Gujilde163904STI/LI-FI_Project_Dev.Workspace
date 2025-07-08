@@ -1,0 +1,30 @@
+# Copyright (c) 2020 Freie Universitaet Berlin
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+if USEMODULE_RN2XX3
+
+menu "RN2XX3 driver configuration"
+
+config RN2XX3_DEFAULT_SLEEP
+    int "Sleep duration in milliseconds [ms]"
+    range 100 $(UINT32_MAX)
+    default 5000
+    help
+        Set the sleep duration (in ms).
+        The value should be greater than RN2XX3_SLEEP_MIN (100 ms)
+
+config RN2XX3_DEFAULT_AR
+    bool "Enable automatic reply"
+    help
+        Enable/disable Automatic Reply (AR) for rn2xx3 module. By enabling the
+        automatic reply, the module will transmit a packet without a payload
+        immediately after a confirmed downlink is received, or when the
+        Frame Pending bit has been set by the server. Refer RN2483 LoRa™
+        Technology Module Command Reference User’s Guide for more information.
+
+endmenu # RN2XX3 driver configuration
+
+endif # USEMODULE_RN2XX3

@@ -1,0 +1,13 @@
+menuconfig KCONFIG_EXTERNAL_PKG_1
+    bool "Configure external package message 1"
+    default y
+    help
+        This will enable configuring the external package message
+
+if KCONFIG_EXTERNAL_PKG_1
+
+config EXTERNAL_PKG_1_MESSAGE
+    string "External package 1 text"
+    default "External package message 1 defined in Kconfig file"
+
+endif # KCONFIG_EXTERNAL_PKG_1

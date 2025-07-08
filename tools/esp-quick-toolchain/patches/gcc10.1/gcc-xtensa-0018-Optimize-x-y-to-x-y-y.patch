@@ -1,0 +1,71 @@
+From cc259b2801c8d04c39169214041305fdd5b87acd Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sun, 29 May 2022 19:55:44 +0900
+Subject: [PATCH 13/31] xtensa: Optimize '(~x & y)' to '((x & y) ^ y)'
+
+In Xtensa ISA, there is no single machine instruction that calculates unary
+bitwise negation.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (*andsi3_bitcmpl):
+	New insn_and_split pattern.
+
+gcc/testsuite/ChangeLog:
+
+	* gcc.target/xtensa/check_zero_byte.c: New.
+---
+ gcc/config/xtensa/xtensa.md                   | 20 +++++++++++++++++++
+ .../gcc.target/xtensa/check_zero_byte.c       |  9 +++++++++
+ 2 files changed, 29 insertions(+)
+ create mode 100644 gcc/testsuite/gcc.target/xtensa/check_zero_byte.c
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 2f6d48d03..28ed1d34e 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -601,6 +601,26 @@
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"3,3")])
+ 
++(define_insn_and_split "*andsi3_bitcmpl"
++  [(set (match_operand:SI 0 "register_operand" "=a")
++	(and:SI (not:SI (match_operand:SI 1 "register_operand" "r"))
++		(match_operand:SI 2 "register_operand" "r")))]
++  ""
++  "#"
++  "&& can_create_pseudo_p ()"
++  [(set (match_dup 3)
++	(and:SI (match_dup 1)
++		(match_dup 2)))
++   (set (match_dup 0)
++	(xor:SI (match_dup 3)
++		(match_dup 2)))]
++{
++  operands[3] = gen_reg_rtx (SImode);
++}
++  [(set_attr "type"	"arith")
++   (set_attr "mode"	"SI")
++   (set_attr "length"	"6")])
++
+ (define_insn "iorsi3"
+   [(set (match_operand:SI 0 "register_operand" "=a")
+ 	(ior:SI (match_operand:SI 1 "register_operand" "%r")
+diff --git a/gcc/testsuite/gcc.target/xtensa/check_zero_byte.c b/gcc/testsuite/gcc.target/xtensa/check_zero_byte.c
+new file mode 100644
+index 000000000..6a04aaeef
+--- /dev/null
++++ b/gcc/testsuite/gcc.target/xtensa/check_zero_byte.c
+@@ -0,0 +1,9 @@
++/* { dg-do compile } */
++/* { dg-options "-O" } */
++
++int check_zero_byte(int v)
++{
++  return (v - 0x01010101) & ~v & 0x80808080;
++}
++
++/* { dg-final { scan-assembler-not "movi" } } */
+-- 
+2.20.1
+

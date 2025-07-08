@@ -1,0 +1,13 @@
+diff --git a/gcc/config/xtensa/xtensa.h b/gcc/config/xtensa/xtensa.h
+index 8e1bcf823e4..3cfcd2b6628 100644
+--- a/gcc/config/xtensa/xtensa.h
++++ b/gcc/config/xtensa/xtensa.h
+@@ -801,3 +801,8 @@ typedef struct xtensa_args
+ 	callx0\ta0\n" \
+ 	TEXT_SECTION_ASM_OP);
+ #endif
++
++
++/* Use int, instead of long int, for int32_t and uint32_t.  */
++#undef STDINT_LONG32
++#define STDINT_LONG32 0

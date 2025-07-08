@@ -1,0 +1,109 @@
+.TH "BST" "1" "2025-05-09" "2.5" "bst Manual"
+.SH NAME
+bst \- Build and manipulate BuildStream projects
+.SH SYNOPSIS
+.B bst
+[OPTIONS] COMMAND [ARGS]...
+.SH DESCRIPTION
+Build and manipulate BuildStream projects
+.PP
+    Most of the main options override options in the
+    user preferences configuration file.
+    
+.SH OPTIONS
+.TP
+\fB\-\-version\fP
+.PP
+.TP
+\fB\-c,\fP \-\-config FILE
+Configuration file to use
+.TP
+\fB\-C,\fP \-\-directory DIRECTORY
+Project directory (default: current directory)
+.TP
+\fB\-\-on\-error\fP [continue|quit|terminate]
+What to do when an error is encountered
+.TP
+\fB\-\-fetchers\fP INTEGER
+Maximum simultaneous download tasks
+.TP
+\fB\-\-builders\fP INTEGER
+Maximum simultaneous build tasks
+.TP
+\fB\-\-pushers\fP INTEGER
+Maximum simultaneous upload tasks
+.TP
+\fB\-\-max\-jobs\fP INTEGER
+Number of parallel jobs allowed for a given build task
+.TP
+\fB\-\-network\-retries\fP INTEGER
+Maximum retries for network tasks
+.TP
+\fB\-\-no\-interactive\fP
+Force non interactive mode, otherwise this is automatically decided
+.TP
+\fB\-\-verbose\fP / \-\-no\-verbose
+Be extra verbose
+.TP
+\fB\-\-debug\fP / \-\-no\-debug
+Print debugging output
+.TP
+\fB\-\-error\-lines\fP INTEGER
+Maximum number of lines to show from a task log
+.TP
+\fB\-\-message\-lines\fP INTEGER
+Maximum number of lines to show in a detailed message
+.TP
+\fB\-\-log\-file\fP FILENAME
+A file to store the main log (allows storing the main log while in interactive mode)
+.TP
+\fB\-\-colors\fP / \-\-no\-colors
+Force enable/disable ANSI color codes in output
+.TP
+\fB\-\-strict\fP / \-\-no\-strict
+Elements must be rebuilt when their dependencies have changed
+.TP
+\fB\-o,\fP \-\-option OPTION VALUE
+Specify a project option
+.TP
+\fB\-\-default\-mirror\fP TEXT
+The mirror to fetch from first, before attempting other mirrors
+.TP
+\fB\-\-pull\-buildtrees\fP
+Include an element's build tree when pulling remote element artifacts
+.TP
+\fB\-\-cache\-buildtrees\fP [always|auto|never]
+Cache artifact build tree content on creation
+.SH COMMANDS
+.PP
+\fBhelp\fP
+  Print usage information
+  See \fBbst-help(1)\fP for full documentation on the \fBhelp\fP command.
+.PP
+\fBinit\fP
+  Initialize a new BuildStream project
+  See \fBbst-init(1)\fP for full documentation on the \fBinit\fP command.
+.PP
+\fBbuild\fP
+  Build elements in a pipeline
+  See \fBbst-build(1)\fP for full documentation on the \fBbuild\fP command.
+.PP
+\fBshow\fP
+  Show elements in the pipeline
+  See \fBbst-show(1)\fP for full documentation on the \fBshow\fP command.
+.PP
+\fBshell\fP
+  Shell into an element's sandbox environment
+  See \fBbst-shell(1)\fP for full documentation on the \fBshell\fP command.
+.PP
+\fBsource\fP
+  Manipulate sources for an element
+  See \fBbst-source(1)\fP for full documentation on the \fBsource\fP command.
+.PP
+\fBworkspace\fP
+  Manipulate developer workspaces
+  See \fBbst-workspace(1)\fP for full documentation on the \fBworkspace\fP command.
+.PP
+\fBartifact\fP
+  Manipulate cached artifacts.
+  See \fBbst-artifact(1)\fP for full documentation on the \fBartifact\fP command.

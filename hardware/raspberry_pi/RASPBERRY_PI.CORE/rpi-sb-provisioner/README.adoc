@@ -1,0 +1,212 @@
+= rpi-sb-provisioner
+Provisioning devices is the act of programming SD cards, NVMe or eMMC devices at manufacture time to put the device into a known and configured state.  For our embedded and industrial customers it is important that they can be sure that their signing keys are programmed correctly, boot security is enabled and the firmware stored in the EEPROM is set to a specific known value.
+
+Secure Boot typically refers to an authenticated boot chain, where from the moment the main processor starts every components authenticates the next component before allowing it to execute.
+
+In order to simplify the mass deployment of secure boot for Raspberry Pi Devices, we have introduced a new tool, the Raspberry Pi Secure Boot Provisioner.
+
+This tool, referred to later in the document as `rpi-sb-provisioner`, is designed to fully automate:
+
+* enforcing secure boot on Raspberry Pi devices
+* the programming of firmware
+* the programming of signing and device encryption keys
+* tying the device encryption key to the storage device
+* inserting a customer-supplied (created with `pi-gen`) operating system into an encrypted container on the storage device
+
+For more information on creating an OS based on Raspberry Pi OS in `pi-gen`, consult the `pi-gen` repository at https://github.com/RPi-Distro/pi-gen
+
+**NOTE**: This tool is under active development. Please report issues at https://github.com/raspberrypi/rpi-sb-provisioner
+
+== Requirements for rpi-sb-provisioner
+
+=== Required hardware for the provisioning system
+
+* A Raspberry Pi 5 (or other 64-bit Raspberry Pi device)
+* An official Raspberry Pi 27W USB-C Power Supply
+* An installation of Raspberry Pi OS Bookworm, or later
+* At least 32GB of storage, for temporary working files
+* For provisoning Raspberry Pi Compute Module 4:
+** A USB-A to microUSB-B cable
+** A Raspberry Pi Compute Module 4 IO Board
+** A single Jumper Wire
+* For provisioning Raspberry Pi 5:
+** A USB-A to USB-C cable
+* For proivisioning Compute Module 5:
+** A USB-A to USB-C cable
+** A Raspberry Pi Compute Module 5 IO Board
+** A single Jumper Wire
+
+=== Hardware configuration
+
+Connect your Raspberry Pi 5 to your Raspberry Pi Compute Module 4 or 5 IO Board as illustrated. Grey cables supply power, Red supplies data.
+
+[pdfwidth=90%]
+.A correctly connected provisioning set-up
+image::docs/images/rpi-connection-cm4io.png[]
+
+WARNING: You *must not* have additional peripherals connected via USB to the Compute Module IO board, as the provisioning Raspberry Pi will only supply up to 900mA of power to the provisoned Compute Module.
+
+=== Software configuration
+
+This repository contains the software comprising `rpi-sb-provisioner`, along with the necessary Debian packaging files. However, it is strongly recommended to install it from the Raspberry Pi OS APT repositories in the usual manner.
+
+First, ensure you are running an up-to-date version of Raspberry Pi OS on your provisioning server:
+
+----
+$ sudo apt update && sudo apt full-upgrade -y
+----
+
+Now, install the `rpi-sb-provisioner` package:
+
+----
+$ sudo apt install -y rpi-sb-provisioner
+----
+
+Next, you will have to configure `rpi-sb-provisioner`. We recommend using the Web UI, however you could edit the configuraton file directly. In a terminal, run: 
+
+----
+$ xdg-open http://localhost:3142
+----
+
+At the minimum, you must consult the 'Options' and 'Images' pages, having uploaded your OS image and set the options as guided by the inline
+help text (which is generated from the reference documentation in docs/)
+
+Once you have followed all those steps, `rpi-sb-provisioner` should be correctly configured and ready to run.
+
+== Using rpi-sb-provisioner
+`rpi-sb-provisioner` is composed of three `systemd` services that are triggered by the connection of a device in RPIBOOT mode to a USB port. With `rpi-sb-provisioner` configured to your requirements, all that is therefore required is to connect your target Raspberry Pi device in RPIBOOT mode.
+
+For any Raspberry Pi Compute Module on the matching Raspberry Pi Compute Module IO Board, you can do this by using the single Jumper Wire to connect the `disable eMMC Boot` pins on the 12-pin header at the top of the board.
+
+[pdfwidth=90%]
+.Force your Compute Module into RPIBOOT mode by connecting the 'disable eMMC Boot' pins
+image::docs/images/rpi-cm4io-detail.png[]
+
+After connecting your device in RPIBOOT mode, `rpi-sb-provisioner` will perform the following steps:
+
+* A new device connection is recognised over USB, and enters the *bootstrap* phase:
+** If your selected PROVISIONING_STYLE is `secure-boot`, and your device has an EEPROM:
+*** Your device will boot a specialised Raspberry Pi firmware, designed to write a hash of your public signing key (generated from the file pointed to by `CUSTOMER_KEY_FILE_PEM`) into device One Time Programmable (OTP) memory
+** If your device has an EEPROM:
+*** Your device will be updated to the latest Raspberry Pi EEPROM software released
+*** Your device will perform a silent reboot
+** If your device does not have an EEPROM, `secure-boot` is not supported, and no EEPROM update will be performed
+** `rpi-sb-provisioner` will boot your device with a specialised Linux distribution, where your device enters the *triage* phase
+** In the *triage* phase, you selected PROVISIONING_STYLE will determine which of the provisioning services is started
+** Your device will enter the *provisioning* phase:
+*** `secure-boot` will:
+**** create a device unique key
+**** partition and format your device's storage
+**** create a LUKSv2 container
+**** place your OS into the LUKSv2 container
+**** place a signed and customised pre-boot authentication firmware (derived from your gold master OS image) into the 'boot' partition of your device's storage
+*** `fde-only` will:
+**** create a device unique key
+**** partition and format your device's storage
+**** create a LUKSv2 container
+**** place your OS into the LUKSv2 container
+**** place a unsigned and customised pre-boot authentication firmware (derived from your gold master OS image) into the 'boot' partition of your device's storage
+*** `naked` will:
+**** partition and format your device's storage
+**** place your OS into your device's storage
+
+After these steps have been completed, your device should display both the `activity` and `power` LEDs as `off`. If you have ethernet connected, you may still see activity from this port. In this state, your device is safe to power off and package into your product.
+
+No further intervention is required in the success case.
+
+WARNING: `rpi-sb-provisioner` will not, by default, block JTAG access. If you wish to make use of this facility, you _must_ use the `RPI_DEVICE_LOCK_JTAG` configuration option.
+
+== Tips and Tricks
+
+=== Observing active provisioning operations
+
+As `rpi-sb-provisioner` is implemented using `systemd` services, you can use the typical `systemctl` commands to observe the services as they provision your device.
+
+To see active provisioning operations, and the serial numbers of the devices involved, type into a Terminal window:
+
+----
+$ systemctl list-units rpi-sb-provisioner*
+----
+
+=== Observing logs
+
+Logs are stored on a per-device, per-phase basis, where logs for a given device are stored at `/var/log/rpi-sb-provisioner/<serial>/<phase>.log`.
+
+For example, to observe the progress of an individual device through a phase, you could use `tail`:
+
+----
+$ tail -f -n 100 /var/log/rpi-sb-provisioner/<serial>/provisioner.log
+$ tail -f -n 100 /var/log/rpi-sb-provisioner/<serial>/triage.log
+----
+
+More verbose logs are available from the `journalctl` command:
+
+----
+$ journalctl -xeu rpi-sb-provisioner@<serial> -f
+----
+
+Where the `-f` flag will follow the logs as they are written, letting you observe the progress of the device in real-time.
+
+=== Processing the manufacturing database
+
+If you have enabled the manufacturing database (using RPI_SB_PROVISIONER_MANUFACTURING_DB), you can create a comma-separated value (CSV) file from the manufacturing database for use with other software.
+
+To do so, you must use the *sqlite3* program:
+
+----
+$ sqlite3 ${RPI_SB_PROVISIONER_MANUFACTURING_DB} -cmd ".headers on" -cmd ".mode csv" -cmd ".output mfg_db.csv" "SELECT * FROM rpi_sb_provisioner;"
+$ stat mfg_db.csv
+----
+
+=== Identifying secured devices
+
+A 'secured device' is one where your customer signing key has been written - regardless of the state of your OS or other software. Such devices can only load Linux images signed by your customer signing key.
+
+Obtain this by inspecting the manufacturing database:
+
+----
+$ sqlite3 ${RPI_SB_PROVISIONER_MANUFACTURING_DB} -cmd ".headers on" -cmd ".mode csv" -cmd ".output mfg_db.csv" "SELECT serial FROM rpi_sb_provisioner WHERE secure = 1;"
+$ stat mfg_db.csv
+----
+
+=== Debugging unexpected results
+
+The first stage of debugging unexpected results is to clear any cached provisioning artefacts. On the WebUI, this can be done by selecting 'Clear caches' from the 'Images' page.
+
+The second stage is to remove the lock directory matching the serial number of the device you are debugging:
+
+----
+$ sudo rm -rf /var/lock/rpi-sb-provisioner/<serial>
+----
+
+Finally, check if you have issued either of the special-* flags for your device serial, and delete as you require:
+
+----
+$ find /etc/rpi-sb-provisioner -name <serial>
+----
+
+=== Disable Triage / Provision (Bootstrap Only)
+
+rpi-sb-provisioner's udev rules cause all devices to be bootstrapped into `fastboot` mode before they are triaged and provisioned. It is possible to temporarily disable the triage service (until next boot) so that detected devices are bootstrapped into `fastboot` mode only:
+
+----
+$ sudo systemctl mask --runtime rpi-sb-triage@.service
+----
+
+=== Handling pre-signed devices
+
+Pre-signed Raspberry Pi 5-family devices cannot follow the standard provisioning path. You must ensure you use the same signing key, and decide if you want to re-provision the EEPROM or skip EEPROM writing entirely:
+
+To skip EEPROM writing entirely, use the following command:
+----
+$ sudo touch /etc/rpi-sb-provisioner/special-skip-eeprom/<serial>
+----
+
+To fully re-provision the device, including any EEPROM contents, using the same signing key, use the following command:
+----
+$ sudo touch /etc/rpi-sb-provisioner/special-reprovision-device/<serial>
+----
+
+=== Changing `config.txt`
+
+Modify the `config.txt` contained within your gold master image as you typically would, and `rpi-sb-provisioner` will include this as part of provisioning.

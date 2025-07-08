@@ -1,0 +1,2 @@
+This is a copy of the hid*composite example from TinyUSB (https://github.com/hathach/tinyusb/tree/master/examples/device/hid*composite)
+showing how to build with TinyUSB when using the Raspberry Pi Pico SDK

@@ -1,0 +1,39 @@
+From a2cde0c6443c440c2a2b72b5eea060229a0cff57 Mon Sep 17 00:00:00 2001
+From: Jeff Law <jeffreyalaw@gmail.com>
+Date: Sat, 9 Jul 2022 11:11:00 -0400
+Subject: [PATCH] [RFA] Improve initialization of objects when the initializer
+
+gcc/
+
+	* expr.c (store_expr): Identify trailing NULs in a STRING_CST
+	initializer and use clear_storage rather than copying the
+	NULs to the destination array.
+---
+ gcc/expr.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/gcc/expr.c b/gcc/expr.c
+index 991b26f33..6ff393462 100644
+--- a/gcc/expr.c
++++ b/gcc/expr.c
+@@ -5723,6 +5723,17 @@ store_expr (tree exp, rtx target, int call_param_p,
+ 	}
+ 
+       str_copy_len = TREE_STRING_LENGTH (str);
++
++      /* Trailing NUL bytes in EXP will be handled by the call to
++	 clear_storage, which is more efficient than copying them from
++	 the STRING_CST, so trim those from STR_COPY_LEN.  */
++      while (str_copy_len)
++	{
++	  if (TREE_STRING_POINTER (str)[str_copy_len - 1])
++	    break;
++	  str_copy_len--;
++	}
++
+       if ((STORE_MAX_PIECES & (STORE_MAX_PIECES - 1)) == 0)
+ 	{
+ 	  str_copy_len += STORE_MAX_PIECES - 1;
+-- 
+2.20.1
+

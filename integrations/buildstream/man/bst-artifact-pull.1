@@ -1,0 +1,38 @@
+.TH "BST ARTIFACT PULL" "1" "2025-05-09" "2.5" "bst artifact pull Manual"
+.SH NAME
+bst\-artifact\-pull \- Pull a built artifact
+.SH SYNOPSIS
+.B bst artifact pull
+[OPTIONS] [ARTIFACTS]...
+.SH DESCRIPTION
+Pull a built artifact from the configured remote artifact cache.
+.PP
+    Specifying no elements will result in pulling the default targets
+    of the project. If no default targets are configured, all project
+    elements will be pulled.
+.PP
+    When this command is executed from a workspace directory, the default
+    is to pull the workspace element.
+.PP
+    By default the artifact will be pulled one of the configured caches
+    if possible, following the usual priority order. If the `--artifact-remote`
+    flag is given, only the specified cache will be queried.
+.PP
+    Specify `--deps` to control which artifacts to pull:
+.PP
+    
+        none:  No dependencies, just the element itself
+        run:   Runtime dependencies, including the element itself
+        build: Build time dependencies, excluding the element itself
+        all:   All dependencies
+    
+.SH OPTIONS
+.TP
+\fB\-d,\fP \-\-deps [build|none|run|all]
+The dependency artifacts to pull  [default: none]
+.TP
+\fB\-\-artifact\-remote\fP REMOTE
+A remote for downloading artifacts
+.TP
+\fB\-\-ignore\-project\-artifact\-remotes\fP
+Ignore remote artifact cache servers recommended by projects

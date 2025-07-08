@@ -1,0 +1,15 @@
+version: "0.0.1"
+description: board hal component
+url: https://github.com/espressif/esp-iot-solution
+dependencies:
+  idf: ">=4.2"
+  i2c_bus:
+    override_path: "../../../components/i2c_bus"
+  spi_bus:
+    override_path: "../../../components/spi_bus"
+  bus:
+    override_path: "../../../components/bus"
+  espressif/button:
+    version: "^3.0.0"
+  espressif/led_strip:
+    version: "~1.1.0-alpha" #please use version 2.0.0 if idf5.0

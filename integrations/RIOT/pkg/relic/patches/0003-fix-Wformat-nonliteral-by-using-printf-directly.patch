@@ -1,0 +1,73 @@
+From 49e5e3576572ebcaefab7fe996c89789c5476073 Mon Sep 17 00:00:00 2001
+From: Marian Buschsieweke <marian.buschsieweke@ovgu.de>
+Date: Mon, 13 Jan 2025 14:13:25 +0100
+Subject: [PATCH 3/3] fix -Wformat-nonliteral by using printf() directly
+
+---
+ include/relic_util.h |  2 +-
+ src/relic_util.c     | 36 ------------------------------------
+ 2 files changed, 1 insertion(+), 37 deletions(-)
+
+diff --git a/include/relic_util.h b/include/relic_util.h
+index cdca0dc..379aa25 100644
+--- a/include/relic_util.h
++++ b/include/relic_util.h
+@@ -316,7 +316,7 @@ void util_perm(uint_t p[], size_t n);
+  * @param[in] format		- the format.
+  * @param[in] ...			- the list of arguments matching the format.
+  */
+-void util_printf(const char *format, ...);
++#define util_printf(...) printf(__VA_ARGS__)
+ 
+ /**
+  * Prints a digit.
+diff --git a/src/relic_util.c b/src/relic_util.c
+index c69fb5c..8207a41 100644
+--- a/src/relic_util.c
++++ b/src/relic_util.c
+@@ -162,42 +162,6 @@ void util_perm(uint_t p[], size_t n) {
+ 	}
+ }
+ 
+-#ifndef QUIET
+-void util_print(const char *format, ...) {
+-#if ARCH == AVR && !defined(OPSYS)
+-	util_print_ptr = print_buf + 1;
+-	va_list list;
+-	va_start(list, format);
+-	vsnprintf_P((char *)util_print_ptr, sizeof(print_buf) - 1, format, list);
+-	va_end(list);
+-	print_buf[0] = (uint8_t)2;
+-#elif ARCH == AVR && OPSYS == DUINO
+-	stdout = &uart_output;
+-	va_list list;
+-	va_start(list, format);
+-	vsnprintf_P((char *)print_buf, sizeof(print_buf), format, list);
+-	printf("%s", (char *)print_buf);
+-	va_end(list);
+-#elif ARCH == MSP && !defined(OPSYS)
+-	va_list list;
+-	va_start(list, format);
+-	vprintf(format, list);
+-	va_end(list);
+-#elif ARCH == ARM && OPSYS == DROID
+-	va_list list;
+-	va_start(list, format);
+-	__android_log_vprint(ANDROID_LOG_INFO, "relic-toolkit", format, list);
+-	va_end(list);
+-#else
+-	va_list list;
+-	va_start(list, format);
+-	vprintf(format, list);
+-	fflush(stdout);
+-	va_end(list);
+-#endif
+-}
+-#endif
+-
+ void util_print_dig(dig_t a, int pad) {
+ #if RLC_DIG == 64
+ 	if (pad) {
+-- 
+2.39.5
+

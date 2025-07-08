@@ -1,0 +1,51 @@
+menu "USB HID Device Example"
+
+    choice DEVELOPMENT_BOARD_SELECTION
+        prompt "Select the development board you are using"
+        default ESP32_S3_USB_OTG if IDF_TARGET_ESP32S3
+        default ESP32_S2_GENERIC if IDF_TARGET_ESP32S2
+        help
+            Select this option to choose the board for the example.
+
+        config ESP32_S3_USB_OTG
+            bool "ESP32 S3 USB OTG"
+            depends on IDF_TARGET_ESP32S3
+
+        config ESP32_S3_GENERIC
+            bool "ESP32 S3 GENERIC"
+            depends on IDF_TARGET_ESP32S3
+
+        config ESP32_S2_GENERIC
+            bool "ESP32 S2 GENERIC"
+            depends on IDF_TARGET_ESP32S2
+
+    endchoice
+
+    choice HID_SUBCLASS
+        prompt "HID Device"
+        default SUBCLASS_MOUSE
+
+        config SUBCLASS_MOUSE
+            bool "Mouse"
+        config SUBCLASS_KEYBOARD
+            bool "Keyboard"
+    endchoice
+
+    config TUSB_VID
+        hex "USB Device VID"
+        default 0x303A
+    config TUSB_PID
+        hex "USB Device PID"
+        default 0x8000
+    config TUSB_MANUFACTURER
+        string "USB Device Manufacture"
+        default "Espressif"
+    config TUSB_PRODUCT
+        string "Product Name"
+        default "HID Demo"
+
+    config ENABLE_FULL_KEY_KEYBOARD
+        bool "Enable Full Key Keyboard"
+        default n
+
+endmenu

@@ -1,0 +1,16 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+menu "RIOT Core"
+
+config THREAD_NAMES
+    bool "Store thread name strings"
+    help
+        By default, thread names are not stored if DEVELHELP is not used.
+        Use this parameter to store them for non-devel builds.
+
+endmenu # RIOT Core

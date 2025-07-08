@@ -1,0 +1,32 @@
+# Copyright (c) 2020 Freie Universitaet Berlin
+#               2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+
+config CPU_ARCH_MSP430
+    bool
+
+config CPU_MSP430
+    bool
+    select CPU_ARCH_MSP430
+
+## Common CPU symbols
+config CPU_ARCH
+    default "msp430" if CPU_MSP430
+
+config CPU
+    default "msp430" if CPU_MSP430
+
+config CPU_CORE
+    default "msp430" if CPU_MSP430
+
+## Specific default configuration values
+config GNRC_PKTBUF_SIZE
+    default 2560
+    depends on USEMODULE_GNRC_PKTBUF_STATIC
+
+source "$(RIOTCPU)/msp430/kconfigs/x1xx/Kconfig"
+source "$(RIOTCPU)/msp430/kconfigs/f2xx_g2xx/Kconfig"

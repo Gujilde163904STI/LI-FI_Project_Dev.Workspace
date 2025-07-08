@@ -1,0 +1,18 @@
+[Unit]
+Description=Launch WayVNC server on boot with TLS + SSH fallback
+After=graphical.target
+Requires=graphical.target
+
+[Service]
+Type=simple
+ExecStart=wayvnc --config %h/.config/wayvnc/config
+User=%i
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_UNIX
+Environment=DISPLAY=%h/.Xauthority
+Environment=XDG_SESSION_TYPE=x11
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target 

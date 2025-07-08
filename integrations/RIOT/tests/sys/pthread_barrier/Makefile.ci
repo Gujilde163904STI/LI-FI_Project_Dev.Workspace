@@ -1,0 +1,6 @@
+BOARD_INSUFFICIENT_MEMORY := \
+    atmega8 \
+    i-nucleo-lrwan1 \
+    nucleo-l011k4 \
+    stm32l0538-disco \
+    #

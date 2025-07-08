@@ -1,0 +1,47 @@
+name: Build on Windows
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'test_workflow'
+      - 'develop'
+      - 'master'
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Clean workspace
+        shell: bash
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf "${{ github.workspace }}/pico-sdk"
+          rm -rf "${{ github.workspace }}/pico-examples"
+      - name: Checkout pico-examples
+        uses: actions/checkout@v4
+        with:
+          path: pico-examples
+
+      - name: Checkout pico-sdk/develop
+        uses: actions/checkout@v4
+        with:
+          repository: raspberrypi/pico-sdk
+          ref: develop
+          path: pico-sdk
+
+      - name: Checkout pico-sdk submodules
+        working-directory: ${{github.workspace}}/pico-sdk
+        run: git submodule update --init
+
+      - name: Install dependencies
+        working-directory: ${{github.workspace}}/pico-examples
+        run: choco install .github/workflows/choco_packages.config
+
+      - name: Build Project
+        working-directory: ${{github.workspace}}/pico-examples
+        shell: pwsh
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G Ninja -DPICO_SDK_PATH=../../pico-sdk -DCMAKE_BUILD_TYPE=Debug -DPICO_BOARD=pico_w
+          cmake --build .

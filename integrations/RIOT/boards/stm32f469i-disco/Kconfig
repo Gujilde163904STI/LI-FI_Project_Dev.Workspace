@@ -1,0 +1,16 @@
+config BOARD
+    default "stm32f469i-disco" if BOARD_STM32F469I_DISCO
+
+config BOARD_STM32F469I_DISCO
+    bool
+    default y
+    select CPU_MODEL_STM32F469NI
+
+    # Clock configuration
+    select BOARD_HAS_HSE
+    select BOARD_HAS_LSE
+
+config CLOCK_HSE
+    default 8000000
+
+source "$(RIOTBOARD)/common/stm32/Kconfig"

@@ -1,0 +1,15 @@
+[Unit]
+Description=sftp-only SSH server used by piserver
+After=network.target auditd.service
+
+[Service]
+ExecStart=/usr/sbin/sshd -D -f /etc/ssh/piserver_sshd_config
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RuntimeDirectory=sshd
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target
+

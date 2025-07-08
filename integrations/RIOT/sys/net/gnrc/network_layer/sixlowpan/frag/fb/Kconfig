@@ -1,0 +1,18 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+#
+menu "GNRC 6LoWPAN Fragmentation buffer"
+    depends on USEMODULE_GNRC_SIXLOWPAN_FRAG_FB
+
+config GNRC_SIXLOWPAN_FRAG_FB_SIZE
+    int "Number of datagrams that can be fragmented simultaneously"
+    default 4 if USEMODULE_GNRC_SIXLOWPAN_FRAG_SFR
+    default 1
+    help
+        This determines the number of @ref gnrc_sixlowpan_frag_fb_t instances
+        available.
+
+endmenu # GNRC 6LoWPAN Fragmentation buffer

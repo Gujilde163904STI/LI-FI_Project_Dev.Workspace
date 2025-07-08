@@ -1,0 +1,17 @@
+# Copyright (c) 2020 HAW Hamburg
+#
+# This file is subject to the terms and conditions of the GNU Lesser
+# General Public License v2.1. See the file LICENSE in the top level
+# directory for more details.
+
+menu "nRF802154"
+    depends on USEMODULE_NRF802154
+
+config NRF802154_CCA_THRESH_DEFAULT
+    hex "Default CCA threshold value"
+    default 0x14
+    range 0x00 0xFF
+    help
+        Default CCA threshold value for the CCACTRL register.
+
+endmenu # nRF802154

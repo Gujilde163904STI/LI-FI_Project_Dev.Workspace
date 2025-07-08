@@ -1,0 +1,146 @@
+name: Release actions
+
+on:
+  push:
+    tags:
+    - '*.*.*'
+
+jobs:
+  build_docs:
+    name: "Build documentation tarball"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        # BuildStream requires tags to be able to find its version.
+        with:
+          fetch-depth: 0
+
+      - name: Give `testuser` ownership of the source directory
+        run: sudo chown -R 1000:1000 ${GITHUB_WORKSPACE}
+
+      - name: Build documentation using Docker Compose
+        run: |
+          docker compose \
+            --env-file ${GITHUB_WORKSPACE}/.github/common.env \
+            --file ${GITHUB_WORKSPACE}/.github/compose/ci.docker-compose.yml \
+            run \
+            docs
+
+          # Restore permissions to the current user
+          sudo chown -R ${USER} ${GITHUB_WORKSPACE}
+
+          tar -C doc/build/html -zcf docs.tgz .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: docs.tgz
+
+  build_sdist:
+    name: "Build Python source distribution tarball"
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Build sdist
+      run: pipx run build --sdist
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: sdist
+        path: dist/*.tar.gz
+
+  build_wheels:
+    name: Build Python wheel packages on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fetch latest BuildBox release
+        run: ${GITHUB_WORKSPACE}/.github/wheel-helpers/fetch-latest-buildbox-release.sh
+
+      - name: Build wheels
+        run: pipx run cibuildwheel==v2.22.0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: ./wheelhouse/*.whl
+
+  test_wheels:
+    name: "Test Python packages: ${{ matrix.test-name }}"
+    needs: [build_wheels]
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        # The names here should map to a valid service defined in
+        # "../compose/ci.docker-compose.yml"
+        test-name:
+          - wheels-manylinux_2_28-cp39
+          - wheels-manylinux_2_28-cp310
+          - wheels-manylinux_2_28-cp311
+          - wheels-manylinux_2_28-cp312
+          - wheels-manylinux_2_28-cp313
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: ./wheelhouse
+
+      - name: Run tests with Docker Compose
+        run: |
+          ${GITHUB_WORKSPACE}/.github/run-ci.sh ${{ matrix.test-name }}
+
+  upload_github_release:
+    name: Upload GitHub release assets
+    needs: [build_docs, build_sdist, build_wheels, test_wheels]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs
+
+      - name: Upload release assets
+        run: |
+          tag_name="${GITHUB_REF##*/}"
+          gh release create "$tag_name" "docs.tgz" --notes "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload_pypi_release:
+    name: Upload PyPI release assets
+    needs: [build_docs, build_sdist, build_wheels, test_wheels]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: dist
+
+      - name: Upload to PyPI
+        run: |
+          pipx run twine upload --repository pypi --username __token__ --password "${{ secrets.PYPI_TOKEN }}" dist/*

@@ -1,0 +1,66 @@
+# Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/check-mkdocs-task.md
+name: Check Website
+
+env:
+  # See: https://github.com/actions/setup-go/tree/main#supported-version-syntax
+  GO_VERSION: "1.24"
+  # See: https://github.com/actions/setup-python/tree/main#available-versions-of-python
+  PYTHON_VERSION: "3.9"
+
+# See: https://docs.github.com/en/actions/reference/events-that-trigger-workflows
+on:
+  push:
+    paths:
+      - ".github/workflows/check-mkdocs-task.ya?ml"
+      - "Taskfile.ya?ml"
+      - "mkdocs.ya?ml"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - "docs/**"
+  pull_request:
+    paths:
+      - ".github/workflows/check-mkdocs-task.ya?ml"
+      - "Taskfile.ya?ml"
+      - "mkdocs.ya?ml"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - "docs/**"
+  workflow_dispatch:
+  repository_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install Go dependencies
+        run: go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@v1.4.1
+
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 3.x
+
+      - name: Build website
+        run: task website:check

@@ -1,0 +1,10 @@
+pexpect
+pylint
+# Pytest 6.0.0 doesn't play well with pylint
+pytest >= 6.0.1
+pytest-datafiles >= 3.0
+pytest-env
+pytest-xdist
+pytest-timeout
+pyftpdlib
+setuptools

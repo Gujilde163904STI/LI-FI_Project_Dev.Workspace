@@ -1,0 +1,10 @@
+if (TARGET pico_multicore)
+    add_subdirectory_exclude_platforms(hello_multicore host)
+    # currently broken on RP2350 due to both cores sharing IRQ
+    add_subdirectory_exclude_platforms(multicore_fifo_irqs host "rp2350.*")
+    add_subdirectory_exclude_platforms(multicore_runner host)
+    add_subdirectory_exclude_platforms(multicore_runner_queue host)
+    add_subdirectory_exclude_platforms(multicore_doorbell host rp2040)
+else()
+    message("Skipping multicore examples as pico_multicore is unavailable on this platform")
+endif()

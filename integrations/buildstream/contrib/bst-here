@@ -1,0 +1,137 @@
+#!/bin/bash
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#  Authors:
+#        Charles Bailey <cbailey32@bloomberg.net>
+#        Sam Thursfield <sam.thursfield@codethink.co.uk>
+
+# This is a helper script for using BuildStream via Docker. See
+# docs/source/install.rst for documentation.
+
+usage() {
+    cat <<EOF
+
+USAGE: $(basename "$0") [-i BST_HERE_IMAGE] [-j TAG] [-p] [-t] [-T] [-v VOLUME ...] [-h] [COMMAND [ARG..]]
+
+Run a bst command in a new BuildStream container.
+
+If no command is specified, an interactive shell is launched
+using "/bin/bash -i".
+
+See https://hub.docker.com/r/buildstream/buildstream for details on image
+variants.
+
+OPTIONS:
+    -i IMAGE      Specify Docker image to use; can also be specified by setting
+                  BST_HERE_IMAGE environment variable.
+                  (default: buildstream/buildstream)
+    -j TAG        Specify the tag of the Docker image to use.
+                  (default: latest)
+    -p            Pull the latest buildstream image before running.
+    -t            Force pseudo-terminal allocation.
+    -T            Disable pseudo-terminal allocation.
+    -v VOLUME     Specify additional volumes to mount; should be in format
+                  'host-src:container-dest' same as 'docker run -v'.
+    -h            Print this help text and exit.
+
+EOF
+    exit "$1"
+}
+
+bst_here_image="${BST_HERE_IMAGE:-buildstream/buildstream}"
+bst_here_tag=
+
+is_tty=
+update=false
+extra_volumes_opt=
+
+if test -t 0
+then
+    is_tty=y
+fi
+
+while getopts i:j:ptTv:h arg
+do
+    case $arg in
+    i)
+        bst_here_image="$OPTARG"
+        ;;
+    j)
+        bst_here_tag="$OPTARG"
+        ;;
+    p)
+        update=true
+        ;;
+    T)
+        is_tty=
+        ;;
+    t)
+        is_tty=y
+        ;;
+    v)
+        extra_volumes_opt="$extra_volumes_opt --volume $OPTARG"
+        ;;
+    h)
+        usage 0
+        ;;
+    \?)
+        usage 1
+    esac
+done
+
+if [ -n "$bst_here_tag" ]; then
+    bst_here_image="$bst_here_image:$bst_here_tag"
+fi
+
+test "$OPTIND" -gt 1 &&
+    shift $(( OPTIND - 1 ))
+
+for vol in buildstream-cache buildstream-config
+do
+    docker volume create "$vol" >/dev/null
+done
+
+BST_HERE_PS1="\[\033[01;34m\]\w\[\033[00m\]> "
+
+if [ "$#" -eq 0 ]; then
+    command="/bin/bash -i"
+else
+    command="/usr/local/bin/bst $@"
+fi
+
+if "$update" == true
+then
+    docker pull "$bst_here_image"
+fi
+
+# FIXME: We run with --privileged to allow bwrap to mount system
+#        directories, but this is overkill. We should add the correct
+#        --cap-add calls, or seccomp settings, but we are not sure
+#        what those are yet.
+#
+#        Old settings:
+#          --cap-add SYS_ADMIN
+#          --security-opt seccomp=unconfined
+#
+exec docker run --rm -i${is_tty:+ -t} \
+                --privileged \
+                --env PS1="$BST_HERE_PS1" \
+                --device /dev/fuse \
+                --volume buildstream-cache:/root/.cache/buildstream \
+                --volume buildstream-config:/root/.config \
+                --volume "$PWD":/src \
+                $extra_volumes_opt \
+                --workdir /src \
+                "$bst_here_image" \
+                $command

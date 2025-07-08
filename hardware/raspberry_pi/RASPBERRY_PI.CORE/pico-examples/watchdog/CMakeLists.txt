@@ -1,0 +1,5 @@
+if (TARGET hardware_watchdog)
+    add_subdirectory_exclude_platforms(hello_watchdog host)
+else()
+    message("Skipping Watchdog examples as hardware_watchdog unavailable")
+endif()

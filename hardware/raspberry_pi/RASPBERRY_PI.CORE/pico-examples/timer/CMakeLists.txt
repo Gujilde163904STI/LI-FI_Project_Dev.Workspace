@@ -1,0 +1,3 @@
+add_subdirectory_exclude_platforms(hello_timer host)
+add_subdirectory_exclude_platforms(periodic_sampler)
+add_subdirectory_exclude_platforms(timer_lowlevel host)
