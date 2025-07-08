@@ -174,3 +174,10 @@ archive/
 *.sqlite
 *.sublime-workspace
 *.sublime-project
+
+# === Firebase ===
+.firebase
+firebase-debug.log
+firebase.json
+firestore.rules
+firestore.indexes.json

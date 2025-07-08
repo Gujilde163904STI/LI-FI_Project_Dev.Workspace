@@ -1,0 +1,216 @@
+version: '3.8'
+
+services:
+  printer_bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile.printer_bridge
+    image: printer_bridge:latest
+    container_name: printer_bridge
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SERIAL_PORT=/dev/ttyUSB0
+      - BAUD_RATE=9600
+      - LOG_LEVEL=INFO
+      - BRIDGE_HOST=0.0.0.0
+      - BRIDGE_PORT=8080
+    volumes:
+      - ./src/printer_bridge:/app
+      - printer_logs:/app/logs
+      - ./config:/app/config:ro
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyUSB2:/dev/ttyUSB2
+      - /dev/ttyUSB3:/dev/ttyUSB3
+    networks:
+      - embedded_network
+    depends_on:
+      - packet_capture
+    ports:
+      - "8080:8080"
+
+  packet_capture:
+    build:
+      context: .
+      dockerfile: Dockerfile.packet_capture
+    image: packet_capture:latest
+    container_name: packet_capture
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
+    environment:
+      - CAPTURE_INTERFACE=eth0
+      - CAPTURE_FILTER=port 8080 or port 80
+      - PCAP_DIR=/captures
+      - ROTATION_SIZE=100M
+      - MAX_FILES=10
+    volumes:
+      - ./src/packet_capture:/app
+      - packet_captures:/captures
+      - ./config:/app/config:ro
+    command: ["tcpdump", "-i", "any", "-w", "/captures/capture-%Y%m%d_%H%M%S.pcap", "-G", "3600", "-C", "100"]
+
+  web_ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.web_ui
+    image: web_ui:latest
+    container_name: web_ui
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - FLASK_ENV=development
+      - API_BASE_URL=http://printer_bridge:8080
+      - SESSION_SECRET=your-secret-key-here
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=embedded_ui
+      - DB_USER=ui_user
+      - DB_PASS=ui_password
+    volumes:
+      - ./src/web_ui:/app
+      - ./config:/app/config:ro
+      - web_uploads:/app/uploads
+    networks:
+      - embedded_network
+    depends_on:
+      - printer_bridge
+      - db
+    ports:
+      - "3000:3000"
+
+  escpos_emulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.escpos_emulator
+    image: escpos_emulator:latest
+    container_name: escpos_emulator
+    restart: unless-stopped
+    environment:
+      - EMULATOR_PORT=9100
+      - EMULATOR_HOST=0.0.0.0
+      - MOCK_RESPONSES=true
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./src/escpos_emulator:/app
+      - ./config:/app/config:ro
+      - emulator_output:/app/output
+    networks:
+      - embedded_network
+    ports:
+      - "9100:9100"
+    profiles:
+      - ci
+      - testing
+
+  db:
+    image: postgres:15-alpine
+    container_name: embedded_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=embedded_ui
+      - POSTGRES_USER=ui_user
+      - POSTGRES_PASSWORD=ui_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - embedded_network
+    ports:
+      - "5432:5432"
+
+  # Development container for embedded builds
+  dev_tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev_tools
+    image: dev_tools:latest
+    container_name: dev_tools
+    restart: unless-stopped
+    environment:
+      - PLATFORMIO_CORE_DIR=/workspace/.platformio
+      - PLATFORMIO_GLOBALLIB_DIR=/workspace/.platformio/lib
+      - ARDUINO_CLI_CONFIG_FILE=/workspace/.arduino15/arduino-cli.yaml
+    volumes:
+      - ./:/workspace
+      - platformio_cache:/workspace/.platformio
+      - arduino_cache:/workspace/.arduino15
+      - ./firmware:/workspace/firmware
+      - ./scripts:/workspace/scripts
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyUSB2:/dev/ttyUSB2
+      - /dev/ttyUSB3:/dev/ttyUSB3
+    networks:
+      - embedded_network
+    working_dir: /workspace
+    command: tail -f /dev/null
+    profiles:
+      - dev
+
+networks:
+  embedded_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  printer_logs:
+    driver: local
+  packet_captures:
+    driver: local
+  web_uploads:
+    driver: local
+  emulator_output:
+    driver: local
+  postgres_data:
+    driver: local
+  platformio_cache:
+    driver: local
+  arduino_cache:
+    driver: local
+
+# Environment variables documentation:
+# 
+# printer_bridge:
+#   SERIAL_PORT: Serial device path (default: /dev/ttyUSB0)
+#   BAUD_RATE: Serial communication baud rate (default: 9600)
+#   LOG_LEVEL: Logging level (INFO, DEBUG, WARNING, ERROR)
+#   BRIDGE_HOST: Host to bind the bridge service (default: 0.0.0.0)
+#   BRIDGE_PORT: Port for the bridge service (default: 8080)
+#
+# packet_capture:
+#   CAPTURE_INTERFACE: Network interface to capture (default: eth0)
+#   CAPTURE_FILTER: tcpdump filter expression
+#   PCAP_DIR: Directory to store capture files (default: /captures)
+#   ROTATION_SIZE: Size threshold for file rotation (default: 100M)
+#   MAX_FILES: Maximum number of capture files to keep (default: 10)
+#
+# web_ui:
+#   NODE_ENV/FLASK_ENV: Environment mode (development/production)
+#   API_BASE_URL: Base URL for printer bridge API
+#   SESSION_SECRET: Secret key for session management
+#   DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASS: Database connection parameters
+#
+# escpos_emulator:
+#   EMULATOR_PORT: Port for ESC/POS emulator (default: 9100)
+#   EMULATOR_HOST: Host to bind emulator (default: 0.0.0.0)
+#   MOCK_RESPONSES: Enable mock responses for testing (default: true)
+#   LOG_LEVEL: Logging level for emulator
+#
+# dev_tools:
+#   PLATFORMIO_CORE_DIR: PlatformIO core directory
+#   PLATFORMIO_GLOBALLIB_DIR: PlatformIO global library directory
+#   ARDUINO_CLI_CONFIG_FILE: Arduino CLI configuration file path
+#
+# Usage:
+#   docker-compose up -d                    # Start core services
+#   docker-compose --profile ci up -d       # Start with CI services (includes escpos_emulator)
+#   docker-compose --profile dev up -d      # Start with development tools
+#   docker-compose --profile testing up -d  # Start with testing services
