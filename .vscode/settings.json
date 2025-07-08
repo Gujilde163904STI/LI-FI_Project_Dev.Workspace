@@ -1,0 +1,269 @@
+{
+    "idf.pythonInstallPath": "/usr/bin/python3",
+    "cmake.ignoreCMakeListsMissing": true,
+    "git.ignoreLimitWarning": true,
+    "php.executablePath": "/opt/homebrew/opt/php@8.4/bin/php",
+    "php.validate.executablePath": "/opt/homebrew/opt/php@8.4/bin/php",
+    "php.validate.enable": true,
+    "php.validate.run": "onSave",
+    "intelephense.files.maxSize": 5000000,
+    "intelephense.environment.phpVersion": "8.4.0",
+    // Memory optimization settings
+    "typescript.tsserver.maxTsServerMemory": 4096,
+    "typescript.preferences.includePackageJsonAutoImports": "off",
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "typescript.suggest.autoImports": false,
+    "javascript.suggest.autoImports": false,
+    // Python/Pylance optimization settings
+    "python.analysis.indexing": true,
+    "python.analysis.packageIndexDepths": [
+        {
+            "name": "",
+            "depth": 2,
+            "includeAllSymbols": false
+        }
+    ],
+    "python.analysis.exclude": [
+        "**/integrations/**",
+        "**/resources/**",
+        "**/docs/**",
+        "**/meta/**",
+        "**/archive/**",
+        "**/Arduino-main/**",
+        "**/arduino-core/**",
+        "**/legacy-docs/**",
+        "**/LIFI_Build_References/**",
+        "**/node_modules/**",
+        "**/build/**",
+        "**/dist/**",
+        "**/target/**"
+    ],
+    "python.analysis.include": [
+        "devices/**",
+        "firmware/**",
+        "scripts/**",
+        "test/**",
+        "tools/**"
+    ],
+    "python.analysis.autoSearchPaths": false,
+    "python.analysis.autoImportCompletions": false,
+    "python.analysis.useLibraryCodeForTypes": false,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.logLevel": "Warning",
+    "python.analysis.stubPath": "./typings",
+    // Enhanced file exclusions for better performance
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/target": true,
+        "**/.git": true,
+        "**/__pycache__": true,
+        "**/venv": true,
+        "**/.venv": true,
+        "**/integrations/**": true,
+        "**/resources/**": true,
+        "**/docs/**": true,
+        "**/meta/**": true,
+        "**/archive/**": true,
+        "**/Arduino-main/**": true,
+        "**/arduino-core/**": true,
+        "**/legacy-docs/**": true,
+        "**/LIFI_Build_References/**": true,
+        "**/*.csproj": true,
+        "**/*.sln": true,
+        "**/obj/**": true,
+        "**/bin/**": true,
+        "**/.dotnet/**": true,
+        "**/.cursor/**": true,
+        "**/.DS_Store": true,
+        "**/firebase-debug.log": true,
+        "**/pglite-debug.log": true
+    },
+    // File watching exclusions to improve performance
+    "files.watcherExclude": {
+        "**/integrations/**": true,
+        "**/resources/**": true,
+        "**/docs/**": true,
+        "**/meta/**": true,
+        "**/archive/**": true,
+        "**/Arduino-main/**": true,
+        "**/arduino-core/**": true,
+        "**/legacy-docs/**": true,
+        "**/LIFI_Build_References/**": true,
+        "**/.git/**": true,
+        "**/node_modules/**": true,
+        "**/__pycache__/**": true,
+        "**/venv/**": true,
+        "**/.venv/**": true,
+        "**/*.csproj": true,
+        "**/*.sln": true,
+        "**/obj/**": true,
+        "**/bin/**": true,
+        "**/.dotnet/**": true,
+        "**/build/**": true,
+        "**/dist/**": true,
+        "**/target/**": true,
+        "**/.cursor/**": true,
+        "**/.DS_Store": true,
+        "**/firebase-debug.log": true,
+        "**/pglite-debug.log": true
+    },
+    // Enhanced search exclusions
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/target": true,
+        "**/.git": true,
+        "**/__pycache__": true,
+        "**/venv": true,
+        "**/.venv": true,
+        "**/integrations/**": true,
+        "**/resources/**": true,
+        "**/docs/**": true,
+        "**/meta/**": true,
+        "**/archive/**": true,
+        "**/Arduino-main/**": true,
+        "**/arduino-core/**": true,
+        "**/legacy-docs/**": true,
+        "**/LIFI_Build_References/**": true,
+        "**/*.csproj": true,
+        "**/*.sln": true,
+        "**/obj/**": true,
+        "**/bin/**": true,
+        "**/.dotnet/**": true,
+        "**/.cursor/**": true,
+        "**/.DS_Store": true,
+        "**/firebase-debug.log": true,
+        "**/pglite-debug.log": true
+    },
+    // Disable resource-intensive features
+    "workbench.enableExperiments": false,
+    "telemetry.telemetryLevel": "off",
+    "workbench.settings.enableNaturalLanguageSearch": false,
+    "editor.wordBasedSuggestions": "off",
+    "editor.wordBasedSuggestionsMode": "currentDocument",
+    "editor.occurrencesHighlight": "off",
+    "editor.selectionHighlight": false,
+    "editor.codeLensFontFamily": "",
+    "editor.suggest.showStatusBar": false,
+    "editor.suggest.preview": false,
+    "editor.suggest.shareSuggestSelections": false,
+    // Disable features that can slow down large workspaces
+    "python.analysis.completeFunctionParens": false,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportGeneralTypeIssues": "none",
+        "reportOptionalMemberAccess": "none",
+        "reportOptionalSubscript": "none",
+        "reportPrivateImportUsage": "none"
+    },
+    // .NET configuration
+    "dotnet.server.useOmnisharp": false,
+    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": false,
+    "dotnet.inlayHints.enableInlayHintsForParameters": false,
+    "dotnet.inlayHints.enableInlayHintsForLiteralParameters": false,
+    "dotnet.inlayHints.enableInlayHintsForIndexerParameters": false,
+    "dotnet.inlayHints.enableInlayHintsForObjectCreationParameters": false,
+    "dotnet.inlayHints.enableInlayHintsForOtherParameters": false,
+    "dotnet.inlayHints.enableInlayHintsForTypes": false,
+    "dotnet.preferCSharpExtension": true,
+    "dotnet.acquisition.legacy.enable": false,
+    // OmniSharp configuration
+    "omnisharp.enableEditorConfigSupport": false,
+    "omnisharp.enableImportCompletion": false,
+    "omnisharp.enableRoslynAnalyzers": false,
+    "omnisharp.organizeImportsOnFormat": false,
+    "omnisharp.useModernNet": false,
+    // C# configuration
+    "csharp.semanticHighlighting.enabled": false,
+    "csharp.suppressDotnetRestoreNotification": true,
+    "csharp.suppressDotnetInstallWarning": true,
+    "csharp.suppressProjectJsonWarning": true,
+    // Disable problematic extensions in this workspace
+    "extensions.autoUpdate": false,
+    "extensions.ignoreRecommendations": true,
+    // Explicitly disable .NET extensions for this workspace
+    "dotnet.backgroundAnalysis.compilationAnalysis": false,
+    "dotnet.backgroundAnalysis.semanticAnalysis": false,
+    "dotnet.completion.showNameCompletionSuggestions": false,
+    "dotnet.debug.sourceFileMap": {},
+    // Force disable C# Dev Kit features
+    "dotnetAcquisitionExtension.enableTelemetry": false,
+    "dotnetAcquisitionExtension.installTimeoutValue": 0,
+    // Firebase CLI optimizationx
+    "firebase.autoReloadProjects": false,
+    "firebase.autoSelect": false,
+    "editor.defaultFormatter": null,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true,
+    "editor.formatOnSave": false,
+    // Terminal Configuration for Mac/zsh
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "terminal.integrated.profiles.osx": {
+        "zsh": {
+            "path": "/bin/zsh",
+            "args": ["-l"]
+        }
+    },
+    "terminal.integrated.rendererType": "dom",
+    "terminal.integrated.gpuAcceleration": "off",
+    "terminal.integrated.scrollback": 10000,
+    "terminal.integrated.fastScrollSensitivity": 5,
+    "terminal.integrated.mouseWheelScrollSensitivity": 1,
+    
+    // Workspace Trust
+    "security.workspace.trust.untrustedFiles": "open",
+    "workbench.trust.enabled": false,
+    
+    // Git Configuration
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+    
+    // Python Configuration for Embedded Development
+    "python.defaultInterpreterPath": "/opt/anaconda3/bin/python",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python"
+    },
+    
+    // C/C++ Configuration for Arduino/ESP
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    
+    // JSON/YAML Configuration
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "vscode.markdown-language-features"
+    },
+    
+    // File Associations for Embedded Development
+    "files.associations": {
+        "*.ino": "cpp",
+        "*.h": "c",
+        "*.c": "c"
+    },
+    
+    // C/C++ Default Settings
+    "C_Cpp.default.compilerPath": "/usr/bin/clang",
+    "C_Cpp.default.cStandard": "c11",
+    "C_Cpp.default.cppStandard": "c++17",
+    
+    // PlatformIO Configuration
+    "platformio-ide.useBuiltinPIOCore": false,
+    "platformio-ide.activateProjectOnTextEditorChange": false,
+    "platformio-ide.autoRebuildAutocompleteIndex": false
+}
