@@ -1,0 +1,71 @@
+package:
+  name: constructor
+  version: "{{ GIT_DESCRIBE_TAG }}.{{ GIT_BUILD_STR }}"
+
+source:
+  # git_url is nice in that it won't capture devenv stuff.  However, it only
+  # captures committed code, so pay attention.
+  - git_url: ../
+
+build:
+  script:
+    - python -m pip install --no-deps --ignore-installed .
+  entry_points:
+    - constructor = constructor.main:main
+
+requirements:
+  host:
+    - python  # >=3.8
+    - pip
+    - setuptools >=70.1
+    - setuptools_scm >=6.2
+  run:
+    - conda >=4.6
+    - python  # >=3.8
+    - ruamel.yaml >=0.11.14,<0.19
+    - conda-standalone
+    - jinja2
+    - jsonschema >=4
+    - pillow >=3.1     # [win or osx]
+    - nsis >=3.08      # [win]
+  run_constrained:     # [unix]
+    - nsis >=3.08      # [unix]
+    - conda-libmamba-solver !=24.11.0
+    - pydantic >=2
+
+test:
+  source_files:
+    - tests
+  requires:
+    - pip
+    - pytest
+    - pywin32  # [win]
+  imports:
+    - constructor
+  commands:
+    - pip check
+    - constructor --help
+    # Run unit tests
+    - pytest -v tests -k "not examples"
+
+about:
+  home: https://conda.io
+  license: BSD 3-Clause
+  license_file: LICENSE.txt
+  summary: create installer from conda packages
+  description: |
+    Constructor is a tool for constructing an installer for a collection of
+    conda packages. It creates an Anaconda-like installer consisting of
+    packages.
+  doc_url: https://conda.io/projects/conda/en/latest/
+  dev_url: https://github.com/conda/constructor
+
+extra:
+  recipe-maintainers:
+    - jakirkham
+    - mbargull
+    - kalefranz
+    - msarahan
+    - mingwandroid
+    - nehaljwani
+    - mcg1969

@@ -1,0 +1,167 @@
+From 7435ec0392c1f36bf3740c3a9748e7149c0c153e Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sat, 16 Jul 2022 14:44:02 +0900
+Subject: [PATCH] xtensa: Correct the relative RTX cost that corresponds to the
+ Move Immediate "MOVI" instruction
+
+This patch corrects the overestimation of the relative cost of
+'(set (reg) (const_int N))' where N fits into the instruction itself.
+
+In fact, such overestimation confuses the RTL loop invariant motion pass.
+As a result, it brings almost no negative impact from the speed point of
+view, but addtiional reg-reg move instructions and register allocation
+pressure about the size.
+
+    /* example, optimized for size */
+    extern int foo(void);
+    extern int array[16];
+    void test_0(void) {
+      unsigned int i;
+      for (i = 0; i < sizeof(array)/sizeof(*array); ++i)
+        array[i] = 1024;
+    }
+    void test_1(void) {
+      unsigned int i;
+      for (i = 0; i < sizeof(array)/sizeof(*array); ++i)
+        array[i] = array[i] ? 1024 : 0;
+    }
+    void test_2(void) {
+      unsigned int i;
+      for (i = 0; i < sizeof(array)/sizeof(*array); ++i)
+        array[i] = foo() ? 0 : 1024;
+    }
+
+    ;; before
+	.literal_position
+	.literal .LC0, array
+    test_0:
+	l32r	a3, .LC0
+	movi.n	a2, 0
+	movi	a4, 0x400	// OK
+    .L2:
+	s32i.n	a4, a3, 0
+	addi.n	a2, a2, 1
+	addi.n	a3, a3, 4
+	bnei	a2, 16, .L2
+	ret.n
+	.literal_position
+	.literal .LC1, array
+    test_1:
+	l32r	a2, .LC1
+	movi.n	a3, 0
+	movi	a5, 0x400	// NG
+    .L6:
+	l32i.n	a4, a2, 0
+	beqz.n	a4, .L5
+	mov.n	a4, a5		// should be "movi a4, 0x400"
+    .L5:
+	s32i.n	a4, a2, 0
+	addi.n	a3, a3, 1
+	addi.n	a2, a2, 4
+	bnei	a3, 16, .L6
+	ret.n
+	.literal_position
+	.literal .LC2, array
+    test_2:
+	addi	sp, sp, -32
+	s32i.n	a12, sp, 24
+	l32r	a12, .LC2
+	s32i.n	a13, sp, 20
+	s32i.n	a14, sp, 16
+	s32i.n	a15, sp, 12
+	s32i.n	a0, sp, 28
+	addi	a13, a12, 64
+	movi.n	a15, 0		// NG
+	movi	a14, 0x400	// and wastes callee-saved registers (only 4)
+    .L11:
+	call0	foo
+	mov.n	a3, a14		// should be "movi a3, 0x400"
+	movnez	a3, a15, a2
+	s32i.n	a3, a12, 0
+	addi.n	a12, a12, 4
+	bne	a12, a13, .L11
+	l32i.n	a0, sp, 28
+	l32i.n	a12, sp, 24
+	l32i.n	a13, sp, 20
+	l32i.n	a14, sp, 16
+	l32i.n	a15, sp, 12
+	addi	sp, sp, 32
+	ret.n
+
+    ;; after
+	.literal_position
+	.literal .LC0, array
+    test_0:
+	l32r	a3, .LC0
+	movi.n	a2, 0
+	movi	a4, 0x400	// OK
+    .L2:
+	s32i.n	a4, a3, 0
+	addi.n	a2, a2, 1
+	addi.n	a3, a3, 4
+	bnei	a2, 16, .L2
+	ret.n
+	.literal_position
+	.literal .LC1, array
+    test_1:
+	l32r	a2, .LC1
+	movi.n	a3, 0
+    .L6:
+	l32i.n	a4, a2, 0
+	beqz.n	a4, .L5
+	movi	a4, 0x400	// OK
+    .L5:
+	s32i.n	a4, a2, 0
+	addi.n	a3, a3, 1
+	addi.n	a2, a2, 4
+	bnei	a3, 16, .L6
+	ret.n
+	.literal_position
+	.literal .LC2, array
+    test_2:
+	addi	sp, sp, -16
+	s32i.n	a12, sp, 8
+	l32r	a12, .LC2
+	s32i.n	a13, sp, 4
+	s32i.n	a0, sp, 12
+	addi	a13, a12, 64
+    .L11:
+	call0	foo
+	movi.n	a3, 0		// OK
+	movi	a4, 0x400	// and less register allocation pressure
+	moveqz	a3, a4, a2
+	s32i.n	a3, a12, 0
+	addi.n	a12, a12, 4
+	bne	a12, a13, .L11
+	l32i.n	a0, sp, 12
+	l32i.n	a12, sp, 8
+	l32i.n	a13, sp, 4
+	addi	sp, sp, 16
+	ret.n
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.c (xtensa_rtx_costs):
+	Change the relative cost of '(set (reg) (const_int N))' where
+	N fits into signed 12-bit from 4 to 0 if optimizing for size.
+	And use the appropriate macro instead of the bare number 4.
+---
+ gcc/config/xtensa/xtensa.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index a5330e52b..bd3489bfe 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -4109,7 +4109,7 @@ xtensa_rtx_costs (rtx x, machine_mode mode, int outer_code,
+ 	case SET:
+ 	  if (xtensa_simm12b (INTVAL (x)))
+ 	    {
+-	      *total = 4;
++	      *total = speed ? COSTS_N_INSNS (1) : 0;
+ 	      return true;
+ 	    }
+ 	  break;
+-- 
+2.20.1
+

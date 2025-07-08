@@ -1,0 +1,61 @@
+---
+title: word
+categories: [ "Variables" ]
+subCategories: [ "Data Types" ]
+---
+
+= word
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+A word can store an unsigned number of at least 16 bits (from 0 to 65535).
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`word var = val;`
+
+
+[float]
+=== Parameters
+`var`: variable name. +
+`val`: the value to assign to that variable.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+
+// HOW TO USE SECTION STARTS
+[#howtouse]
+--
+
+[float]
+=== Example Code
+// Describe what the example code is all about and add relevant code   ►►►►► THIS SECTION IS MANDATORY ◄◄◄◄◄
+
+
+[source,arduino]
+----
+word w = 10000;
+----
+
+--
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+--
+// SEE ALSO SECTION ENDS

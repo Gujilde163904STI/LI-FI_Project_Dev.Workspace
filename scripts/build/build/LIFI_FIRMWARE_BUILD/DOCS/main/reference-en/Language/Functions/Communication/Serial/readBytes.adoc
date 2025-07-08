@@ -1,0 +1,57 @@
+---
+title: Serial.readBytes()
+---
+
+
+
+
+= Serial.readBytes()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+`Serial.readBytes()` reads characters from the serial port into a buffer. The function terminates if the determined length has been read, or it times out (see link:../settimeout[Serial.setTimeout()]).
+
+`Serial.readBytes()` returns the number of characters placed in the buffer. A 0 means no valid data was found.
+
+`Serial.readBytes()` inherits from the link:../../stream[Stream] utility class.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`_Serial_.readBytes(buffer, length)`
+
+
+[float]
+=== Parameters
+`_Serial_`: serial port object. See the list of available serial ports for each board on the link:https://www.arduino.cc/en/Reference/serial[Serial main page]. +
+`buffer`: the buffer to store the bytes in. Allowed data types: array of `char` or `byte`. +
+`length`: the number of bytes to read. Allowed data types: `int`.
+
+
+[float]
+=== Returns
+The number of bytes placed in the buffer. Data type: `size_t`.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:../../stream[stream]
+* #LANGUAGE# link:../../stream/streamreadbytes[stream.readBytes()]
+
+--
+// SEE ALSO SECTION ENDS

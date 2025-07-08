@@ -1,0 +1,400 @@
+From ed2c4b57807470b386e9abdf145282e197d9da65 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sat, 11 Jun 2022 00:26:17 +0900
+Subject: [PATCH 18/31] xtensa: Improve constant synthesis for both integer and
+ floating-point
+
+This patch revises the previous implementation of constant synthesis.
+
+First, changed to use define_split machine description pattern and to run
+after reload pass, in order not to interfere some optimizations such as
+the loop invariant motion.
+
+Second, not only integer but floating-point is subject to processing.
+
+Third, several new synthesis patterns - when the constant cannot fit into
+a "MOVI Ax, simm12" instruction, but:
+
+I.   can be represented as a power of two minus one (eg. 32767, 65535 or
+     0x7fffffffUL)
+       => "MOVI(.N) Ax, -1" + "SRLI Ax, Ax, 1 ... 31" (or "EXTUI")
+II.  is between -34816 and 34559
+       => "MOVI(.N) Ax, -2048 ... 2047" + "ADDMI Ax, Ax, -32768 ... 32512"
+III. (existing case) can fit into a signed 12-bit if the trailing zero bits
+     are stripped
+       => "MOVI(.N) Ax, -2048 ... 2047" + "SLLI Ax, Ax, 1 ... 31"
+
+The above sequences consist of 5 or 6 bytes and have latency of 2 clock cycles,
+in contrast with "L32R Ax, <litpool>" (3 bytes and one clock latency, but may
+suffer additional one clock pipeline stall and implementation-specific
+InstRAM/ROM access penalty) plus 4 bytes of constant value.
+
+In addition, 3-instructions synthesis patterns (8 or 9 bytes, 3 clock latency)
+are also provided when optimizing for speed and L32R instruction has
+considerable access penalty:
+
+IV.  2-instructions synthesis (any of I ... III) followed by
+     "SLLI Ax, Ax, 1 ... 31"
+V.   2-instructions synthesis followed by either "ADDX[248] Ax, Ax, Ax"
+     or "SUBX8 Ax, Ax, Ax" (multiplying by 3, 5, 7 or 9)
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa-protos.h (xtensa_constantsynth):
+	New prototype.
+	* config/xtensa/xtensa.c (xtensa_emit_constantsynth,
+	xtensa_constantsynth_2insn, xtensa_constantsynth_rtx_SLLI,
+	xtensa_constantsynth_rtx_ADDSUBX, xtensa_constantsynth):
+	New backend functions that process the abovementioned logic.
+	(xtensa_emit_move_sequence): Revert the previous changes.
+	* config/xtensa/xtensa.md: New split patterns for integer
+	and floating-point, as the frontend part.
+
+gcc/testsuite/ChangeLog:
+
+	* gcc.target/xtensa/constsynth_2insns.c: New.
+	* gcc.target/xtensa/constsynth_3insns.c: Ditto.
+	* gcc.target/xtensa/constsynth_double.c: Ditto.
+---
+ gcc/config/xtensa/xtensa-protos.h             |   1 +
+ gcc/config/xtensa/xtensa.c                    | 133 +++++++++++++++---
+ gcc/config/xtensa/xtensa.md                   |  50 +++++++
+ .../gcc.target/xtensa/constsynth_2insns.c     |  44 ++++++
+ .../gcc.target/xtensa/constsynth_3insns.c     |  24 ++++
+ .../gcc.target/xtensa/constsynth_double.c     |  11 ++
+ 6 files changed, 247 insertions(+), 16 deletions(-)
+ create mode 100644 gcc/testsuite/gcc.target/xtensa/constsynth_2insns.c
+ create mode 100644 gcc/testsuite/gcc.target/xtensa/constsynth_3insns.c
+ create mode 100644 gcc/testsuite/gcc.target/xtensa/constsynth_double.c
+
+diff --git a/gcc/config/xtensa/xtensa-protos.h b/gcc/config/xtensa/xtensa-protos.h
+index 80b1da2bb..d65bc2954 100644
+--- a/gcc/config/xtensa/xtensa-protos.h
++++ b/gcc/config/xtensa/xtensa-protos.h
+@@ -44,6 +44,7 @@ extern int xtensa_expand_block_move (rtx *);
+ extern int xtensa_expand_block_set_unrolled_loop (rtx *);
+ extern int xtensa_expand_block_set_small_loop (rtx *);
+ extern void xtensa_split_operand_pair (rtx *, machine_mode);
++extern int xtensa_constantsynth (rtx, HOST_WIDE_INT);
+ extern int xtensa_emit_move_sequence (rtx *, machine_mode);
+ extern rtx xtensa_copy_incoming_a7 (rtx);
+ extern void xtensa_expand_nonlocal_goto (rtx *);
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 94ff901c5..ba36d7244 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -1027,6 +1027,123 @@ xtensa_split_operand_pair (rtx operands[4], machine_mode mode)
+ }
+ 
+ 
++/* Try to emit insns to load srcval (that cannot fit into signed 12-bit)
++   into dst with synthesizing a such constant value from a sequence of
++   load-immediate / arithmetic ones, instead of a L32R instruction
++   (plus a constant in litpool).  */
++
++static void
++xtensa_emit_constantsynth (rtx dst, enum rtx_code code,
++			   HOST_WIDE_INT imm0, HOST_WIDE_INT imm1,
++			   rtx (*gen_op)(rtx, HOST_WIDE_INT),
++			   HOST_WIDE_INT imm2)
++{
++  gcc_assert (REG_P (dst));
++  emit_move_insn (dst, GEN_INT (imm0));
++  emit_move_insn (dst, gen_rtx_fmt_ee (code, SImode,
++				       dst, GEN_INT (imm1)));
++  if (gen_op)
++    emit_move_insn (dst, gen_op (dst, imm2));
++}
++
++static int
++xtensa_constantsynth_2insn (rtx dst, HOST_WIDE_INT srcval,
++			    rtx (*gen_op)(rtx, HOST_WIDE_INT),
++			    HOST_WIDE_INT op_imm)
++{
++  int shift = exact_log2 (srcval + 1);
++
++  if (IN_RANGE (shift, 1, 31))
++    {
++      xtensa_emit_constantsynth (dst, LSHIFTRT, -1, 32 - shift,
++				 gen_op, op_imm);
++      return 1;
++    }
++
++  if (IN_RANGE (srcval, (-2048 - 32768), (2047 + 32512)))
++    {
++      HOST_WIDE_INT imm0, imm1;
++
++      if (srcval < -32768)
++	imm1 = -32768;
++      else if (srcval > 32512)
++	imm1 = 32512;
++      else
++	imm1 = srcval & ~255;
++      imm0 = srcval - imm1;
++      if (TARGET_DENSITY && imm1 < 32512 && IN_RANGE (imm0, 224, 255))
++	imm0 -= 256, imm1 += 256;
++      xtensa_emit_constantsynth (dst, PLUS, imm0, imm1, gen_op, op_imm);
++	return 1;
++    }
++
++  shift = ctz_hwi (srcval);
++  if (xtensa_simm12b (srcval >> shift))
++    {
++      xtensa_emit_constantsynth (dst, ASHIFT, srcval >> shift, shift,
++				 gen_op, op_imm);
++      return 1;
++    }
++
++  return 0;
++}
++
++static rtx
++xtensa_constantsynth_rtx_SLLI (rtx reg, HOST_WIDE_INT imm)
++{
++  return gen_rtx_ASHIFT (SImode, reg, GEN_INT (imm));
++}
++
++static rtx
++xtensa_constantsynth_rtx_ADDSUBX (rtx reg, HOST_WIDE_INT imm)
++{
++  return imm == 7
++	 ? gen_rtx_MINUS (SImode, gen_rtx_ASHIFT (SImode, reg, GEN_INT (3)),
++			  reg)
++	 : gen_rtx_PLUS (SImode, gen_rtx_ASHIFT (SImode, reg,
++						 GEN_INT (floor_log2 (imm - 1))),
++			 reg);
++}
++
++int
++xtensa_constantsynth (rtx dst, HOST_WIDE_INT srcval)
++{
++  /* No need for synthesizing for what fits into MOVI instruction.  */
++  if (xtensa_simm12b (srcval))
++    return 0;
++
++  /* 2-insns substitution.  */
++  if ((optimize_size || (optimize && xtensa_extra_l32r_costs >= 1))
++      && xtensa_constantsynth_2insn (dst, srcval, NULL, 0))
++    return 1;
++
++  /* 3-insns substitution.  */
++  if (optimize > 1 && !optimize_size && xtensa_extra_l32r_costs >= 2)
++    {
++      int shift, divisor;
++
++      /* 2-insns substitution followed by SLLI.  */
++      shift = ctz_hwi (srcval);
++      if (IN_RANGE (shift, 1, 31) &&
++	  xtensa_constantsynth_2insn (dst, srcval >> shift,
++				      xtensa_constantsynth_rtx_SLLI,
++				      shift))
++	return 1;
++
++      /* 2-insns substitution followed by ADDX[248] or SUBX8.  */
++      if (TARGET_ADDX)
++	for (divisor = 3; divisor <= 9; divisor += 2)
++	  if (srcval % divisor == 0 &&
++	      xtensa_constantsynth_2insn (dst, srcval / divisor,
++					  xtensa_constantsynth_rtx_ADDSUBX,
++					  divisor))
++	    return 1;
++    }
++
++  return 0;
++}
++
++
+ /* Emit insns to move operands[1] into operands[0].
+    Return 1 if we have written out everything that needs to be done to
+    do the move.  Otherwise, return 0 and the caller will emit the move
+@@ -1064,22 +1181,6 @@ xtensa_emit_move_sequence (rtx *operands, machine_mode mode)
+ 
+       if (! TARGET_AUTO_LITPOOLS && ! TARGET_CONST16)
+ 	{
+-	  /* Try to emit MOVI + SLLI sequence, that is smaller
+-	     than L32R + literal.  */
+-	  if (optimize_size && mode == SImode && CONST_INT_P (src)
+-	      && register_operand (dst, mode))
+-	    {
+-	      HOST_WIDE_INT srcval = INTVAL (src);
+-	      int shift = ctz_hwi (srcval);
+-
+-	      if (xtensa_simm12b (srcval >> shift))
+-		{
+-		  emit_move_insn (dst, GEN_INT (srcval >> shift));
+-		  emit_insn (gen_ashlsi3_internal (dst, dst, GEN_INT (shift)));
+-		  return 1;
+-		}
+-	    }
+-
+ 	  src = force_const_mem (SImode, src);
+ 	  operands[1] = src;
+ 	}
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index da6b71d1d..ddc3087fa 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -940,6 +940,19 @@
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"2,2,2,2,2,2,3,3,3,3,6,3,3,3,3,3")])
+ 
++(define_split
++  [(set (match_operand:SI 0 "register_operand")
++	(match_operand:SI 1 "constantpool_operand"))]
++  "! optimize_debug && reload_completed"
++  [(const_int 0)]
++{
++  rtx x = avoid_constant_pool_reference (operands[1]);
++  if (! CONST_INT_P (x))
++    FAIL;
++  if (! xtensa_constantsynth (operands[0], INTVAL (x)))
++    emit_move_insn (operands[0], x);
++})
++
+ ;; 16-bit Integer moves
+ 
+ (define_expand "movhi"
+@@ -1144,6 +1157,43 @@
+    (set_attr "mode"	"SF")
+    (set_attr "length"	"3")])
+ 
++(define_split
++  [(set (match_operand:SF 0 "register_operand")
++	(match_operand:SF 1 "constantpool_operand"))]
++  "! optimize_debug && reload_completed"
++  [(const_int 0)]
++{
++  int i = 0;
++  rtx x = XEXP (operands[1], 0);
++  long l[2];
++  if (GET_CODE (x) == SYMBOL_REF
++      && CONSTANT_POOL_ADDRESS_P (x))
++    x = get_pool_constant (x);
++  else if (GET_CODE (x) == CONST)
++    {
++      x = XEXP (x, 0);
++      gcc_assert (GET_CODE (x) == PLUS
++		  && GET_CODE (XEXP (x, 0)) == SYMBOL_REF
++		  && CONSTANT_POOL_ADDRESS_P (XEXP (x, 0))
++		  && CONST_INT_P (XEXP (x, 1)));
++      i = INTVAL (XEXP (x, 1));
++      gcc_assert (i == 0 || i == 4);
++      i /= 4;
++      x = get_pool_constant (XEXP (x, 0));
++    }
++  else
++    gcc_unreachable ();
++  if (GET_MODE (x) == SFmode)
++    REAL_VALUE_TO_TARGET_SINGLE (*CONST_DOUBLE_REAL_VALUE (x), l[0]);
++  else if (GET_MODE (x) == DFmode)
++    REAL_VALUE_TO_TARGET_DOUBLE (*CONST_DOUBLE_REAL_VALUE (x), l);
++  else
++    FAIL;
++  x = gen_rtx_REG (SImode, REGNO (operands[0]));
++  if (! xtensa_constantsynth (x, l[i]))
++    emit_move_insn (x, GEN_INT (l[i]));
++})
++
+ ;; 64-bit floating point moves
+ 
+ (define_expand "movdf"
+diff --git a/gcc/testsuite/gcc.target/xtensa/constsynth_2insns.c b/gcc/testsuite/gcc.target/xtensa/constsynth_2insns.c
+new file mode 100644
+index 000000000..43c85a250
+--- /dev/null
++++ b/gcc/testsuite/gcc.target/xtensa/constsynth_2insns.c
+@@ -0,0 +1,44 @@
++/* { dg-do compile } */
++/* { dg-options "-Os" } */
++
++int test_0(void)
++{
++  return 4095;
++}
++
++int test_1(void)
++{
++  return 2147483647;
++}
++
++int test_2(void)
++{
++  return -34816;
++}
++
++int test_3(void)
++{
++  return -2049;
++}
++
++int test_4(void)
++{
++  return 2048;
++}
++
++int test_5(void)
++{
++  return 34559;
++}
++
++int test_6(void)
++{
++  return 43680;
++}
++
++void test_7(int *p)
++{
++  *p = -1432354816;
++}
++
++/* { dg-final { scan-assembler-not "l32r" } } */
+diff --git a/gcc/testsuite/gcc.target/xtensa/constsynth_3insns.c b/gcc/testsuite/gcc.target/xtensa/constsynth_3insns.c
+new file mode 100644
+index 000000000..f3c4a1c7c
+--- /dev/null
++++ b/gcc/testsuite/gcc.target/xtensa/constsynth_3insns.c
+@@ -0,0 +1,24 @@
++/* { dg-do compile } */
++/* { dg-options "-O2 -mextra-l32r-costs=3" } */
++
++int test_0(void)
++{
++  return 134217216;
++}
++
++int test_1(void)
++{
++  return -27604992;
++}
++
++int test_2(void)
++{
++  return -162279;
++}
++
++void test_3(int *p)
++{
++  *p = 192437;
++}
++
++/* { dg-final { scan-assembler-not "l32r" } } */
+diff --git a/gcc/testsuite/gcc.target/xtensa/constsynth_double.c b/gcc/testsuite/gcc.target/xtensa/constsynth_double.c
+new file mode 100644
+index 000000000..890ca5047
+--- /dev/null
++++ b/gcc/testsuite/gcc.target/xtensa/constsynth_double.c
+@@ -0,0 +1,11 @@
++/* { dg-do compile } */
++/* { dg-options "-Os" } */
++
++void test(unsigned int count, double array[])
++{
++  unsigned int i;
++  for (i = 0; i < count; ++i)
++    array[i] = 1.0;
++}
++
++/* { dg-final { scan-assembler-not "l32r" } } */
+-- 
+2.20.1
+

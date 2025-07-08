@@ -1,0 +1,1 @@
+This file will track all files and folders moved into SCRIPTS for audit and rollback if needed.

@@ -1,0 +1,61 @@
+---
+title: "compareTo()"
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Function" ]
+---
+
+
+
+
+
+= compareTo()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Compares two Strings, testing whether one comes before or after the other, or whether they're equal. The strings are compared character by character, using the ASCII values of the characters. That means, for example, that 'a' comes before 'b' but after 'A'. Numbers come before letters.
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString.compareTo(myString2)`
+
+
+[float]
+=== Parameters
+`myString`: a variable of type `String`. +
+`myString2`: another variable of type `String`.
+
+
+[float]
+=== Returns
+`a negative number`: if myString comes before myString2. +
+`0`: if String equals myString2. +
+`a positive number`: if myString comes after myString2.
+
+--
+
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

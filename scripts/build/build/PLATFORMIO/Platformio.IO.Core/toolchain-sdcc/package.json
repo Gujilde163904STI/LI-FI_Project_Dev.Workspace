@@ -1,0 +1,9 @@
+{
+    "description": "sdcc",
+    "name": "toolchain-sdcc",
+    "system": [
+        "linux_x86_64"
+    ],
+    "url": "http://sdcc.sourceforge.net/",
+    "version": "1.20500.0"
+}

@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "menuinst"
+description = "cross platform install of menu items"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.8"
+dynamic = [
+  "version"
+]
+
+[project.urls]
+repository = "https://github.com/conda/menuinst"
+
+[tool.setuptools_scm]
+write_to = "menuinst/_version.py"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["menuinst*"]
+namespaces = true
+
+[tool.pyright]
+pythonPlatform = "All"
+
+[tool.ruff]
+line-length = 99
+exclude = [
+  "_schema.py"
+]
+
+[tool.ruff.lint]
+# see https://docs.astral.sh/ruff/rules/
+select = [
+  "E",  # pycodestyle errors (part of flake8)
+  "F",  # pyflakes (part of flake8)
+  "I",  # isort
+  "W",  # pycodestyle warnings (part of flake8)
+]
+
+[tool.vendoring]
+destination = "menuinst/_vendor/"
+namespace = "menuinst._vendor"
+requirements = "dev/vendoring/vendor.txt"
+
+patches-dir = "dev/vendoring/patches"
+protected-files = ["__init__.py", "vendor.txt", "README.md"]
+
+[tool.vendoring.typing-stubs]
+# prevent stubs from being generated
+apipkg = []
+
+[tool.vendoring.license.fallback-urls]
+apipkg = "https://raw.githubusercontent.com/pytest-dev/apipkg/master/LICENSE"

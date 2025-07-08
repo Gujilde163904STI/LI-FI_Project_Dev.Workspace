@@ -1,0 +1,38 @@
+From 624bf9fd927ada2d6d6dc34f5e0de704e7ee268f Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Thu, 4 Aug 2022 19:56:27 +0900
+Subject: [PATCH] xtensa: Turn on -fsplit-wide-types-early by default
+
+Since GCC10, the "subreg2" optimization pass was no longer tied to enabling
+"subreg1" unless -fsplit-wide-types-early was turned on (PR88233).  However
+on the Xtensa port, the lack of "subreg2" can degrade the quality of the
+output code, especially for those that produce many D[FC]mode pseudos.
+
+This patch turns on -fsplit-wide-types-early by default in order to restore
+the previous behavior.
+
+gcc/ChangeLog:
+
+	* common/config/xtensa/xtensa-common.c
+	(xtensa_option_optimization_table): Add OPT_fsplit_wide_types_early
+	for OPT_LEVELS_ALL in order to restore pre-GCC10 behavior.
+---
+ gcc/common/config/xtensa/xtensa-common.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/gcc/common/config/xtensa/xtensa-common.c b/gcc/common/config/xtensa/xtensa-common.c
+index dd751a14d..697a9eb22 100644
+--- a/gcc/common/config/xtensa/xtensa-common.c
++++ b/gcc/common/config/xtensa/xtensa-common.c
+@@ -34,6 +34,8 @@ static const struct default_options xtensa_option_optimization_table[] =
+        assembler, so GCC cannot do a good job of reordering blocks.
+        Do not enable reordering unless it is explicitly requested.  */
+     { OPT_LEVELS_ALL, OPT_freorder_blocks, NULL, 0 },
++    /* Split multi-word types early (pre-GCC10 behavior).  */
++    { OPT_LEVELS_ALL, OPT_fsplit_wide_types_early, NULL, 1 },
+     { OPT_LEVELS_NONE, 0, NULL, 0 }
+   };
+ 
+-- 
+2.20.1
+

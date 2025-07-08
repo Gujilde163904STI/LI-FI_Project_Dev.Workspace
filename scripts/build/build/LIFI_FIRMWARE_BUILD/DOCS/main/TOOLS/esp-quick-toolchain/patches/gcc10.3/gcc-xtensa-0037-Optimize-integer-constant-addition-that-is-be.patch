@@ -1,0 +1,95 @@
+From 9308911796a46bd689bbcc1cedef1b63ae9b871e Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sun, 26 Jun 2022 14:07:56 +0900
+Subject: [PATCH] xtensa: Optimize integer constant addition that is
+ between -32896 and 32639
+
+Such constants are often subject to the constant synthesis:
+
+    int test(int a) {
+      return a - 31999;
+    }
+
+    test:
+	movi	a3, 1
+	addmi	a3, a3, -0x7d00
+	add	a2, a2, a3
+	ret
+
+This patch optimizes such case as follows:
+
+    test:
+	addi	a2, a2, 1
+	addmi	a2, a2, -0x7d00
+	ret
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md:
+	Suppress unnecessary emitting nop insn in the split patterns for
+	integer/FP constant synthesis, and add new peephole2 pattern that
+	folds such synthesized additions.
+---
+ gcc/config/xtensa/xtensa.md | 35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 81b016859..b697e16db 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -1036,6 +1036,7 @@
+     FAIL;
+   if (! xtensa_constantsynth (operands[0], INTVAL (x)))
+     emit_move_insn (operands[0], x);
++  DONE;
+ })
+ 
+ ;; 16-bit Integer moves
+@@ -1277,6 +1278,7 @@
+   x = gen_rtx_REG (SImode, REGNO (operands[0]));
+   if (! xtensa_constantsynth (x, l[i]))
+     emit_move_insn (x, GEN_INT (l[i]));
++  DONE;
+ })
+ 
+ ;; 64-bit floating point moves
+@@ -2813,3 +2815,36 @@
+ 	 && REGNO (x) == regno + REG_NREGS (operands[0]) / 2))
+     FAIL;
+ })
++
++(define_peephole2
++  [(set (match_operand:SI 0 "register_operand")
++	(match_operand:SI 1 "const_int_operand"))
++   (set (match_dup 0)
++	(plus:SI (match_dup 0)
++		 (match_operand:SI 2 "const_int_operand")))
++   (set (match_operand:SI 3 "register_operand")
++	(plus:SI (match_operand:SI 4 "register_operand")
++		 (match_dup 0)))]
++  "IN_RANGE (INTVAL (operands[1]) + INTVAL (operands[2]),
++	     (-128 - 32768), (127 + 32512))
++   && REGNO (operands[0]) != REGNO (operands[3])
++   && REGNO (operands[0]) != REGNO (operands[4])
++   && peep2_reg_dead_p (3, operands[0])"
++  [(set (match_dup 3)
++	(plus:SI (match_dup 4)
++		 (match_dup 1)))
++   (set (match_dup 3)
++	(plus:SI (match_dup 3)
++		 (match_dup 2)))]
++{
++  HOST_WIDE_INT value = INTVAL (operands[1]) + INTVAL (operands[2]);
++  int imm0, imm1;
++  value += 128;
++  if (value > 32512)
++    imm1 = 32512;
++  else
++    imm1 = value & ~255;
++  imm0 = value - imm1 - 128;
++  operands[1] = GEN_INT (imm0);
++  operands[2] = GEN_INT (imm1);
++})
+-- 
+2.20.1
+

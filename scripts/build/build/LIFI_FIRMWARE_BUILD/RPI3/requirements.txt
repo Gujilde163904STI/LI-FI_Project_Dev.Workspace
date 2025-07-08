@@ -1,0 +1,5 @@
+RPi.GPIO
+pyserial
+numpy
+socket
+

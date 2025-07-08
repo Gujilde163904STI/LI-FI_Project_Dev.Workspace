@@ -1,0 +1,36 @@
+---
+title: Serial.end()
+---
+
+
+
+
+= end()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Disables serial communication, allowing the RX and TX pins to be used for general input and output. To re-enable serial communication, call link:../begin[Serial.begin()].
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`_Serial_.end()`
+
+
+[float]
+=== Parameters
+`_Serial_`: serial port object. See the list of available serial ports for each board on the link:https://www.arduino.cc/en/Reference/serial[Serial main page].
+
+
+[float]
+=== Returns
+Nothing
+
+--
+// OVERVIEW SECTION ENDS

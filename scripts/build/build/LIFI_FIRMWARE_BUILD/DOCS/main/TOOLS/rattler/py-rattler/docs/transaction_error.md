@@ -1,0 +1,3 @@
+# TransactionError
+
+::: rattler.exceptions.TransactionError

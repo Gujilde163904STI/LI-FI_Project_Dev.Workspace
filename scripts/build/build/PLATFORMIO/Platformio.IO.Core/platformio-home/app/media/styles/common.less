@@ -1,0 +1,224 @@
+/**
+ * Copyright (c) 2014-present PlatformIO <contact@platformio.org>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+h1 {
+  font-size: 1.5em;
+}
+h2 {
+  font-size: 1.3em;
+}
+
+h1 small,
+h2 small,
+h3 small,
+h4 small,
+h5 small,
+h6 small {
+  font-weight: normal;
+  font-size: 65%;
+  line-height: 1;
+  color: #777;
+}
+
+pre {
+  overflow: auto;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 1em;
+}
+
+code {
+  padding: 2px 4px;
+  font-size: 90%;
+  color: @tag-code-color;
+  background-color: @tag-code-bg;
+  border-radius: 4px;
+}
+
+kbd {
+  padding: 2px 4px;
+  font-size: 90% !important;
+  color: @tag-kbd-color;
+  background-color: @tag-kbd-bg;
+  border-radius: 3px;
+  -webkit-box-shadow: inset 0 -1px 0 @disabled-color;
+  box-shadow: inset 0 -1px 0 @disabled-color;
+}
+
+dl {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+dt,
+dd {
+  line-height: 1.42857143;
+}
+dt {
+  font-weight: bold;
+}
+dd {
+  margin-left: 0;
+}
+@media (min-width: 768px) {
+  .dl-horizontal dt {
+    float: left;
+    width: 160px;
+    overflow: hidden;
+    clear: left;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dl-horizontal dd {
+    margin-left: 180px;
+  }
+}
+
+.lead {
+  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.4;
+}
+
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.text-nowrap {
+  white-space: nowrap !important;
+}
+.text-word-break {
+  word-break: normal !important;
+}
+.text-muted {
+  color: #777;
+}
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-buttons button {
+  margin: 0 5px 5px 0;
+}
+
+.pull-right {
+  float: right !important;
+}
+.pull-left {
+  float: left !important;
+}
+.clearfix {
+  &::after {
+    display: block;
+    content: '';
+    clear: both;
+  }
+}
+
+.hide {
+  display: none !important;
+}
+.show {
+  display: block !important;
+}
+.invisible {
+  visibility: hidden;
+}
+
+.block {
+  margin-bottom: @padding-sm !important;
+}
+.inline-block-tight {
+  margin-right: 5px;
+}
+.inline-block,
+.inline-block-tight {
+  display: inline-block;
+  // vertical-align: middle;
+}
+.inline-block {
+  margin-right: 10px;
+}
+.inline-block-tight {
+  margin-right: 5px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul.background-message {
+  font-size: 36px;
+  margin: 0;
+  padding: 0;
+}
+
+ul.list-inline {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+ul.list-inline > li {
+  display: inline-block;
+  padding-right: 10px;
+}
+
+ul.list-inline > li:last-child {
+  padding-right: 0;
+}
+
+ul.list-styled {
+  list-style-type: initial;
+  padding-left: 20px;
+}
+
+/* Items: library, platform, framework */
+.list-item-card {
+  cursor: pointer;
+  margin-bottom: @padding-sm !important;
+
+  .ant-card-head {
+    background-color: @background-color-light !important;
+  }
+
+  .ant-card-head-title {
+    white-space: initial !important;
+    small {
+      font-weight: normal;
+      font-size: 75%;
+      line-height: 1;
+      color: @text-color;
+    }
+  }
+
+  .list-item-card-head-extra {
+    padding-top: 7px;
+  }
+}

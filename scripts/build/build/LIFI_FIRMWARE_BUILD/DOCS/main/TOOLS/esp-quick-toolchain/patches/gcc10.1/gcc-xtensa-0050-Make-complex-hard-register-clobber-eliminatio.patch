@@ -1,0 +1,111 @@
+From 78eac52fe49e1463bec7a838dd172b970412927b Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Tue, 30 Aug 2022 21:28:51 +0900
+Subject: [PATCH] xtensa: Make complex hard register clobber elimination
+ more robust and accurate
+
+This patch eliminates all clobbers for complex hard registers that will
+be overwritten entirely afterwards (supersedence of
+3867d414bd7d9e5b6fb2a51b1fb3d9e9e1eae9).
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md: Rewrite the split pattern that performs
+	the abovementioned process so that insns that overwrite clobbered
+	register no longer need to be contiguous.
+	(DSC): Remove as no longer needed.
+---
+ gcc/config/xtensa/xtensa.md | 67 +++++++++++++++++++++++++------------
+ 1 file changed, 45 insertions(+), 22 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 0c05c16b1..ec4a69e30 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -86,10 +86,6 @@
+ ;; This code iterator is for *shlrd and its variants.
+ (define_code_iterator ior_op [ior plus])
+ 
+-;; This mode iterator allows the DC and SC patterns to be defined from
+-;; the same template.
+-(define_mode_iterator DSC [DC SC])
+-
+ 
+ ;; Attributes.
+ 
+@@ -2848,27 +2844,54 @@
+ })
+ 
+ (define_split
+-  [(clobber (match_operand:DSC 0 "register_operand"))]
+-  "GP_REG_P (REGNO (operands[0]))"
++  [(clobber (match_operand 0 "register_operand"))]
++  "HARD_REGISTER_P (operands[0])
++   && COMPLEX_MODE_P (GET_MODE (operands[0]))"
+   [(const_int 0)]
+ {
+-  unsigned int regno = REGNO (operands[0]);
+-  machine_mode inner_mode = GET_MODE_INNER (<MODE>mode);
++  auto_sbitmap bmp (FIRST_PSEUDO_REGISTER);
+   rtx_insn *insn;
+-  rtx x;
+-  if (! ((insn = next_nonnote_nondebug_insn (curr_insn))
+-	 && NONJUMP_INSN_P (insn)
+-	 && GET_CODE (x = PATTERN (insn)) == SET
+-	 && REG_P (x = XEXP (x, 0))
+-	 && GET_MODE (x) == inner_mode
+-	 && REGNO (x) == regno
+-	 && (insn = next_nonnote_nondebug_insn (insn))
+-	 && NONJUMP_INSN_P (insn)
+-	 && GET_CODE (x = PATTERN (insn)) == SET
+-	 && REG_P (x = XEXP (x, 0))
+-	 && GET_MODE (x) == inner_mode
+-	 && REGNO (x) == regno + REG_NREGS (operands[0]) / 2))
+-    FAIL;
++  rtx reg = gen_rtx_REG (SImode, 0);
++  bitmap_set_range (bmp, REGNO (operands[0]), REG_NREGS (operands[0]));
++  for (insn = next_nonnote_nondebug_insn_bb (curr_insn);
++       insn; insn = next_nonnote_nondebug_insn_bb (insn))
++    {
++      sbitmap_iterator iter;
++      unsigned int regno;
++      if (NONJUMP_INSN_P (insn))
++	{
++	  EXECUTE_IF_SET_IN_BITMAP (bmp, 2, regno, iter)
++	    {
++	      set_regno_raw (reg, regno, REG_NREGS (reg));
++	      if (reg_overlap_mentioned_p (reg, PATTERN (insn)))
++		break;
++	    }
++	  if (GET_CODE (PATTERN (insn)) == SET)
++	    {
++	      rtx x = SET_DEST (PATTERN (insn));
++	      if (REG_P (x) && HARD_REGISTER_P (x))
++		bitmap_clear_range (bmp, REGNO (x), REG_NREGS (x));
++	      else if (SUBREG_P (x) && HARD_REGISTER_P (SUBREG_REG (x)))
++		{
++		  struct subreg_info info;
++		  subreg_get_info (regno = REGNO (SUBREG_REG (x)),
++				   GET_MODE (SUBREG_REG (x)),
++				   SUBREG_BYTE (x), GET_MODE (x), &info);
++		  if (!info.representable_p)
++		    break;
++		  bitmap_clear_range (bmp, regno + info.offset, info.nregs);
++		}
++	    }
++	  if (bitmap_empty_p (bmp))
++	    goto FALLTHRU;
++	}
++      else if (CALL_P (insn))
++	EXECUTE_IF_SET_IN_BITMAP (bmp, 2, regno, iter)
++	 if (call_used_or_fixed_reg_p (regno))
++	   break;
++    }
++  FAIL;
++FALLTHRU:;
+ })
+ 
+ (define_peephole2
+-- 
+2.30.2
+

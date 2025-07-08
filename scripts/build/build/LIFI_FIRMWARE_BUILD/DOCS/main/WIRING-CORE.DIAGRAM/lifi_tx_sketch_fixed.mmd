@@ -1,0 +1,10 @@
+flowchart TD
+    USB_TX["Raspberry Pi USB Port"]
+    MCU["NodeMCU ESP8266 (TX)"]
+    D4["GPIO2 (D4)"]
+    LED["LED"]
+    GND1["GND"]
+    USB_TX -- Serial --> MCU
+    MCU -- D4 --> LED
+    LED -- Cathode --> GND1
+    Note1["LED: Use 220Ω resistor in series with Anode. Connect NodeMCU to Pi via USB for serial."]

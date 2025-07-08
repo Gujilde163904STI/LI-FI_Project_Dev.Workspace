@@ -1,0 +1,71 @@
+From e3b1e99a383cbceb2c910a3a88392f37e58daeb2 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Tue, 27 Dec 2022 15:30:12 +0900
+Subject: [PATCH] xtensa: Change GP_RETURN{,_REG_COUNT} to
+ GP_RETURN_{FIRST,LAST}
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.h (GP_RETURN, GP_RETURN_REG_COUNT):
+	Change to GP_RETURN_FIRST and GP_RETURN_LAST, respectively.
+	* config/xtensa/xtensa.c (xtensa_function_value,
+	xtensa_libcall_value, xtensa_function_value_regno_p): Ditto.
+---
+ gcc/config/xtensa/xtensa.c | 10 +++++-----
+ gcc/config/xtensa/xtensa.h |  4 ++--
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index d4713cd8d..054a44ea3 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -4561,9 +4561,9 @@ xtensa_function_value (const_tree valtype, const_tree func ATTRIBUTE_UNUSED,
+ 		       bool outgoing)
+ {
+   return gen_rtx_REG ((INTEGRAL_TYPE_P (valtype)
+-                      && TYPE_PRECISION (valtype) < BITS_PER_WORD)
+-                     ? SImode : TYPE_MODE (valtype),
+-                     outgoing ? GP_OUTGOING_RETURN : GP_RETURN);
++		       && TYPE_PRECISION (valtype) < BITS_PER_WORD)
++		      ? SImode : TYPE_MODE (valtype),
++		      outgoing ? GP_OUTGOING_RETURN : GP_RETURN_FIRST);
+ }
+ 
+ /* Worker function for TARGET_LIBCALL_VALUE.  */
+@@ -4573,7 +4573,7 @@ xtensa_libcall_value (machine_mode mode, const_rtx fun ATTRIBUTE_UNUSED)
+ {
+   return gen_rtx_REG ((GET_MODE_CLASS (mode) == MODE_INT
+ 		       && GET_MODE_SIZE (mode) < UNITS_PER_WORD)
+-		      ? SImode : mode, GP_RETURN);
++		      ? SImode : mode, GP_RETURN_FIRST);
+ }
+ 
+ /* Worker function TARGET_FUNCTION_VALUE_REGNO_P.  */
+@@ -4581,7 +4581,7 @@ xtensa_libcall_value (machine_mode mode, const_rtx fun ATTRIBUTE_UNUSED)
+ static bool
+ xtensa_function_value_regno_p (const unsigned int regno)
+ {
+-  return (regno >= GP_RETURN && regno < GP_RETURN + GP_RETURN_REG_COUNT);
++  return IN_RANGE (regno, GP_RETURN_FIRST, GP_RETURN_LAST);
+ }
+ 
+ /* The static chain is passed in memory.  Provide rtx giving 'mem'
+diff --git a/gcc/config/xtensa/xtensa.h b/gcc/config/xtensa/xtensa.h
+index b5fec1cb3..e3f808c42 100644
+--- a/gcc/config/xtensa/xtensa.h
++++ b/gcc/config/xtensa/xtensa.h
+@@ -475,9 +475,9 @@ enum reg_class
+ 
+ /* Symbolic macros for the registers used to return integer, floating
+    point, and values of coprocessor and user-defined modes.  */
+-#define GP_RETURN (GP_REG_FIRST + 2 + WINDOW_SIZE)
++#define GP_RETURN_FIRST (GP_REG_FIRST + 2 + WINDOW_SIZE)
++#define GP_RETURN_LAST  (GP_RETURN_FIRST + 3)
+ #define GP_OUTGOING_RETURN (GP_REG_FIRST + 2)
+-#define GP_RETURN_REG_COUNT 4
+ 
+ /* Symbolic macros for the first/last argument registers.  */
+ #define GP_ARG_FIRST (GP_REG_FIRST + 2)
+-- 
+2.30.2
+

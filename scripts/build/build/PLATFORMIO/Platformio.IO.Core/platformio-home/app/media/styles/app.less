@@ -1,0 +1,166 @@
+/**
+ * Copyright (c) 2014-present PlatformIO <contact@platformio.org>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@sider-width: 64px;
+@max-content-width: @screen-xl - @sider-width;
+
+.app-container {
+  .ant-layout-sider {
+    overflow: auto;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+
+    .logo {
+      text-align: center;
+      height: 44px;
+      padding-top: 8px;
+    }
+
+    .anticon {
+      display: block;
+      font-size: 22px;
+      margin: 0 0 8px;
+    }
+
+    .ant-menu-item {
+      height: @sider-width;
+      margin-top: 2px;
+      padding: 12px 0 !important;
+      text-align: center;
+
+      .menu-item-label {
+        display: block;
+        line-height: 1;
+        font-size: 12px;
+      }
+    }
+  }
+
+  .main-container {
+    padding: 0;
+    margin-left: @sider-width;
+
+    .ant-layout-header {
+      padding: 0px 10px 8px 3px;
+      margin: 0;
+      height: unset;
+      line-height: inherit;
+      vertical-align: middle;
+
+      .header-container {
+        max-width: @max-content-width;
+      }
+
+      .account-bar,
+      .ant-btn-group {
+        padding-top: 8px;
+      }
+    }
+
+    .ant-layout-content {
+      overflow: initial;
+      padding: 0 18px;
+      margin: 0;
+
+      .ant-menu-horizontal {
+        margin: 5px 0 20px 0;
+      }
+
+      .page-container {
+        max-width: @max-content-width - 40; // 20+20 padding
+      }
+    }
+  }
+
+  .ant-layout-footer {
+    max-width: @max-content-width;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    .ant-badge {
+      margin-left: 3px;
+    }
+    .ant-badge-count {
+      background-color: @primary-color;
+    }
+
+    > .anticon {
+      font-size: 80%;
+    }
+  }
+
+  h1 > .anticon,
+  h2 > .anticon {
+    font-size: 70%;
+  }
+}
+
+/* Menu with Babges */
+.ant-menu {
+  .ant-badge {
+    color: inherit !important;
+  }
+  .ant-badge-count {
+    padding: 0;
+    font-size: 11px;
+  }
+  &.ant-menu-inline .ant-badge-count {
+    right: 10px;
+  }
+  &.ant-menu-horizontal .ant-badge-count {
+    right: -15px;
+  }
+}
+
+.powered-by-platformio {
+  .pio-company-text {
+    vertical-align: bottom;
+  }
+
+  h2 {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Notification */
+.ant-notification .ant-notification-notice-description {
+  overflow: auto;
+  max-height: 300px;
+}
+
+/* Progress */
+.progress-error-stroke .ant-progress .ant-progress-circle-path {
+  stroke: @error-color !important;
+}
+
+.progress-warning-stroke .ant-progress .ant-progress-circle-path {
+  stroke: @warning-color !important;
+}
+
+/* Alert */
+.ant-alert-error.ant-alert-with-description .ant-alert-message {
+  color: @alert-error-message-color;
+}
+.ant-alert-warning .ant-alert-message {
+  color: @alert-warning-message-color;
+}

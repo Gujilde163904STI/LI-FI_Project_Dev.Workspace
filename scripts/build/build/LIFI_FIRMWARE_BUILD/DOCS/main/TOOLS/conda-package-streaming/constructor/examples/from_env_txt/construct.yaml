@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: EnvironmentTXT
+version: X
+installer_type: all
+environment_file: env.txt
+initialize_by_default: false
+register_python: False

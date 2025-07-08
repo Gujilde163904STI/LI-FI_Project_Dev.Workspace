@@ -1,0 +1,16 @@
+---
+title: LI-FI Transmitter Wiring
+---
+flowchart TD
+    subgraph NodeMCU_ESP8266_TX [NodeMCU ESP8266 (TX)]
+        LED[LED (Anode)]
+        GND1[GND]
+        D4[GPIO2 (D4)]
+    end
+    subgraph Raspberry_Pi
+        USB_TX[USB Port]
+    end
+    LED --|Cathode| GND1
+    LED --|Anode| D4
+    USB_TX -- Serial --> NodeMCU_ESP8266_TX
+    note1(("LED: Use 220Ω resistor in series with Anode.\nConnect NodeMCU to Pi via USB for serial."))

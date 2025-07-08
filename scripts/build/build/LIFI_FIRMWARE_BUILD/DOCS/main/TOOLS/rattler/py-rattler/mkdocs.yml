@@ -1,0 +1,194 @@
+site_name: "py-rattler"
+
+theme:
+  name: material
+  site_url: https://prefix.dev
+  font:
+    text: Red Hat Text
+    code: JetBrains Mono
+
+  palette:
+    - primary: yellow
+      accent: yellow
+      scheme: slate
+
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: prefix-light
+      accent: prefix-light
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: prefix
+      accent: prefix
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  icon:
+    edit: material/pencil
+    view: material/eye
+
+  features:
+    - content.tabs.link
+    - content.code.copy
+    - content.action.edit
+    - content.code.annotate
+    # - content.code.select Sponsor only
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+
+extra_css:
+  - stylesheets/extra.css
+
+repo_url: https://github.com/conda/rattler/
+edit_uri: edit/main/py-rattler/docs/
+
+markdown_extensions:
+  - admonition
+  - def_list
+  - footnotes
+  - admonition
+  - def_list
+  - footnotes
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      toc_depth: 3
+      permalink: "#"
+  - mdx_truly_sane_lists
+  - pymdownx.snippets:
+      base_path:
+      - !relative $config_dir  # Relative to the current Markdown file
+
+nav:
+  - First Steps: index.md
+  - References:
+      - core:
+          - fetch: fetch_repo_data.md
+          - solve: solver.md
+          - install: installer.md
+          - index: index_.md
+      - channel:
+          - ChannelConfig: channel_config.md
+          - Channel: channel.md
+      - lock:
+          - LockFile: lock_file.md
+          - Environment: environment.md
+          - LockedPackage: locked_package.md
+          - CondaLockedPackage: conda_locked_package.md
+          - CondaLockedBinaryPackage: conda_locked_binary_package.md
+          - CondaLockedSourcePackage: conda_locked_source_package.md
+          - PypiLockedPackage: pypi_locked_package.md
+          - PackageHashes: package_hashes.md
+      - metadata:
+          - AboutJson: about_json.md
+          - RunExportsJson: run_exports_json.md
+          - PathsJson: paths_json.md
+          - PathsEntry: paths_entry.md
+          - PathType: path_type.md
+          - PrefixPlaceholder: prefix_placeholder.md
+          - FileMode: file_mode.md
+          - IndexJson: index_json.md
+      - match_spec:
+          - MatchSpec: match_spec.md
+          - NamelessMatchSpec: nameless_match_spec.md
+      - networking:
+          - Client: client.md
+      - package:
+          - PackageName: package_name.md
+      - platform:
+          - Arch: arch.md
+          - Platform: platform.md
+      - prefix:
+          - PrefixPaths: prefix_paths.md
+          - PrefixRecord: prefix_record.md
+      - repo_data:
+          - Gateway: gateway.md
+          - PackageRecord: package_record.md
+          - PatchInstructions: patch_instructions.md
+          - RepoDataRecord: repo_data_record.md
+          - Repodata: repo_data.md
+          - SparseRepoData: sparse_repo_data.md
+      - version:
+          - Version: version.md
+          - VersionWithSource: version_with_source.md
+      - virtual_package:
+          - VirtualPackage: virtual_package.md
+          - GenericVirtualPackage: generic_virtual_package.md
+      - shell:
+          - activate: activate.md
+          - ActivationResult: activation_result.md
+          - ActivationVariables: activation_variables.md
+          - Shell: shell.md
+          - PathModificationBehavior: path_modification_behavior.md
+      - exceptions:
+          - ActivationError: activation_error.md
+          - CacheDirError: cache_dir_error.md
+          - DetectVirtualPackageError: detect_virtual_package_error.md
+          - EnvironmentCreationError: environment_creation_error.md
+          - FetchRepoDataError: fetch_repo_data_error.md
+          - InvalidChannelError: invalid_channel_error.md
+          - InvalidMatchSpecError: invalid_match_spec_error.md
+          - InvalidPackageNameError: invalid_package_name_error.md
+          - InvalidUrlError: invalid_url_error.md
+          - InvalidVersionError: invalid_version_error.md
+          - IoError: io_error.md
+          - LinkError: link_error.md
+          - ParseArchError: parse_arch_error.md
+          - ParsePlatformError: parse_platform_error.md
+          - SolverError: solver_error.md
+          - TransactionError: transaction_error.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/prefix_dev
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/prefix-dev
+    - icon: fontawesome/brands/github
+      link: https://github.com/prefix-dev
+
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - py-rattler
+          options:
+            separate_signature: true
+            show_source: false
+
+  - search
+  - social
+
+watch:
+  - rattler

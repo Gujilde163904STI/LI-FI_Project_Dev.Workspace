@@ -1,0 +1,59 @@
+---
+title: sqrt()
+categories: [ "Functions" ]
+subCategories: [ "Math" ]
+---
+
+
+
+
+
+= sqrt(x)
+
+
+// OVERVIEW SECTION STARTS
+Calculates the square root of a number.
+[#overview]
+--
+
+[float]
+=== Description
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`sqrt(x)`
+
+
+[float]
+=== Parameters
+`x`: the number. Allowed data types: any data type.
+
+
+[float]
+=== Returns
+The number's square root. Data type: `double`.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:../abs[abs()]
+* #LANGUAGE# link:../constrain[constrain()]
+* #LANGUAGE# link:../map[map()]
+* #LANGUAGE# link:../max[max()]
+* #LANGUAGE# link:../min[min()]
+* #LANGUAGE# link:../pow[pow()]
+* #LANGUAGE# link:../sq[sq()]
+
+--
+// SEE ALSO SECTION ENDS

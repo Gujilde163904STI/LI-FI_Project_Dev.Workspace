@@ -1,0 +1,56 @@
+---
+title: Serial.find()
+---
+
+
+
+
+= Serial.find()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+`Serial.find()` reads data from the serial buffer until the target is found. The function returns `true` if target is found, `false` if it times out.
+
+`Serial.find()` inherits from the link:../../stream[stream] utility class.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`_Serial_.find(target)` +
+`_Serial_.find(target, length)`
+
+
+[float]
+=== Parameters
+`_Serial_`: serial port object. See the list of available serial ports for each board on the link:https://www.arduino.cc/en/Reference/serial[Serial main page]. +
+`target`: the string to search for. Allowed data types: `char`. +
+`length`: length of the target. Allowed data types: `size_t`.
+
+
+[float]
+=== Returns
+Data type: `bool`.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:../../stream[stream] +
+* #LANGUAGE# link:../../stream/streamfind[stream.find()]
+
+--
+// SEE ALSO SECTION ENDS

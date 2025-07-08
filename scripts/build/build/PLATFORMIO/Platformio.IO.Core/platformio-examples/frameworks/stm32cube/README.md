@@ -1,0 +1,48 @@
+
+# STM32Cube: framework for [PlatformIO](https://platformio.org)
+
+STM32Cube embedded software libraries, including: The HAL hardware abstraction layer, enabling portability between different STM32 devices via standardized API calls; The Low-Layer (LL) APIs, a light-weight, optimized, expert oriented set of APIs designed for both performance and runtime efficiency
+
+* [Home](https://platformio.org/frameworks/stm32cube) (home page in PlatformIO Registry)
+* [Documentation](https://docs.platformio.org/page/frameworks/stm32cube.html)
+
+# Examples
+
+- [ST STM32](https://github.com/platformio/platform-ststm32)
+  * [arduino-blink](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-blink)
+  * [arduino-external-libs](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-external-libs)
+  * [arduino-internal-libs](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-internal-libs)
+  * [arduino-mbed-doom](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-mbed-doom)
+  * [arduino-mbed-rpc](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-mbed-rpc)
+  * [arduino-mxchip-azureiot](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-mxchip-azureiot)
+  * [arduino-mxchip-filesystem](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-mxchip-filesystem)
+  * [arduino-mxchip-sensors](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-mxchip-sensors)
+  * [arduino-mxchip-wifiscan](https://github.com/platformio/platform-ststm32/tree/master/examples/arduino-mxchip-wifiscan)
+  * [cmsis-blink](https://github.com/platformio/platform-ststm32/tree/master/examples/cmsis-blink)
+  * [libopencm3-1bitsy](https://github.com/platformio/platform-ststm32/tree/master/examples/libopencm3-1bitsy)
+  * [libopencm3-blink](https://github.com/platformio/platform-ststm32/tree/master/examples/libopencm3-blink)
+  * [libopencm3-usb-cdcacm](https://github.com/platformio/platform-ststm32/tree/master/examples/libopencm3-usb-cdcacm)
+  * [mbed-rtos-blink-baremetal](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-blink-baremetal)
+  * [mbed-rtos-custom-target](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-custom-target)
+  * [mbed-rtos-ethernet-tls](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-ethernet-tls)
+  * [mbed-rtos-events](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-events)
+  * [mbed-rtos-filesystem](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-filesystem)
+  * [mbed-rtos-mesh-minimal](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-mesh-minimal)
+  * [mbed-rtos-serial](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-serial)
+  * [mbed-rtos-sockets](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-sockets)
+  * [mbed-rtos-usb-keyboard](https://github.com/platformio/platform-ststm32/tree/master/examples/mbed-rtos-usb-keyboard)
+  * [spl-blink](https://github.com/platformio/platform-ststm32/tree/master/examples/spl-blink)
+  * [stm32cube-hal-blink](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-hal-blink)
+  * [stm32cube-hal-eeprom-emulation](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-hal-eeprom-emulation)
+  * [stm32cube-hal-extmem-boot](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-hal-extmem-boot)
+  * [stm32cube-hal-iap](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-hal-iap)
+  * [stm32cube-hal-lcd](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-hal-lcd)
+  * [stm32cube-hal-usb-device-dfu](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-hal-usb-device-dfu)
+  * [stm32cube-hal-wifi-client](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-hal-wifi-client)
+  * [stm32cube-ll-blink](https://github.com/platformio/platform-ststm32/tree/master/examples/stm32cube-ll-blink)
+  * [zephyr-blink](https://github.com/platformio/platform-ststm32/tree/master/examples/zephyr-blink)
+  * [zephyr-cpp-synchronization](https://github.com/platformio/platform-ststm32/tree/master/examples/zephyr-cpp-synchronization)
+  * [zephyr-drivers-can](https://github.com/platformio/platform-ststm32/tree/master/examples/zephyr-drivers-can)
+  * [zephyr-net-https-client](https://github.com/platformio/platform-ststm32/tree/master/examples/zephyr-net-https-client)
+  * [zephyr-subsys-usb-hid-mouse](https://github.com/platformio/platform-ststm32/tree/master/examples/zephyr-subsys-usb-hid-mouse)
+

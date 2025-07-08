@@ -1,0 +1,4 @@
+conda-sphinx-theme==0.2.3
+sphinx-sitemap==2.2.0
+sphinx-design
+sphinx-reredirects

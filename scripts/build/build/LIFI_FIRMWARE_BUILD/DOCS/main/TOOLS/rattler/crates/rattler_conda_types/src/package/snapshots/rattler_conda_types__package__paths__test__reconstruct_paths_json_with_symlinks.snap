@@ -1,0 +1,23 @@
+---
+source: crates/rattler_conda_types/src/package/paths.rs
+expression: "PathsJson::from_deprecated_package_directory(&package_dir).unwrap()"
+---
+paths:
+  - _path: include/zconf.h
+    path_type: hardlink
+  - _path: include/zlib.h
+    path_type: hardlink
+  - _path: lib/libz.a
+    path_type: hardlink
+  - _path: lib/libz.so
+    path_type: softlink
+  - _path: lib/libz.so.1
+    path_type: softlink
+  - _path: lib/libz.so.1.2.8
+    path_type: hardlink
+  - _path: lib/pkgconfig/zlib.pc
+    path_type: hardlink
+    file_mode: text
+    prefix_placeholder: /opt/anaconda1anaconda2anaconda3
+paths_version: 1
+

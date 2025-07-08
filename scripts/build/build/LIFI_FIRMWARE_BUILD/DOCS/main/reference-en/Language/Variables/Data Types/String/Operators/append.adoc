@@ -1,0 +1,59 @@
+---
+title: "+="
+title_expanded: append
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Operator" ]
+---
+
+
+
+
+
+= += Append
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+It concatenates Strings with other data.
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString1 += data`
+
+
+[float]
+=== Parameters
+`myString1`: a String variable.
+
+
+[float]
+=== Returns
+Nothing
+
+--
+
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

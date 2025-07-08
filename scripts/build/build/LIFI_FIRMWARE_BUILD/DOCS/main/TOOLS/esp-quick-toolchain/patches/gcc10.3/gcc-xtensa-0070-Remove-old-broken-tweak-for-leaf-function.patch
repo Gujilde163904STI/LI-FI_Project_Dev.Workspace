@@ -1,0 +1,218 @@
+From 70feb8960c923e914f1e0bf8e7eae96300c708a2 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sat, 14 Jan 2023 04:31:46 +0900
+Subject: [PATCH] xtensa: Remove old broken tweak for leaf function
+
+In the before-IRA era, ORDER_REGS_FOR_LOCAL_ALLOC was called for each
+function in Xtensa, and there was register allocation table reordering
+for leaf functions to compensate for the poor performance of local-alloc.
+
+Today the adjustment hook is still called via its alternative
+ADJUST_REG_ALLOC_ORDER, but it is only called once at the start of the IRA,
+and leaf_function_p() erroneously returns true and also gives no argument
+count.
+
+That straightforwardly misleads register allocation that all functions are
+always leaves with no arguments, which leads to inefficiencies in allocation
+results.
+
+Fortunately, IRA is smart enough than local-alloc to not need such assistance.
+
+This patch does away with the antiquated by removing the wreckage that no
+longer works.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa-protos.h (order_regs_for_local_alloc):
+	  Rename to xtensa_adjust_reg_alloc_order.
+	* config/xtensa/xtensa.c (xtensa_adjust_reg_alloc_order):
+	  Ditto.  And also remove code to reorder register numbers for
+	  leaf functions, rename the tables, and adjust the allocation
+	  order for the call0 ABI to use register A0 more.
+	  (xtensa_leaf_regs): Remove.
+	* config/xtensa/xtensa.h (REG_ALLOC_ORDER): Cosmetics.
+	  (order_regs_for_local_alloc): Rename as the above.
+	  (LEAF_REGISTERS, LEAF_REG_REMAP, leaf_function): Remove.
+---
+ gcc/config/xtensa/xtensa-protos.h |  2 +-
+ gcc/config/xtensa/xtensa.c        | 77 +++++++------------------------
+ gcc/config/xtensa/xtensa.h        | 51 ++++++--------------
+ 3 files changed, 31 insertions(+), 99 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa-protos.h b/gcc/config/xtensa/xtensa-protos.h
+index 63b147a90..39d5a5825 100644
+--- a/gcc/config/xtensa/xtensa-protos.h
++++ b/gcc/config/xtensa/xtensa-protos.h
+@@ -78,7 +78,7 @@ extern long compute_frame_size (poly_int64);
+ extern bool xtensa_use_return_instruction_p (void);
+ extern void xtensa_expand_prologue (void);
+ extern void xtensa_expand_epilogue (bool);
+-extern void order_regs_for_local_alloc (void);
++extern void xtensa_adjust_reg_alloc_order (void);
+ extern enum reg_class xtensa_regno_to_class (int regno);
+ extern HOST_WIDE_INT xtensa_initial_elimination_offset (int from, int to);
+ 
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index e0adf069e..db7ac3599 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -107,18 +107,6 @@ struct GTY(()) machine_function
+   rtx last_logues_a9_content;
+ };
+ 
+-/* Vector, indexed by hard register number, which contains 1 for a
+-   register that is allowable in a candidate for leaf function
+-   treatment.  */
+-
+-const char xtensa_leaf_regs[FIRST_PSEUDO_REGISTER] =
+-{
+-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+-  1, 1, 1,
+-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+-  1
+-};
+-
+ static void xtensa_option_override (void);
+ static enum internal_test map_test_to_internal_test (enum rtx_code);
+ static rtx gen_int_relational (enum rtx_code, rtx, rtx);
+@@ -4175,58 +4163,25 @@ xtensa_secondary_reload (bool in_p, rtx x, reg_class_t rclass,
+   return NO_REGS;
+ }
+ 
++/* Called once at the start of IRA, by ADJUST_REG_ALLOC_ORDER.  */
+ 
+ void
+-order_regs_for_local_alloc (void)
++xtensa_adjust_reg_alloc_order (void)
+ {
+-  if (!leaf_function_p ())
+-    {
+-      static const int reg_nonleaf_alloc_order[FIRST_PSEUDO_REGISTER] =
+-	REG_ALLOC_ORDER;
+-      static const int reg_nonleaf_alloc_order_call0[FIRST_PSEUDO_REGISTER] =
+-	{
+-	  11, 10,  9,  8,  7,  6,  5,  4,  3,  2, 12, 13, 14, 15,
+-	  18,
+-	  19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+-	  0,  1, 16, 17,
+-	  35,
+-	};
+-
+-      memcpy (reg_alloc_order, TARGET_WINDOWED_ABI ?
+-	      reg_nonleaf_alloc_order : reg_nonleaf_alloc_order_call0,
+-	      FIRST_PSEUDO_REGISTER * sizeof (int));
+-    }
+-  else
+-    {
+-      int i, num_arg_regs;
+-      int nxt = 0;
+-
+-      /* Use the AR registers in increasing order (skipping a0 and a1)
+-	 but save the incoming argument registers for a last resort.  */
+-      num_arg_regs = crtl->args.info.arg_words;
+-      if (num_arg_regs > MAX_ARGS_IN_REGISTERS)
+-	num_arg_regs = MAX_ARGS_IN_REGISTERS;
+-      for (i = GP_ARG_FIRST; i < 16 - num_arg_regs; i++)
+-	reg_alloc_order[nxt++] = i + num_arg_regs;
+-      for (i = 0; i < num_arg_regs; i++)
+-	reg_alloc_order[nxt++] = GP_ARG_FIRST + i;
+-
+-      /* List the coprocessor registers in order.  */
+-      for (i = 0; i < BR_REG_NUM; i++)
+-	reg_alloc_order[nxt++] = BR_REG_FIRST + i;
+-
+-      /* List the FP registers in order for now.  */
+-      for (i = 0; i < 16; i++)
+-	reg_alloc_order[nxt++] = FP_REG_FIRST + i;
+-
+-      /* GCC requires that we list *all* the registers....  */
+-      reg_alloc_order[nxt++] = 0;	/* a0 = return address */
+-      reg_alloc_order[nxt++] = 1;	/* a1 = stack pointer */
+-      reg_alloc_order[nxt++] = 16;	/* pseudo frame pointer */
+-      reg_alloc_order[nxt++] = 17;	/* pseudo arg pointer */
+-
+-      reg_alloc_order[nxt++] = ACC_REG_FIRST;	/* MAC16 accumulator */
+-    }
++  static const int reg_windowed_alloc_order[FIRST_PSEUDO_REGISTER] =
++ 	REG_ALLOC_ORDER;
++  static const int reg_call0_alloc_order[FIRST_PSEUDO_REGISTER] =
++  {
++     9, 10, 11,  7,  6,  5,  4,  3,  2,  8,  0, 12, 13, 14, 15,
++    18,
++    19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
++     1, 16, 17,
++    35,
++  };
++
++  memcpy (reg_alloc_order, TARGET_WINDOWED_ABI ?
++	  reg_windowed_alloc_order : reg_call0_alloc_order,
++	  FIRST_PSEUDO_REGISTER * sizeof (int));
+ }
+ 
+ 
+diff --git a/gcc/config/xtensa/xtensa.h b/gcc/config/xtensa/xtensa.h
+index e3f808c42..ef7f9e5d5 100644
+--- a/gcc/config/xtensa/xtensa.h
++++ b/gcc/config/xtensa/xtensa.h
+@@ -249,44 +249,21 @@ along with GCC; see the file COPYING3.  If not see
+   1,									\
+ }
+ 
+-/* For non-leaf procedures on Xtensa processors, the allocation order
+-   is as specified below by REG_ALLOC_ORDER.  For leaf procedures, we
+-   want to use the lowest numbered registers first to minimize
+-   register window overflows.  However, local-alloc is not smart
+-   enough to consider conflicts with incoming arguments.  If an
+-   incoming argument in a2 is live throughout the function and
+-   local-alloc decides to use a2, then the incoming argument must
+-   either be spilled or copied to another register.  To get around
+-   this, we define ADJUST_REG_ALLOC_ORDER to redefine
+-   reg_alloc_order for leaf functions such that lowest numbered
+-   registers are used first with the exception that the incoming
+-   argument registers are not used until after other register choices
+-   have been exhausted.  */
+-
+-#define REG_ALLOC_ORDER \
+-{  8,  9, 10, 11, 12, 13, 14, 15,  7,  6,  5,  4,  3,  2, \
+-  18, \
+-  19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, \
+-   0,  1, 16, 17, \
+-  35, \
+-}
+-
+-#define ADJUST_REG_ALLOC_ORDER order_regs_for_local_alloc ()
+-
+-/* For Xtensa, the only point of this is to prevent GCC from otherwise
+-   giving preference to call-used registers.  To minimize window
+-   overflows for the AR registers, we want to give preference to the
+-   lower-numbered AR registers.  For other register files, which are
+-   not windowed, we still prefer call-used registers, if there are any.  */
+-extern const char xtensa_leaf_regs[FIRST_PSEUDO_REGISTER];
+-#define LEAF_REGISTERS xtensa_leaf_regs
++/* For the windowed register ABI on Xtensa processors, the allocation
++   order is as specified below by REG_ALLOC_ORDER.
++   For the call0 ABI, on the other hand, ADJUST_REG_ALLOC_ORDER hook
++   will be called once at the start of IRA, replacing it with the
++   appropriate one.  */
+ 
+-/* For Xtensa, no remapping is necessary, but this macro must be
+-   defined if LEAF_REGISTERS is defined.  */
+-#define LEAF_REG_REMAP(REGNO) (REGNO)
+-
+-/* This must be declared if LEAF_REGISTERS is set.  */
+-extern int leaf_function;
++#define REG_ALLOC_ORDER							\
++{									\
++   8,  9, 10, 11, 12, 13, 14, 15,  7,  6,  5,  4,  3,  2,		\
++  18,									\
++  19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,	\
++   0,  1, 16, 17,							\
++  35,									\
++}
++#define ADJUST_REG_ALLOC_ORDER xtensa_adjust_reg_alloc_order ()
+ 
+ /* Internal macros to classify a register number.  */
+ 
+-- 
+2.30.2
+

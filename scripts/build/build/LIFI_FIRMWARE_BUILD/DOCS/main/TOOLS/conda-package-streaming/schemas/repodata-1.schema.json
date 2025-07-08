@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://schemas.conda.org/repodata-1.schema.json",
+  "type": "object",
+  "title": "repodata.json",
+  "$comment": "TODO add back to required: repodata_version",
+  "required": [
+    "info"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://schemas.conda.org/repodata-1.schema.json",
+      "format": "uri"
+    },
+    "repodata_version": {
+      "type": "integer",
+      "title": "The API version or schema version of the repodata file.",
+      "const": 1
+    },
+    "info": {
+      "type": "object",
+      "properties": {
+        "subdir": {
+          "$ref": "common-1.schema.json#/definitions/subdir"
+        }
+      },
+      "required": [
+        "subdir"
+      ]
+    },
+    "packages": {
+      "type": "object",
+      "title": "Metadata for 'v1' .tar.bz2 Conda packages.",
+      "description": "Filename key of each package should be validated against {name}-{version}-{build}{ext} metadata for the package.",
+      "patternProperties": {
+        "^.+\\.tar\\.bz2$": {
+          "$ref": "repodata-record-1.schema.json"
+        }
+      },
+      "additionalProperties": false
+    },
+    "packages.conda": {
+      "type": "object",
+      "title": "Metadata for 'v2' .conda Conda packages.",
+      "description": "Filename key of each package should be validated against {name}-{version}-{build}{ext} metadata for the package.",
+      "patternProperties": {
+        "^.+\\.conda$": {
+          "$ref": "repodata-record-1.schema.json"
+        }
+      },
+      "additionalProperties": false
+    },
+    "removed": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^.+(\\.tar\\.bz2)|(\\.conda)$",
+        "description": "Packages that had previously been in this repodata file but have now been removed.",
+        "examples": [
+          "blinker-1.4-py37_0.tar.bz2",
+          "blinker-1.4-py37_0.conda"
+        ]
+      }
+    },
+    "signatures": {
+      "type": "object",
+      "patternProperties": {
+        "^.+(\\.tar\\.bz2)|(\\.conda)$": {
+          "$ref": "#/definitions/signature"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "definitions": {
+    "signature": {
+      "type": "object",
+      "properties": {
+        "metadata_sha256": {
+          "type": "string"
+        },
+        "metadata_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sig": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "metadata_sha256",
+        "metadata_size",
+        "sig",
+        "key"
+      ]
+    }
+  }
+}

@@ -1,0 +1,50 @@
+---
+title: bit()
+categories: [ "Functions" ]
+subCategories: [ "Bits and Bytes" ]
+---
+
+
+
+
+
+= bit()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Computes the value of the specified bit (bit 0 is 1, bit 1 is 2, bit 2 is 4, etc.).
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`bit(n)`
+
+
+[float]
+=== Parameters
+`n`: the bit whose value to compute. Note that `n` needs to be between 0-31 (32 bit). 
+
+
+[float]
+=== Returns
+The value of the bit.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+--
+// SEE ALSO SECTION ENDS

@@ -1,0 +1,31 @@
+From 5773838c193d36476109de77d230391f6738bb62 Mon Sep 17 00:00:00 2001
+From: Max Filippov <jcmvbkbc@gmail.com>
+Date: Fri, 12 Aug 2022 21:02:15 -0700
+Subject: [PATCH] xtensa: gcc: add static PIE support
+
+gcc/
+	* config/xtensa/linux.h (LINK_SPEC): Add static-pie.
+---
+ gcc/config/xtensa/linux.h | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/gcc/config/xtensa/linux.h b/gcc/config/xtensa/linux.h
+index 62a33a9bc..49796c97f 100644
+--- a/gcc/config/xtensa/linux.h
++++ b/gcc/config/xtensa/linux.h
+@@ -52,9 +52,10 @@ along with GCC; see the file COPYING3.  If not see
+ #define LINK_SPEC \
+  "%{shared:-shared} \
+   %{!shared: \
+-    %{!static: \
++    %{!static:%{!static-pie: \
+       %{rdynamic:-export-dynamic} \
+-      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
++      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "}} \
++    %{static-pie:-static -pie --no-dynamic-linker -z text} \
+     %{static:-static}}"
+ 
+ #undef LOCAL_LABEL_PREFIX
+-- 
+2.30.2
+

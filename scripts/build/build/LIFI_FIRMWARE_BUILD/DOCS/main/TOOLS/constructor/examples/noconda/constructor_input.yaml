@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: NoConda
+version: X
+installer_type: all
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+specs:
+  - python
+exclude:  # [unix]
+  - tk  # [unix]
+conclusion_text: |
+  Thanks for installing NoConda!
+  You are now ready to run your Python installation.
+  This is a second line and should appear as such on the installer UI.
+  This would be the third one.
+
+check_path_spaces: False
+check_path_length: False

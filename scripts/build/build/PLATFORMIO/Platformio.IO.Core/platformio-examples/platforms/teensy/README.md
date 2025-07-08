@@ -1,0 +1,15 @@
+
+# Teensy: development platform for [PlatformIO](https://platformio.org)
+
+Teensy is a complete USB-based microcontroller development system, in a very small footprint, capable of implementing many types of projects. All programming is done via the USB port. No special programmer is needed, only a standard USB cable and a PC or Macintosh with a USB port.
+
+* [Home](https://platformio.org/platforms/teensy) (home page in PlatformIO Registry)
+* [Documentation](https://docs.platformio.org/page/platforms/teensy.html) (advanced usage, packages, boards, frameworks, etc.)
+
+# Examples
+
+* [arduino-blink](https://github.com/platformio/platform-teensy/tree/master/examples/arduino-blink)
+* [arduino-hid-usb-mouse](https://github.com/platformio/platform-teensy/tree/master/examples/arduino-hid-usb-mouse)
+* [arduino-internal-libs](https://github.com/platformio/platform-teensy/tree/master/examples/arduino-internal-libs)
+* [zephyr-blink](https://github.com/platformio/platform-teensy/tree/master/examples/zephyr-blink)
+* [zephyr-synchronization](https://github.com/platformio/platform-teensy/tree/master/examples/zephyr-synchronization)

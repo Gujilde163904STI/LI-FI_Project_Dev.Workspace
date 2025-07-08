@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: NoCondaOptions
+version: X
+installer_type: all
+
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+
+specs:
+  - python
+  - conda
+
+register_python: False
+initialize_conda: False
+initialize_by_default: false

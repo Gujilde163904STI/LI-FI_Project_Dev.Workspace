@@ -1,0 +1,62 @@
+/**
+ * Copyright (c) 2014-present PlatformIO <contact@platformio.org>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.home-page {
+  padding-top: @padding-sm;
+
+  .company-logo-versions {
+    .versions {
+      padding-top: @padding-xs;
+    }
+  }
+
+  .quick-buttons {
+    button {
+      width: 250px;
+      margin-bottom: @padding-xs;
+      text-align: left;
+    }
+  }
+
+  .recent-news {
+    .ant-card-cover div {
+      height: 100px;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+
+    .ant-card-body {
+      overflow-y: hidden;
+      height: 110px;
+      font-size: 13px !important;
+
+      .ant-card-meta-title {
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .ant-card-meta-description {
+        color: fade(@heading-color, 70%);
+      }
+    }
+
+    .ant-carousel .slick-dots {
+      position: inherit;
+      bottom: inherit;
+      margin-top: @padding-sm;
+    }
+  }
+}

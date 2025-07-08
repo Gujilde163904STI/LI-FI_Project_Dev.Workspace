@@ -1,0 +1,84 @@
+From fef84d1ba0cb5956687f776b22f51d9fa5e7d176 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Fri, 6 Jan 2023 14:08:06 +0900
+Subject: [PATCH] xtensa: Optimize bitwise splicing operation
+
+This patch optimizes the operation of cutting and splicing two register
+values at a specified bit position, in other words, combining (bitwise
+ORing) bits 0 through (C-1) of the register with bits C through 31
+of the other, where C is the specified immediate integer 17 through 31.
+
+This typically applies to signed copy of floating point number and
+__builtin_return_address() if the windowed register ABI, and saves one
+instruction compared to four shifts and a bitwise OR by the default RTL
+combination pass.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (*splice_bits):
+	New insn_and_split pattern.
+---
+ gcc/config/xtensa/xtensa.md | 47 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index a2cfb3df7..ba1c044c4 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -746,6 +746,53 @@
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"3")])
+ 
++(define_insn_and_split "*splice_bits"
++  [(set (match_operand:SI 0 "register_operand" "=a")
++	(ior:SI (and:SI (match_operand:SI 1 "register_operand" "r")
++			(match_operand:SI 3 "const_int_operand" "i"))
++		(and:SI (match_operand:SI 2 "register_operand" "r")
++			(match_operand:SI 4 "const_int_operand" "i"))))]
++
++  "!optimize_debug && optimize
++   && INTVAL (operands[3]) + INTVAL (operands[4]) == -1
++   && (exact_log2 (INTVAL (operands[3]) + 1) > 16
++       || exact_log2 (INTVAL (operands[4]) + 1) > 16)"
++  "#"
++  "&& can_create_pseudo_p ()"
++  [(set (match_dup 5)
++	(ashift:SI (match_dup 1)
++		   (match_dup 4)))
++   (set (match_dup 6)
++	(lshiftrt:SI (match_dup 2)
++		     (match_dup 3)))
++   (set (match_dup 0)
++	(ior:SI (lshiftrt:SI (match_dup 5)
++			     (match_dup 4))
++		(ashift:SI (match_dup 6)
++			   (match_dup 3))))]
++{
++  int shift;
++  if (INTVAL (operands[3]) < 0)
++    {
++      rtx x;
++      x = operands[1], operands[1] = operands[2], operands[2] = x;
++      x = operands[3], operands[3] = operands[4], operands[4] = x;
++    }
++  shift = floor_log2 (INTVAL (operands[3]) + 1);
++  operands[3] = GEN_INT (shift);
++  operands[4] = GEN_INT (32 - shift);
++  operands[5] = gen_reg_rtx (SImode);
++  operands[6] = gen_reg_rtx (SImode);
++}
++  [(set_attr "type"	"arith")
++   (set_attr "mode"	"SI")
++   (set (attr "length")
++	(if_then_else (match_test "TARGET_DENSITY
++				   && (INTVAL (operands[3]) == 0x7FFFFFFF
++				       || INTVAL (operands[4]) == 0x7FFFFFFF)")
++		      (const_int 11)
++		      (const_int 12)))])
++
+ 
+ ;; Zero-extend instructions.
+ 
+-- 
+2.30.2
+

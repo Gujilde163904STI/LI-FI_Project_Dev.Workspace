@@ -1,0 +1,48 @@
+From 1848b547a6ac69a002d068239a5bc9463f3fae25 Mon Sep 17 00:00:00 2001
+From: Max Filippov <jcmvbkbc@gmail.com>
+Date: Tue, 7 Jun 2022 21:01:01 -0700
+Subject: [PATCH 10/31] gcc: xtensa: fix PR target/105879
+
+split_double operates with the 'word that comes first in memory in the
+target' terminology, while gen_lowpart operates with the 'value
+representing some low-order bits of X' terminology. They are not
+equivalent and must be dealt with differently on little- and big-endian
+targets.
+
+gcc/
+	PR target/105879
+	* config/xtensa/xtensa.md (movdi): Rename 'first' and 'second'
+	to 'lowpart' and 'highpart' so that they match 'gen_lowpart' and
+	'gen_highpart' bitwise semantics and fix order of highpart and
+	lowpart depending on target endianness.
+---
+ gcc/config/xtensa/xtensa.md | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index cea280061..30d8ef96c 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -802,11 +802,14 @@
+ 	 because of offering further optimization opportunities.  */
+       if (register_operand (operands[0], DImode))
+ 	{
+-	  rtx first, second;
+-
+-	  split_double (operands[1], &first, &second);
+-	  emit_insn (gen_movsi (gen_lowpart (SImode, operands[0]), first));
+-	  emit_insn (gen_movsi (gen_highpart (SImode, operands[0]), second));
++	  rtx lowpart, highpart;
++
++	  if (TARGET_BIG_ENDIAN)
++	    split_double (operands[1], &highpart, &lowpart);
++	  else
++	    split_double (operands[1], &lowpart, &highpart);
++	  emit_insn (gen_movsi (gen_lowpart (SImode, operands[0]), lowpart));
++	  emit_insn (gen_movsi (gen_highpart (SImode, operands[0]), highpart));
+ 	  DONE;
+ 	}
+ 
+-- 
+2.20.1
+

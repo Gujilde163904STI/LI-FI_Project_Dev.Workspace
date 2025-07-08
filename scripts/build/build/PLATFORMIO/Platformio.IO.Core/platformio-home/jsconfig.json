@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "allowSyntheticDefaultImports": false,
+    "baseUrl": "./",
+    "jsx": "react",
+    "paths": {
+      "@core/*": ["app/core/*"],
+      "@device/*": ["app/modules/device/*"],
+      "@inspect/*": ["app/modules/inspect/*"],
+      "@library/*": ["app/modules/library/*"],
+      "@platform/*": ["app/modules/platform/*"],
+      "@project/*": ["app/modules/project/*"],
+      "@store/*": ["app/store/*"],
+      "@app/*": ["app/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

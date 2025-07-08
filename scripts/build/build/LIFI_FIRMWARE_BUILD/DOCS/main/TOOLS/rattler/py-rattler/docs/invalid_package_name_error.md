@@ -1,0 +1,3 @@
+# InvalidPackageNameError
+
+::: rattler.exceptions.InvalidPackageNameError

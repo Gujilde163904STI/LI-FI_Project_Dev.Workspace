@@ -1,0 +1,57 @@
+---
+title: long()
+categories: [ "Variables" ]
+subCategories: [ "Conversion" ]
+---
+
+
+
+
+
+= long()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Converts a value to the `link:../../data-types/long[long]` data type.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`long(x)` +
+`(long)x` (C-style type conversion)
+
+
+[float]
+=== Parameters
+`x`: a value. Allowed data types: any type.
+
+
+[float]
+=== Returns
+Data type: link:../../data-types/long[`long`].
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+
+// SEE ALSO SECTION STARTS
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:../../data-types/long[long]
+
+
+--
+// SEE ALSO SECTION ENDS

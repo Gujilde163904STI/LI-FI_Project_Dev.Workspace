@@ -1,0 +1,35 @@
+name: conda-recipe-manager
+channels:
+  - defaults
+
+dependencies:
+  - black
+  - isort
+  - make
+  - mypy
+  - python >=3.11
+  - pytest
+  - pytest-cov
+  - pytest-socket
+  - pytest-xdist
+  - pyfakefs >=5.9.1
+  # Match version with .pre-commit-config.yaml to ensure consistent rules with `make lint`.
+  - pylint ==3.2.7
+  - pip
+  - click >=8.1.7,<8.2.0
+  - conda
+  - jinja2
+  - pyyaml
+  - types-pyyaml
+  - conda-build
+  - jsonschema
+  - types-jsonschema
+  - requests
+  - types-requests
+  - gitpython
+  - networkx
+  - matplotlib-base
+  - pygraphviz
+  - pre-commit
+  - sphinx
+  - sphinx-rtd-theme

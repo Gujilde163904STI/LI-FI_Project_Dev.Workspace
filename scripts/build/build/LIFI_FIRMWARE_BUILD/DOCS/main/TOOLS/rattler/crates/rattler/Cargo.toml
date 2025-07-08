@@ -1,0 +1,69 @@
+[package]
+name = "rattler"
+version = "0.34.4"
+edition.workspace = true
+authors = ["Bas Zalmstra <zalmstra.bas@gmail.com>"]
+description = "Rust library to install conda environments"
+categories.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+readme.workspace = true
+
+[features]
+default = ['rustls-tls']
+native-tls = ['reqwest/native-tls', 'rattler_package_streaming/native-tls', 'rattler_cache/native-tls', 'rattler_networking/native-tls']
+rustls-tls = ['reqwest/rustls-tls', 'rattler_package_streaming/rustls-tls', 'rattler_cache/rustls-tls', 'rattler_networking/rustls-tls']
+cli-tools = ['dep:clap']
+indicatif = ['dep:indicatif', 'dep:console']
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true, optional = true }
+digest = { workspace = true }
+dirs = { workspace = true }
+fs-err = { workspace = true }
+futures = { workspace = true }
+humantime = { workspace = true }
+indexmap = { workspace = true }
+indicatif = { workspace = true, optional = true }
+itertools = { workspace = true }
+memchr = { workspace = true }
+memmap2 = { workspace = true }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+rattler_cache = { workspace = true }
+rattler_conda_types = { workspace = true }
+rattler_digest = { workspace = true }
+rattler_networking = { workspace = true }
+rattler_shell = { workspace = true }
+rattler_package_streaming = { workspace = true, features = ["reqwest"] }
+rattler_menuinst = { workspace = true, default-features = false }
+rayon = { workspace = true }
+reflink-copy = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true, features = ["stream", "json", "gzip"] }
+reqwest-middleware = { workspace = true }
+smallvec = { workspace = true }
+simple_spawn_blocking = { workspace = true, features = ["tokio"] }
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["rt", "io-util", "macros"] }
+tracing = { workspace = true }
+url = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4", "fast-rng"] }
+console = { workspace = true, optional = true }
+serde_json.workspace = true
+
+[dev-dependencies]
+assert_matches = { workspace = true }
+rand = { workspace = true }
+rstest = { workspace = true }
+tracing-test = { workspace = true }
+insta = { workspace = true, features = ["yaml"] }
+rattler_lock = { path = "../rattler_lock" }
+tools = { path="../tools" }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+axum = { workspace = true }
+tower-http = { workspace = true, features = ["fs"] }
+tower = { workspace = true, features = ["util"] }

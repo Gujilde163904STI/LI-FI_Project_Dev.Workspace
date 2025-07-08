@@ -1,0 +1,4 @@
+[run]
+source=constructor
+omit =
+    constructor/_version.py

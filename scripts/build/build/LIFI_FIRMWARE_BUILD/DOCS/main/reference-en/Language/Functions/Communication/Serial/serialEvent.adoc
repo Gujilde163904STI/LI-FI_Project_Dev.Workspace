@@ -1,0 +1,101 @@
+---
+title: serialEvent()
+---
+
+
+
+
+= serialEvent()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Called at the end of link:../../../../structure/sketch/loop[`loop()`] when data is available. Use `Serial.read()` to capture this data.
+
+*Please note:* most modern boards do not support this method. See "Notes and Warnings" further below this article.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+
+[source,arduino]
+----
+void serialEvent() {
+  //statements
+}
+----
+
+The Mega 2560 R3 and Due boards have additional serial ports which can be accessed by adding the corresponding number at the end of the function.
+
+[source,arduino]
+----
+void serialEvent1() {
+  //statements
+}
+
+void serialEvent2() {
+  //statements
+}
+
+void serialEvent3() {
+  //statements
+}
+----
+
+
+[float]
+=== Parameters
+`statements`: any valid statements
+
+
+[float]
+=== Returns
+Nothing
+
+--
+// OVERVIEW SECTION ENDS
+
+
+// HOW TO USE SECTION STARTS
+[#howtouse]
+--
+
+[float]
+=== Notes and Warnings
+Please note that `serialEvent()` *does not work* on any modern Arduino boards. The only recognized boards to have support as of 2023/12/06 are the *UNO R3*, *Nano*, *Mega 2560 R3* and *Due*.
+
+Instead, you can use the link:../available[`available()`] method. Examples in this page demonstrates how to read serial data only when it is available, similarly to how `Serial.event()` is implemented.
+[%hardbreaks]
+
+--
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# http://arduino.cc/en/Tutorial/SerialEvent[Serial Event^]
+
+[role="language"]
+* #LANGUAGE# link:../begin[begin()]
+* #LANGUAGE# link:../end[end()]
+* #LANGUAGE# link:../available[available()]
+* #LANGUAGE# link:../read[read()]
+* #LANGUAGE# link:../peek[peek()]
+* #LANGUAGE# link:../flush[flush()]
+* #LANGUAGE# link:../print[print()]
+* #LANGUAGE# link:../println[println()]
+* #LANGUAGE# link:../write[write()]
+
+--
+// SEE ALSO SECTION ENDS

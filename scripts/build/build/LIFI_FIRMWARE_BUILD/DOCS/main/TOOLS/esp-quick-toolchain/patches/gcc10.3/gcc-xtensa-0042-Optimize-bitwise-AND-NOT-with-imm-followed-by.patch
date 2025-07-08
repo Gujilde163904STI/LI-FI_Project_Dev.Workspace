@@ -1,0 +1,179 @@
+From f4d76407c8c33229f9b1d7b81e713ed10a5d408b Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Thu, 21 Jul 2022 16:10:47 +0900
+Subject: [PATCH] xtensa: Optimize "bitwise AND NOT with imm" followed by
+ "branch if (not) equal to zero"
+
+The RTL combiner will transform "if ((x & C) == C) goto label;"
+into "if ((~x & C) == 0) goto label;" and will try to match it with
+the insn patterns.
+
+    /* example */
+    void test_0(int a) {
+      if ((char)a == 255)
+        foo();
+    }
+    void test_1(int a) {
+      if ((unsigned short)a == 0xFFFF)
+        foo();
+    }
+    void test_2(int a) {
+      if ((a & 0x00003F80) != 0x00003F80)
+        foo();
+    }
+
+    ;; before
+    test_0:
+	extui	a2, a2, 0, 8
+	movi	a3, 0xff
+	bne	a2, a3, .L1
+	j.l	foo, a9
+    .L1:
+	ret.n
+    test_1:
+	movi.n	a3, -1
+	extui	a2, a2, 0, 16
+	extui	a3, a3, 16, 16
+	bne	a2, a3, .L3
+	j.l	foo, a9
+    .L3:
+	ret.n
+    test_2:
+	movi	a3, 0x80
+	extui	a2, a2, 7, 7
+	addmi	a3, a3, 0x3f00
+	slli	a2, a2, 7
+	beq	a2, a3, .L5
+	j.l	foo, a9
+    .L5:
+	ret.n
+
+    ;; after
+    test_0:
+	movi	a3, 0xff
+	bnall	a2, a3, .L1
+	j.l	foo, a9
+    .L1:
+	ret.n
+    test_1:
+	movi.n	a3, -1
+	extui	a3, a3, 16, 16
+	bnall	a2, a3, .L3
+	j.l	foo, a9
+    .L3:
+	ret.n
+    test_2:
+	movi	a3, 0x80
+	addmi	a3, a3, 0x3f00
+	ball	a2, a3, .L5
+	j.l	foo, a9
+    .L5:
+	ret.n
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (*masktrue_const_bitcmpl):
+	Add a new insn_and_split pattern, and a few split patterns for
+	special cases.
+---
+ gcc/config/xtensa/xtensa.md | 84 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 84 insertions(+)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index ca8b3913d..ed1e072fe 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -1719,6 +1719,90 @@
+    (set_attr "mode"	"none")
+    (set_attr "length"	"3")])
+ 
++(define_insn_and_split "*masktrue_const_bitcmpl"
++  [(set (pc)
++	(if_then_else (match_operator 3 "boolean_operator"
++			[(and:SI (not:SI (match_operand:SI 0 "register_operand" "r"))
++				 (match_operand:SI 1 "const_int_operand" "i"))
++			 (const_int 0)])
++		      (label_ref (match_operand 2 "" ""))
++		      (pc)))]
++  "exact_log2 (INTVAL (operands[1])) < 0"
++  "#"
++  "&& can_create_pseudo_p ()"
++  [(set (match_dup 4)
++	(match_dup 1))
++   (set (pc)
++	(if_then_else (match_op_dup 3
++			[(and:SI (not:SI (match_dup 0))
++				 (match_dup 4))
++			 (const_int 0)])
++		      (label_ref (match_dup 2))
++		      (pc)))]
++{
++  operands[4] = gen_reg_rtx (SImode);
++}
++  [(set_attr "type"	"jump")
++   (set_attr "mode"	"none")
++   (set (attr "length")
++	(if_then_else (match_test "TARGET_DENSITY
++				   && IN_RANGE (INTVAL (operands[1]), -32, 95)")
++		      (const_int 5)
++		      (if_then_else (match_test "xtensa_simm12b (INTVAL (operands[1]))")
++				    (const_int 6)
++				    (const_int 10))))])
++
++(define_split
++  [(set (pc)
++	(if_then_else (match_operator 2 "boolean_operator"
++			[(subreg:HQI (not:SI (match_operand:SI 0 "register_operand")) 0)
++			 (const_int 0)])
++		      (label_ref (match_operand 1 ""))
++		      (pc)))]
++  "!BYTES_BIG_ENDIAN"
++  [(set (pc)
++	(if_then_else (match_op_dup 2
++			[(and:SI (not:SI (match_dup 0))
++				 (match_dup 3))
++			 (const_int 0)])
++		      (label_ref (match_dup 1))
++		      (pc)))]
++{
++  operands[3] = GEN_INT ((1 << GET_MODE_BITSIZE (<MODE>mode)) - 1);
++})
++
++(define_split
++  [(set (pc)
++	(if_then_else (match_operator 2 "boolean_operator"
++			[(subreg:HI (not:SI (match_operand:SI 0 "register_operand")) 2)
++			 (const_int 0)])
++		      (label_ref (match_operand 1 ""))
++		      (pc)))]
++  "BYTES_BIG_ENDIAN"
++  [(set (pc)
++	(if_then_else (match_op_dup 2
++			[(and:SI (not:SI (match_dup 0))
++				 (const_int 65535))
++			 (const_int 0)])
++		      (label_ref (match_dup 1))
++		      (pc)))])
++
++(define_split
++  [(set (pc)
++	(if_then_else (match_operator 2 "boolean_operator"
++			[(subreg:QI (not:SI (match_operand:SI 0 "register_operand")) 3)
++			 (const_int 0)])
++		      (label_ref (match_operand 1 ""))
++		      (pc)))]
++  "BYTES_BIG_ENDIAN"
++  [(set (pc)
++	(if_then_else (match_op_dup 2
++			[(and:SI (not:SI (match_dup 0))
++				 (const_int 255))
++			 (const_int 0)])
++		      (label_ref (match_dup 1))
++		      (pc)))])
++
+ (define_insn_and_split "*masktrue_const_pow2_minus_one"
+   [(set (pc)
+ 	(if_then_else (match_operator 4 "boolean_operator"
+-- 
+2.20.1
+

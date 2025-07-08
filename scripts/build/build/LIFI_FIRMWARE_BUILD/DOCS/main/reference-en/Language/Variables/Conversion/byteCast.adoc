@@ -1,0 +1,55 @@
+---
+title: byte()
+categories: [ "Variables" ]
+subCategories: [ "Conversion" ]
+---
+
+
+
+
+
+= byte()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Converts a value to the `link:../../data-types/byte[byte]` data type.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`byte(x)` +
+`(byte)x` (C-style type conversion)
+
+
+[float]
+=== Parameters
+`x`: a value. Allowed data types: any type.
+
+
+[float]
+=== Returns
+Data type: link:../../data-types/byte[`byte`].
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+// SEE ALSO SECTION BEGINS
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:../../data-types/byte[byte]
+
+--
+// SEE ALSO SECTION ENDS

@@ -1,0 +1,102 @@
+---
+title: Serial.readString()
+---
+
+
+
+
+= readString()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+`Serial.readString()` reads characters from the serial buffer into a String. The function terminates if it times out (see link:../settimeout[setTimeout()]).
+
+`Serial.readString()` inherits from the link:../../stream[Stream] utility class.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`_Serial_.readString()`
+
+
+[float]
+=== Parameters
+`_Serial_`: serial port object. See the list of available serial ports for each board on the link:https://www.arduino.cc/en/Reference/serial[Serial main page].
+
+
+[float]
+=== Returns
+A `String` read from the serial buffer
+
+
+--
+// OVERVIEW SECTION ENDS
+
+
+// HOW TO USE SECTION STARTS
+[#howtouse]
+--
+
+[float]
+=== Example Code
+Demonstrate Serial.readString()
+
+[source,arduino]
+----
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  Serial.println("Enter data:");
+  while (Serial.available() == 0) {}     //wait for data available
+  String teststr = Serial.readString();  //read until timeout
+  teststr.trim();                        // remove any \r \n whitespace at the end of the String
+  if (teststr == "red") {
+    Serial.println("A primary color");
+  } else {
+    Serial.println("Something else");
+  }
+}
+----
+[%hardbreaks]
+
+
+[float]
+=== Notes and Warnings
+The function does not terminate early if the data contains end of line characters. The returned `String` may contain carriage return and/or line feed characters if they were received.
+[%hardbreaks]
+
+--
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:https://www.arduino.cc/en/Reference/serial[Serial]
+* #LANGUAGE# link:../begin[begin()]
+* #LANGUAGE# link:../end[end()]
+* #LANGUAGE# link:../available[available()]
+* #LANGUAGE# link:../read[read()]
+* #LANGUAGE# link:../peek[peek()]
+* #LANGUAGE# link:../flush[flush()]
+* #LANGUAGE# link:../print[print()]
+* #LANGUAGE# link:../println[println()]
+* #LANGUAGE# link:../write[write()]
+* #LANGUAGE# link:../serialevent[SerialEvent()]
+* #LANGUAGE# link:../parsefloat[parseFloat()]
+
+--
+// SEE ALSO SECTION ENDS

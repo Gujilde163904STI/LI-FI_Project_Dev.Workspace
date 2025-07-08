@@ -1,0 +1,61 @@
+---
+title: "+"
+title_expanded: concatenation
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Operator" ]
+---
+
+
+
+
+
+= + Concatenation
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Combines, or concatenates two Strings into one new String. The second String is appended to the first, and the result is placed in a new String. Works the same as string.concat().
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString3 = myString1 + myString2`
+
+
+[float]
+=== Parameters
+`myString1`: a String variable. +
+`myString2`: a String variable. +
+`myString3`: a String variable.
+
+
+[float]
+=== Returns
+New String that is the combination of the original two Strings.
+
+--
+
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

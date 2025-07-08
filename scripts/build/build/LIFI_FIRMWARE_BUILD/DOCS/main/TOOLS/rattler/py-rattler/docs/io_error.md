@@ -1,0 +1,3 @@
+# IoError
+
+::: rattler.exceptions.IoError

@@ -1,0 +1,83 @@
+/**
+ * Copyright (c) 2014-present PlatformIO <contact@platformio.org>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.source-code-toggler {
+  float: right;
+  margin-top: @padding-xs;
+  font-size: 18px !important;
+  font-weight: normal;
+  color: #d9d9d9;
+  cursor: pointer;
+}
+
+.release-notes {
+  h2 {
+    margin-top: 5px !important;
+  }
+
+  h3 {
+    margin-top: @padding-xs !important;
+    border-bottom: 1px solid @border-color-split;
+  }
+
+  ul {
+    list-style-type: initial;
+    padding-left: 20px;
+  }
+}
+
+.file-explorer {
+  background-color: @layout-header-background;
+  @height: 350px;
+
+  .fe-toolbar {
+    padding: @padding-xs;
+  }
+
+  .fe-sidebar {
+    height: @height;
+    overflow: auto;
+    padding: 0 @padding-sm;
+
+    .fe-toolbar {
+      margin-bottom: 5px;
+    }
+
+    li {
+      padding-top: 5px;
+
+      .anticon {
+        margin-right: 5px;
+      }
+    }
+  }
+
+  .fe-tree {
+    background-color: @layout-body-background;
+    height: @height;
+    overflow: auto;
+    padding: @padding-xs @padding-sm;
+    word-break: break-all;
+
+    .fe-root-items li {
+      padding-bottom: @padding-xs / 2;
+    }
+
+    .ant-divider {
+      margin: @padding-xs 0;
+    }
+  }
+}

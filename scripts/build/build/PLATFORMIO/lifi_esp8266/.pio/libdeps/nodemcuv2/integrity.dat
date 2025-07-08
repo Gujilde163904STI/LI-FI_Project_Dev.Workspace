@@ -1,0 +1,7 @@
+ESP8266HTTPClient
+Adafruit NeoPixel@^1.11.0
+ESP8266WebServer
+ArduinoJson@^6.21.2
+PubSubClient@^2.8.0
+WiFiManager@^2.0.16-rc.2
+ESP8266WiFi

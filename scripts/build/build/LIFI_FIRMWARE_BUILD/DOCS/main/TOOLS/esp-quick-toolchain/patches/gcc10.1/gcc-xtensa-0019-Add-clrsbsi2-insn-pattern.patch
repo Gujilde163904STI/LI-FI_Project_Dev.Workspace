@@ -1,0 +1,98 @@
+From ebd48d915076589f04b5c1ed50f9f5ddfae088e8 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sun, 29 May 2022 19:57:35 +0900
+Subject: [PATCH 14/31] xtensa: Add clrsbsi2 insn pattern
+
+> (clrsb:m x)
+> Represents the number of redundant leading sign bits in x, represented
+> as an integer of mode m, starting at the most significant bit position.
+
+This explanation is just what the NSA instruction (not ever emitted before)
+calculates in Xtensa ISA.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (clrsbsi2): New insn pattern.
+
+libgcc/ChangeLog:
+
+	* config/xtensa/lib1funcs.S (__clrsbsi2): New function.
+	* config/xtensa/t-xtensa (LIB1ASMFUNCS): Add _clrsbsi2.
+---
+ gcc/config/xtensa/xtensa.md      | 12 +++++++++++-
+ libgcc/config/xtensa/lib1funcs.S | 23 +++++++++++++++++++++++
+ libgcc/config/xtensa/t-xtensa    |  2 +-
+ 3 files changed, 35 insertions(+), 2 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 28ed1d34e..6c76fb942 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -429,7 +429,17 @@
+    (set_attr "length"	"3")])
+ 
+ 
+-;; Count leading/trailing zeros and find first bit.
++;; Count redundant leading sign bits and leading/trailing zeros,
++;; and find first bit.
++
++(define_insn "clrsbsi2"
++  [(set (match_operand:SI 0 "register_operand" "=a")
++	(clrsb:SI (match_operand:SI 1 "register_operand" "r")))]
++  "TARGET_NSA"
++  "nsa\t%0, %1"
++  [(set_attr "type"	"arith")
++   (set_attr "mode"	"SI")
++   (set_attr "length"	"3")])
+ 
+ (define_insn "clzsi2"
+   [(set (match_operand:SI 0 "register_operand" "=a")
+diff --git a/libgcc/config/xtensa/lib1funcs.S b/libgcc/config/xtensa/lib1funcs.S
+index b19deae14..ad9072c40 100644
+--- a/libgcc/config/xtensa/lib1funcs.S
++++ b/libgcc/config/xtensa/lib1funcs.S
+@@ -456,6 +456,29 @@ __nsau_data:
+ #endif /* L_clz */
+ 
+ 
++#ifdef L_clrsbsi2
++	.align	4
++	.global	__clrsbsi2
++	.type	__clrsbsi2, @function
++__clrsbsi2:
++	leaf_entry sp, 16
++#if XCHAL_HAVE_NSA
++	nsa	a2, a2
++#else
++	srai	a3, a2, 31
++	xor	a3, a3, a2
++	movi	a2, 31
++	beqz	a3, .Lreturn
++	do_nsau	a2, a3, a4, a5
++	addi	a2, a2, -1
++.Lreturn:
++#endif
++	leaf_return
++	.size	__clrsbsi2, . - __clrsbsi2
++
++#endif /* L_clrsbsi2 */
++
++
+ #ifdef L_clzsi2
+ 	.align	4
+ 	.global	__clzsi2
+diff --git a/libgcc/config/xtensa/t-xtensa b/libgcc/config/xtensa/t-xtensa
+index 9836c96ae..084618b38 100644
+--- a/libgcc/config/xtensa/t-xtensa
++++ b/libgcc/config/xtensa/t-xtensa
+@@ -1,6 +1,6 @@
+ LIB1ASMSRC = xtensa/lib1funcs.S
+ LIB1ASMFUNCS = _mulsi3 _divsi3 _modsi3 _udivsi3 _umodsi3 \
+-	_umulsidi3 _clz _clzsi2 _ctzsi2 _ffssi2 \
++	_umulsidi3 _clz _clrsbsi2 _clzsi2 _ctzsi2 _ffssi2 \
+ 	_ashldi3 _ashrdi3 _lshrdi3 \
+ 	_bswapsi2 _bswapdi2 \
+ 	_negsf2 _addsubsf3 _mulsf3 _divsf3 _cmpsf2 _fixsfsi _fixsfdi \
+-- 
+2.20.1
+

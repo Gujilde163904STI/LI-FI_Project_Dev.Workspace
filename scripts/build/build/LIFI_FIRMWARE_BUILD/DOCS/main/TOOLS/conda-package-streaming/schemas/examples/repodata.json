@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schemas.conda.org/repodata-1.schema.json",
+  "repodata_version": 1,
+  "info": {
+    "subdir": "linux-32"
+  },
+  "packages": {
+    "itsdangerous-2.3.4-23.tar.bz2": {
+      "record_version": 1,
+      "origin_channel_name": "main",
+      "subdir": "noarch",
+      "namespace": "py",
+      "name": "itsdangerous",
+      "version": "2.3.4",
+      "build_number": 23,
+      "build": "23",
+      "ext": ".tar.bz2",
+      "fn": "itsdangerous-2.3.4-23.tar.bz2",
+      "package_id": "py:itsdangerous-2.3.4-23-23",
+      "md5": "9ceda9e08e97868b6ff7c0961a40544f",
+      "size": 128,
+      "sha256": "9ceda9e08e97868b6ff7c0961a40544f9ceda9e08e97868b6ff7c0961a40544f"
+    }
+  },
+  "signatures": {
+    "itsdangerous-2.3.4-23.tar.bz2": {
+      "metadata_sha256": "9ceda9e08e97868b6ff7c0961a40544f9ceda9e08e97868b6ff7c0961a40544f",
+      "metadata_size": 18,
+      "sig": "",
+      "key": ""
+    }
+  }
+}

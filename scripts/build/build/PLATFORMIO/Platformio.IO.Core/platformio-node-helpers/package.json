@@ -1,0 +1,71 @@
+{
+  "name": "platformio-node-helpers",
+  "version": "11.3.0",
+  "description": "Collection of Node.JS helpers for PlatformIO",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "build": "webpack --env build",
+    "dev": "webpack --progress --colors --watch --env dev",
+    "lint": "eslint --ext js src || exit 0",
+    "format": "prettier --single-quote --print-width 88 --write \"src/**/*.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/platformio/platformio-node-helpers.git"
+  },
+  "keywords": [
+    "PlatformIO",
+    "IoT",
+    "debug",
+    "unittest",
+    "embedded",
+    "flash",
+    "firmware",
+    "arduino",
+    "CMSIS",
+    "ESP-IDF",
+    "SPL",
+    "mbed",
+    "STM32Cube",
+    "avr",
+    "arm",
+    "espressif",
+    "esp8266",
+    "esp32",
+    "stm32",
+    "pic32",
+    "nRF51",
+    "nRF52",
+    "fpga",
+    "verilog",
+    "hardware",
+    "serial",
+    "monitor"
+  ],
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformio/platformio-node-helpers/issues"
+  },
+  "homepage": "https://platformio.org",
+  "dependencies": {
+    "global-agent": "^3.0.0",
+    "got": "^11.8.6",
+    "jsonrpc-lite": "~2.1.1",
+    "semver": "^7.6.3",
+    "tar": "~7.4.3",
+    "tcp-port-used": "~1.0.2",
+    "ws": "~8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "~14",
+    "eslint": "~8.56.0",
+    "eslint-import-resolver-webpack": "~0.13.10",
+    "eslint-plugin-import": "~2.31.0",
+    "prettier": "~3.4.2",
+    "webpack": "~5.97.1",
+    "webpack-cli": "~6.0.1"
+  }
+}

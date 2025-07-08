@@ -1,0 +1,111 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "conda-libmamba-solver"
+description = "The fast mamba solver, now in conda"
+readme = "README.md"
+authors = [
+  {name = "Anaconda, Inc.", email = "conda@continuum.io"}
+]
+license = {file = "LICENSE"}
+classifiers = [
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy"
+]
+requires-python = ">=3.9"
+dependencies = [
+  "conda >=24.11",
+  # "libmambapy >=2",
+  "boltons >=23.0.0",
+]
+dynamic = [
+  "version"
+]
+
+[project.urls]
+homepage = "https://github.com/conda/conda-libmamba-solver"
+
+[project.entry-points.conda]
+conda-libmamba-solver = "conda_libmamba_solver.plugin"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.black]
+line-length = 99
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+exclude = '''
+(
+      ^/conda_libmamba_solver/_libmamba\.py
+    | ^/tests/_reposerver\.py
+)
+'''
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+  "--color=yes",
+  "--tb=native",
+  "--strict-markers"
+]
+filterwarnings = [
+  # elevate all deprecation warnings to errors
+  "error::PendingDeprecationWarning",
+  "error::DeprecationWarning",
+  "error::FutureWarning",
+  # temporary ignores
+  "ignore:conda.cli.install.print_activate:PendingDeprecationWarning:conda.env.env",
+  "ignore:`remote_definition`:FutureWarning:argparse",
+  "ignore:conda.core.prefix_data.python_record_for_prefix:PendingDeprecationWarning:conda.core.link",
+  "ignore:conda.core.prefix_data.PrefixDataType.__call__:PendingDeprecationWarning:conda_libmamba_solver.state",
+]
+markers = [
+  "integration: integration tests that usually require an internet connect",
+  "slow: slow running tests",
+]
+
+[tool.ruff]
+exclude = ["conda_libmamba_solver/mamba_utils.py", "tests/data/"]
+target-version = "py39"
+line-length = 99
+
+[tool.ruff.lint]
+# E, W = pycodestyle errors and warnings
+# F = pyflakes
+# I = isort
+# D = pydocstyle
+# UP = pyupgrade
+# ISC = flake8-implicit-str-concat
+# TCH = flake8-type-checking
+# T10 = flake8-debugger
+# FA = flake8-future-annotations
+# see also https://docs.astral.sh/ruff/rules/
+select = ["E", "W", "F", "I", "D1", "UP", "ISC", "TCH", "T10", "FA"]
+# E402 module level import not at top of file
+# E501 line too long
+# E722 do not use bare 'except'
+# E731 do not assign a lambda expression, use a def
+# D101 Missing docstring in public class
+# D102 Missing docstring in public method
+# D103 Missing docstring in public function
+# D104 Missing docstring in public package
+# D105 Missing docstring in magic method
+# D107 Missing docstring in `__init__`
+ignore = ["E402", "E501", "E722", "E731", "D101", "D102", "D103", "D104", "D105", "D107"]
+extend-per-file-ignores = {"docs/*" = ["D1"], "tests/*" = ["D1"]}
+pydocstyle = {convention = "pep257"}
+flake8-type-checking = {exempt-modules = [], strict = true}
+
+# [tool.pyright]
+# include = ["conda_libmamba_solver"]
+# ignore = ["conda_libmamba_solver/*_v1.py"]
+# strict = ["**/"]

@@ -1,0 +1,174 @@
+From fa7073ff572c248896057a5a7841a3e1d98380ad Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Fri, 13 May 2022 22:27:36 +0900
+Subject: [PATCH 06/31] xtensa: Make use of IN_RANGE macro where appropriate
+
+No functional changes.
+
+gcc/ChangeLog:
+
+	* config/xtensa/constraints.md (M, O): Use the macro.
+	* config/xtensa/predicates.md (addsubx_operand, extui_fldsz_operand,
+	sext_fldsz_operand): Ditto.
+	* config/xtensa/xtensa.c (xtensa_simm8, xtensa_simm8x256,
+	xtensa_simm12b, xtensa_uimm8, xtensa_uimm8x2, xtensa_uimm8x4,
+	xtensa_mask_immediate, smalloffset_mem_p, printx, xtensa_call_save_reg,
+	xtensa_expand_prologue): Ditto.
+	* config/xtensa/xtensa.h (FUNCTION_ARG_REGNO_P): Ditto.
+---
+ gcc/config/xtensa/constraints.md |  4 ++--
+ gcc/config/xtensa/predicates.md  |  5 ++---
+ gcc/config/xtensa/xtensa.c       | 20 ++++++++++----------
+ gcc/config/xtensa/xtensa.h       |  2 +-
+ 4 files changed, 15 insertions(+), 16 deletions(-)
+
+diff --git a/gcc/config/xtensa/constraints.md b/gcc/config/xtensa/constraints.md
+index 2062c8816..9a8caab4f 100644
+--- a/gcc/config/xtensa/constraints.md
++++ b/gcc/config/xtensa/constraints.md
+@@ -92,7 +92,7 @@
+  "An integer constant in the range @minus{}32-95 for use with MOVI.N
+   instructions."
+  (and (match_code "const_int")
+-      (match_test "ival >= -32 && ival <= 95")))
++      (match_test "IN_RANGE (ival, -32, 95)")))
+ 
+ (define_constraint "N"
+  "An unsigned 8-bit integer constant shifted left by 8 bits for use
+@@ -103,7 +103,7 @@
+ (define_constraint "O"
+  "An integer constant that can be used in ADDI.N instructions."
+  (and (match_code "const_int")
+-      (match_test "ival == -1 || (ival >= 1 && ival <= 15)")))
++      (match_test "ival == -1 || IN_RANGE (ival, 1, 15)")))
+ 
+ (define_constraint "P"
+  "An integer constant that can be used as a mask value in an EXTUI
+diff --git a/gcc/config/xtensa/predicates.md b/gcc/config/xtensa/predicates.md
+index 3f84859b6..91b9343a2 100644
+--- a/gcc/config/xtensa/predicates.md
++++ b/gcc/config/xtensa/predicates.md
+@@ -25,8 +25,7 @@
+ 
+ (define_predicate "addsubx_operand"
+   (and (match_code "const_int")
+-       (match_test "INTVAL (op) >= 1
+-		    && INTVAL (op) <= 3")))
++       (match_test "IN_RANGE (INTVAL (op), 1, 3)")))
+ 
+ (define_predicate "arith_operand"
+   (ior (and (match_code "const_int")
+@@ -64,7 +63,7 @@
+ 
+ (define_predicate "sext_fldsz_operand"
+   (and (match_code "const_int")
+-       (match_test "INTVAL (op) >= 8 && INTVAL (op) <= 23")))
++       (match_test "IN_RANGE (INTVAL (op), 8, 23)")))
+ 
+ (define_predicate "lsbitnum_operand"
+   (and (match_code "const_int")
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 4043f40ce..02dc5799a 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -341,42 +341,42 @@ struct gcc_target targetm = TARGET_INITIALIZER;
+ bool
+ xtensa_simm8 (HOST_WIDE_INT v)
+ {
+-  return v >= -128 && v <= 127;
++  return IN_RANGE (v, -128, 127);
+ }
+ 
+ 
+ bool
+ xtensa_simm8x256 (HOST_WIDE_INT v)
+ {
+-  return (v & 255) == 0 && (v >= -32768 && v <= 32512);
++  return (v & 255) == 0 && IN_RANGE (v, -32768, 32512);
+ }
+ 
+ 
+ bool
+ xtensa_simm12b (HOST_WIDE_INT v)
+ {
+-  return v >= -2048 && v <= 2047;
++  return IN_RANGE (v, -2048, 2047);
+ }
+ 
+ 
+ static bool
+ xtensa_uimm8 (HOST_WIDE_INT v)
+ {
+-  return v >= 0 && v <= 255;
++  return IN_RANGE (v, 0, 255);
+ }
+ 
+ 
+ static bool
+ xtensa_uimm8x2 (HOST_WIDE_INT v)
+ {
+-  return (v & 1) == 0 && (v >= 0 && v <= 510);
++  return (v & 1) == 0 && IN_RANGE (v, 0, 510);
+ }
+ 
+ 
+ static bool
+ xtensa_uimm8x4 (HOST_WIDE_INT v)
+ {
+-  return (v & 3) == 0 && (v >= 0 && v <= 1020);
++  return (v & 3) == 0 && IN_RANGE (v, 0, 1020);
+ }
+ 
+ 
+@@ -527,7 +527,7 @@ smalloffset_mem_p (rtx op)
+ 	    return FALSE;
+ 
+ 	  val = INTVAL (offset);
+-	  return (val & 3) == 0 && (val >= 0 && val <= 60);
++	  return (val & 3) == 0 && IN_RANGE (val, 0, 60);
+ 	}
+     }
+   return FALSE;
+@@ -2352,7 +2352,7 @@ static void
+ printx (FILE *file, signed int val)
+ {
+   /* Print a hexadecimal value in a nice way.  */
+-  if ((val > -0xa) && (val < 0xa))
++  if (IN_RANGE (val, -9, 9))
+     fprintf (file, "%d", val);
+   else if (val < 0)
+     fprintf (file, "-0x%x", -val);
+@@ -2732,7 +2732,7 @@ xtensa_call_save_reg(int regno)
+     return crtl->profile || !crtl->is_leaf || crtl->calls_eh_return ||
+       df_regs_ever_live_p (regno);
+ 
+-  if (crtl->calls_eh_return && regno >= 2 && regno < 4)
++  if (crtl->calls_eh_return && IN_RANGE (regno, 2, 3))
+     return true;
+ 
+   return !call_used_or_fixed_reg_p (regno) && df_regs_ever_live_p (regno);
+@@ -2852,7 +2852,7 @@ xtensa_expand_prologue (void)
+       int callee_save_size = cfun->machine->callee_save_size;
+ 
+       /* -128 is a limit of single addi instruction. */
+-      if (total_size > 0 && total_size <= 128)
++      if (IN_RANGE (total_size, 1, 128))
+ 	{
+ 	  insn = emit_insn (gen_addsi3 (stack_pointer_rtx, stack_pointer_rtx,
+ 					GEN_INT (-total_size)));
+diff --git a/gcc/config/xtensa/xtensa.h b/gcc/config/xtensa/xtensa.h
+index 5b102de51..3e9cbc943 100644
+--- a/gcc/config/xtensa/xtensa.h
++++ b/gcc/config/xtensa/xtensa.h
+@@ -493,7 +493,7 @@ enum reg_class
+    used for this purpose since all function arguments are pushed on
+    the stack.  */
+ #define FUNCTION_ARG_REGNO_P(N)						\
+-  ((N) >= GP_OUTGOING_ARG_FIRST && (N) <= GP_OUTGOING_ARG_LAST)
++  IN_RANGE ((N), GP_OUTGOING_ARG_FIRST, GP_OUTGOING_ARG_LAST)
+ 
+ /* Record the number of argument words seen so far, along with a flag to
+    indicate whether these are incoming arguments.  (FUNCTION_INCOMING_ARG
+-- 
+2.20.1
+

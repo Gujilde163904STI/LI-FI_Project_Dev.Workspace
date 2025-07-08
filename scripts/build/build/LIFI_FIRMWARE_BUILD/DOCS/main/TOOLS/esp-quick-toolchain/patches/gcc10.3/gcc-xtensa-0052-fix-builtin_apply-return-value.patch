@@ -1,0 +1,81 @@
+From 4df06b8339667e15107034842185300cca85c51c Mon Sep 17 00:00:00 2001
+From: Max Filippov <jcmvbkbc@gmail.com>
+Date: Sat, 10 Sep 2022 17:31:07 -0700
+Subject: [PATCH] xtensa: gcc: fix builtin_apply return value
+
+xtensa may use up to 4 registers to return a value from a function, but
+recognition of only one register in the xtensa_function_value_regno_p
+and missing untyped_call pattern result in that only one register is
+saved by the __builtin_apply and returned by the __builtin_apply_return.
+
+gcc/
+	* config/xtensa/xtensa.c (xtensa_function_value_regno_p):
+	Recognize all 4 return registers.
+	* config/xtensa/xtensa.h (GP_RETURN_REG_COUNT): New definition.
+	* config/xtensa/xtensa.md (untyped_call): New pattern.
+---
+ gcc/config/xtensa/xtensa.c  |  2 +-
+ gcc/config/xtensa/xtensa.h  |  1 +
+ gcc/config/xtensa/xtensa.md | 21 +++++++++++++++++++++
+ 3 files changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index baee55ce3..ad4940913 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -4508,7 +4508,7 @@ xtensa_libcall_value (machine_mode mode, const_rtx fun ATTRIBUTE_UNUSED)
+ static bool
+ xtensa_function_value_regno_p (const unsigned int regno)
+ {
+-  return (regno == GP_RETURN);
++  return (regno >= GP_RETURN && regno < GP_RETURN + GP_RETURN_REG_COUNT);
+ }
+ 
+ /* The static chain is passed in memory.  Provide rtx giving 'mem'
+diff --git a/gcc/config/xtensa/xtensa.h b/gcc/config/xtensa/xtensa.h
+index ee2238606..3a986fa1c 100644
+--- a/gcc/config/xtensa/xtensa.h
++++ b/gcc/config/xtensa/xtensa.h
+@@ -477,6 +477,7 @@ enum reg_class
+    point, and values of coprocessor and user-defined modes.  */
+ #define GP_RETURN (GP_REG_FIRST + 2 + WINDOW_SIZE)
+ #define GP_OUTGOING_RETURN (GP_REG_FIRST + 2)
++#define GP_RETURN_REG_COUNT 4
+ 
+ /* Symbolic macros for the first/last argument registers.  */
+ #define GP_ARG_FIRST (GP_REG_FIRST + 2)
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index ec4a69e30..c18640b25 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -2310,6 +2310,27 @@
+    (set_attr "mode"	"none")
+    (set_attr "length"	"3")])
+ 
++(define_expand "untyped_call"
++  [(parallel [(call (match_operand 0 "")
++		    (const_int 0))
++	      (match_operand 1 "")
++	      (match_operand 2 "")])]
++  ""
++{
++  int i;
++
++  emit_call_insn (gen_call (operands[0], const0_rtx));
++
++  for (i = 0; i < XVECLEN (operands[2], 0); i++)
++    {
++      rtx set = XVECEXP (operands[2], 0, i);
++      emit_move_insn (SET_DEST (set), SET_SRC (set));
++    }
++
++  emit_insn (gen_blockage ());
++  DONE;
++})
++
+ (define_insn "entry"
+   [(set (reg:SI A1_REG)
+ 	(unspec_volatile:SI [(match_operand:SI 0 "const_int_operand" "i")]
+-- 
+2.30.2
+

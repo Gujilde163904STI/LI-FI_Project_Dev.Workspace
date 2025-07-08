@@ -1,0 +1,427 @@
+From 0690bcdd42d0aa6671f9ec3ccbbe70faa04ffb6b Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Mon, 31 Jan 2022 09:56:21 +0900
+Subject: [PATCH 20/31] xtensa: Simplify conditional branch/move insn patterns
+
+No need to describe the "false side" conditional insn patterns anymore.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa-protos.h (xtensa_emit_branch):
+	Remove the first argument.
+	(xtensa_emit_bit_branch): Remove it because now called only from the
+	output statement of *bittrue insn pattern.
+	* config/xtensa/xtensa.c (gen_int_relational): Remove the last
+	argument 'p_invert', and make so that the condition is reversed by
+	itself as needed.
+	(xtensa_expand_conditional_branch): Share the common path, and remove
+	condition inversion code.
+	(xtensa_emit_branch, xtensa_emit_movcc): Simplify by removing the
+	"false side" pattern.
+	(xtensa_emit_bit_branch): Remove it because of the abovementioned
+	reason, and move the function body to *bittrue insn pattern.
+	* config/xtensa/xtensa.md (*bittrue): Transplant the output
+	statement from removed xtensa_emit_bit_branch().
+	(*bfalse, *ubfalse, *bitfalse, *maskfalse): Remove the "false side"
+	insn patterns.
+---
+ gcc/config/xtensa/xtensa-protos.h |   3 +-
+ gcc/config/xtensa/xtensa.c        | 111 ++++++++++------------------
+ gcc/config/xtensa/xtensa.md       | 117 ++++++++----------------------
+ 3 files changed, 70 insertions(+), 161 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa-protos.h b/gcc/config/xtensa/xtensa-protos.h
+index 32743bc67..e4b2d2f06 100644
+--- a/gcc/config/xtensa/xtensa-protos.h
++++ b/gcc/config/xtensa/xtensa-protos.h
+@@ -51,8 +51,7 @@ extern void xtensa_expand_nonlocal_goto (rtx *);
+ extern void xtensa_expand_compare_and_swap (rtx, rtx, rtx, rtx);
+ extern void xtensa_expand_atomic (enum rtx_code, rtx, rtx, rtx, bool);
+ extern void xtensa_emit_loop_end (rtx_insn *, rtx *);
+-extern char *xtensa_emit_branch (bool, bool, rtx *);
+-extern char *xtensa_emit_bit_branch (bool, bool, rtx *);
++extern char *xtensa_emit_branch (bool, rtx *);
+ extern char *xtensa_emit_movcc (bool, bool, bool, rtx *);
+ extern char *xtensa_emit_call (int, rtx *);
+ extern bool xtensa_tls_referenced_p (rtx);
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 473cfaf9d..8deae3d51 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -118,7 +118,7 @@ const char xtensa_leaf_regs[FIRST_PSEUDO_REGISTER] =
+ 
+ static void xtensa_option_override (void);
+ static enum internal_test map_test_to_internal_test (enum rtx_code);
+-static rtx gen_int_relational (enum rtx_code, rtx, rtx, int *);
++static rtx gen_int_relational (enum rtx_code, rtx, rtx);
+ static rtx gen_float_relational (enum rtx_code, rtx, rtx);
+ static rtx gen_conditional_move (enum rtx_code, machine_mode, rtx, rtx);
+ static rtx fixup_subreg_mem (rtx);
+@@ -670,8 +670,7 @@ map_test_to_internal_test (enum rtx_code test_code)
+ static rtx
+ gen_int_relational (enum rtx_code test_code, /* relational test (EQ, etc) */
+ 		    rtx cmp0, /* first operand to compare */
+-		    rtx cmp1, /* second operand to compare */
+-		    int *p_invert /* whether branch needs to reverse test */)
++		    rtx cmp1 /* second operand to compare */)
+ {
+   struct cmp_info
+   {
+@@ -703,6 +702,7 @@ gen_int_relational (enum rtx_code test_code, /* relational test (EQ, etc) */
+   enum internal_test test;
+   machine_mode mode;
+   struct cmp_info *p_info;
++  int invert;
+ 
+   test = map_test_to_internal_test (test_code);
+   gcc_assert (test != ITEST_MAX);
+@@ -739,9 +739,9 @@ gen_int_relational (enum rtx_code test_code, /* relational test (EQ, etc) */
+     }
+ 
+   /* See if we need to invert the result.  */
+-  *p_invert = ((GET_CODE (cmp1) == CONST_INT)
+-	       ? p_info->invert_const
+-	       : p_info->invert_reg);
++  invert = ((GET_CODE (cmp1) == CONST_INT)
++	    ? p_info->invert_const
++	    : p_info->invert_reg);
+ 
+   /* Comparison to constants, may involve adding 1 to change a LT into LE.
+      Comparison between two registers, may involve switching operands.  */
+@@ -758,7 +758,9 @@ gen_int_relational (enum rtx_code test_code, /* relational test (EQ, etc) */
+       cmp1 = temp;
+     }
+ 
+-  return gen_rtx_fmt_ee (p_info->test_code, VOIDmode, cmp0, cmp1);
++  return gen_rtx_fmt_ee (invert ? reverse_condition (p_info->test_code)
++				: p_info->test_code,
++			 VOIDmode, cmp0, cmp1);
+ }
+ 
+ 
+@@ -817,45 +819,33 @@ xtensa_expand_conditional_branch (rtx *operands, machine_mode mode)
+   enum rtx_code test_code = GET_CODE (operands[0]);
+   rtx cmp0 = operands[1];
+   rtx cmp1 = operands[2];
+-  rtx cmp;
+-  int invert;
+-  rtx label1, label2;
++  rtx cmp, label;
+ 
+   switch (mode)
+     {
++    case E_SFmode:
++      if (TARGET_HARD_FLOAT)
++	{
++	  cmp = gen_float_relational (test_code, cmp0, cmp1);
++	  break;
++	}
++      /* FALLTHRU */
++
+     case E_DFmode:
+     default:
+       fatal_insn ("bad test", gen_rtx_fmt_ee (test_code, VOIDmode, cmp0, cmp1));
+ 
+     case E_SImode:
+-      invert = FALSE;
+-      cmp = gen_int_relational (test_code, cmp0, cmp1, &invert);
+-      break;
+-
+-    case E_SFmode:
+-      if (!TARGET_HARD_FLOAT)
+-	fatal_insn ("bad test", gen_rtx_fmt_ee (test_code, VOIDmode,
+-						cmp0, cmp1));
+-      invert = FALSE;
+-      cmp = gen_float_relational (test_code, cmp0, cmp1);
++      cmp = gen_int_relational (test_code, cmp0, cmp1);
+       break;
+     }
+ 
+   /* Generate the branch.  */
+-
+-  label1 = gen_rtx_LABEL_REF (VOIDmode, operands[3]);
+-  label2 = pc_rtx;
+-
+-  if (invert)
+-    {
+-      label2 = label1;
+-      label1 = pc_rtx;
+-    }
+-
++  label = gen_rtx_LABEL_REF (VOIDmode, operands[3]);
+   emit_jump_insn (gen_rtx_SET (pc_rtx,
+ 			       gen_rtx_IF_THEN_ELSE (VOIDmode, cmp,
+-						     label1,
+-						     label2)));
++						     label,
++						     pc_rtx)));
+ }
+ 
+ 
+@@ -2058,21 +2048,20 @@ xtensa_emit_loop_end (rtx_insn *insn, rtx *operands)
+ 
+ 
+ char *
+-xtensa_emit_branch (bool inverted, bool immed, rtx *operands)
++xtensa_emit_branch (bool immed, rtx *operands)
+ {
+   static char result[64];
+-  enum rtx_code code;
++  enum rtx_code code = GET_CODE (operands[3]);
+   const char *op;
+ 
+-  code = GET_CODE (operands[3]);
+   switch (code)
+     {
+-    case EQ:	op = inverted ? "ne" : "eq"; break;
+-    case NE:	op = inverted ? "eq" : "ne"; break;
+-    case LT:	op = inverted ? "ge" : "lt"; break;
+-    case GE:	op = inverted ? "lt" : "ge"; break;
+-    case LTU:	op = inverted ? "geu" : "ltu"; break;
+-    case GEU:	op = inverted ? "ltu" : "geu"; break;
++    case EQ:	op = "eq"; break;
++    case NE:	op = "ne"; break;
++    case LT:	op = "lt"; break;
++    case GE:	op = "ge"; break;
++    case LTU:	op = "ltu"; break;
++    case GEU:	op = "geu"; break;
+     default:	gcc_unreachable ();
+     }
+ 
+@@ -2091,32 +2080,6 @@ xtensa_emit_branch (bool inverted, bool immed, rtx *operands)
+ }
+ 
+ 
+-char *
+-xtensa_emit_bit_branch (bool inverted, bool immed, rtx *operands)
+-{
+-  static char result[64];
+-  const char *op;
+-
+-  switch (GET_CODE (operands[3]))
+-    {
+-    case EQ:	op = inverted ? "bs" : "bc"; break;
+-    case NE:	op = inverted ? "bc" : "bs"; break;
+-    default:	gcc_unreachable ();
+-    }
+-
+-  if (immed)
+-    {
+-      unsigned bitnum = INTVAL (operands[1]) & 0x1f; 
+-      operands[1] = GEN_INT (bitnum); 
+-      sprintf (result, "b%si\t%%0, %%d1, %%2", op);
+-    }
+-  else
+-    sprintf (result, "b%s\t%%0, %%1, %%2", op);
+-
+-  return result;
+-}
+-
+-
+ char *
+ xtensa_emit_movcc (bool inverted, bool isfp, bool isbool, rtx *operands)
+ {
+@@ -2125,12 +2088,14 @@ xtensa_emit_movcc (bool inverted, bool isfp, bool isbool, rtx *operands)
+   const char *op;
+ 
+   code = GET_CODE (operands[4]);
++  if (inverted)
++    code = reverse_condition (code);
+   if (isbool)
+     {
+       switch (code)
+ 	{
+-	case EQ:	op = inverted ? "t" : "f"; break;
+-	case NE:	op = inverted ? "f" : "t"; break;
++	case EQ:	op = "f"; break;
++	case NE:	op = "t"; break;
+ 	default:	gcc_unreachable ();
+ 	}
+     }
+@@ -2138,10 +2103,10 @@ xtensa_emit_movcc (bool inverted, bool isfp, bool isbool, rtx *operands)
+     {
+       switch (code)
+ 	{
+-	case EQ:	op = inverted ? "nez" : "eqz"; break;
+-	case NE:	op = inverted ? "eqz" : "nez"; break;
+-	case LT:	op = inverted ? "gez" : "ltz"; break;
+-	case GE:	op = inverted ? "ltz" : "gez"; break;
++	case EQ:	op = "eqz"; break;
++	case NE:	op = "nez"; break;
++	case LT:	op = "ltz"; break;
++	case GE:	op = "gez"; break;
+ 	default:	gcc_unreachable ();
+ 	}
+     }
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 58bba89af..40000859d 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -1551,28 +1551,13 @@
+ (define_insn "*btrue"
+   [(set (pc)
+ 	(if_then_else (match_operator 3 "branch_operator"
+-		       [(match_operand:SI 0 "register_operand" "r,r")
+-			(match_operand:SI 1 "branch_operand" "K,r")])
++			[(match_operand:SI 0 "register_operand" "r,r")
++			 (match_operand:SI 1 "branch_operand" "K,r")])
+ 		      (label_ref (match_operand 2 "" ""))
+ 		      (pc)))]
+   ""
+ {
+-  return xtensa_emit_branch (false, which_alternative == 0, operands);
+-}
+-  [(set_attr "type"	"jump,jump")
+-   (set_attr "mode"	"none")
+-   (set_attr "length"	"3,3")])
+-
+-(define_insn "*bfalse"
+-  [(set (pc)
+-	(if_then_else (match_operator 3 "branch_operator"
+-		       [(match_operand:SI 0 "register_operand" "r,r")
+-			(match_operand:SI 1 "branch_operand" "K,r")])
+-		      (pc)
+-		      (label_ref (match_operand 2 "" ""))))]
+-  ""
+-{
+-  return xtensa_emit_branch (true, which_alternative == 0, operands);
++  return xtensa_emit_branch (which_alternative == 0, operands);
+ }
+   [(set_attr "type"	"jump,jump")
+    (set_attr "mode"	"none")
+@@ -1581,28 +1566,13 @@
+ (define_insn "*ubtrue"
+   [(set (pc)
+ 	(if_then_else (match_operator 3 "ubranch_operator"
+-		       [(match_operand:SI 0 "register_operand" "r,r")
+-			(match_operand:SI 1 "ubranch_operand" "L,r")])
++			[(match_operand:SI 0 "register_operand" "r,r")
++			 (match_operand:SI 1 "ubranch_operand" "L,r")])
+ 		      (label_ref (match_operand 2 "" ""))
+ 		      (pc)))]
+   ""
+ {
+-  return xtensa_emit_branch (false, which_alternative == 0, operands);
+-}
+-  [(set_attr "type"	"jump,jump")
+-   (set_attr "mode"	"none")
+-   (set_attr "length"	"3,3")])
+-
+-(define_insn "*ubfalse"
+-  [(set (pc)
+-	(if_then_else (match_operator 3 "ubranch_operator"
+-			 [(match_operand:SI 0 "register_operand" "r,r")
+-			  (match_operand:SI 1 "ubranch_operand" "L,r")])
+-		      (pc)
+-		      (label_ref (match_operand 2 "" ""))))]
+-  ""
+-{
+-  return xtensa_emit_branch (true, which_alternative == 0, operands);
++  return xtensa_emit_branch (which_alternative == 0, operands);
+ }
+   [(set_attr "type"	"jump,jump")
+    (set_attr "mode"	"none")
+@@ -1613,75 +1583,50 @@
+ (define_insn "*bittrue"
+   [(set (pc)
+ 	(if_then_else (match_operator 3 "boolean_operator"
+-			[(zero_extract:SI
+-			    (match_operand:SI 0 "register_operand" "r,r")
+-			    (const_int 1)
+-			    (match_operand:SI 1 "arith_operand" "J,r"))
+-			 (const_int 0)])
+-		      (label_ref (match_operand 2 "" ""))
+-		      (pc)))]
+-  ""
+-{
+-  return xtensa_emit_bit_branch (false, which_alternative == 0, operands);
+-}
+-  [(set_attr "type"	"jump")
+-   (set_attr "mode"	"none")
+-   (set_attr "length"	"3")])
+-
+-(define_insn "*bitfalse"
+-  [(set (pc)
+-	(if_then_else (match_operator 3 "boolean_operator"
+-			[(zero_extract:SI
+-			    (match_operand:SI 0 "register_operand" "r,r")
+-			    (const_int 1)
+-			    (match_operand:SI 1 "arith_operand" "J,r"))
++			[(zero_extract:SI (match_operand:SI 0 "register_operand" "r,r")
++					  (const_int 1)
++					  (match_operand:SI 1 "arith_operand" "J,r"))
+ 			 (const_int 0)])
+-		      (pc)
+-		      (label_ref (match_operand 2 "" ""))))]
+-  ""
+-{
+-  return xtensa_emit_bit_branch (true, which_alternative == 0, operands);
+-}
+-  [(set_attr "type"	"jump")
+-   (set_attr "mode"	"none")
+-   (set_attr "length"	"3")])
+-
+-(define_insn "*masktrue"
+-  [(set (pc)
+-	(if_then_else (match_operator 3 "boolean_operator"
+-		 [(and:SI (match_operand:SI 0 "register_operand" "r")
+-			  (match_operand:SI 1 "register_operand" "r"))
+-		  (const_int 0)])
+ 		      (label_ref (match_operand 2 "" ""))
+ 		      (pc)))]
+   ""
+ {
++  static char result[64];
++  char op;
+   switch (GET_CODE (operands[3]))
+     {
+-    case EQ:		return "bnone\t%0, %1, %2";
+-    case NE:		return "bany\t%0, %1, %2";
+-    default:		gcc_unreachable ();
++    case EQ:	op = 'c'; break;
++    case NE:	op = 's'; break;
++    default:	gcc_unreachable ();
+     }
++  if (which_alternative == 0)
++    {
++      operands[1] = GEN_INT (INTVAL (operands[1]) & 0x1f);
++      sprintf (result, "bb%ci\t%%0, %%d1, %%2", op);
++    }
++  else
++    sprintf (result, "bb%c\t%%0, %%1, %%2", op);
++  return result;
+ }
+   [(set_attr "type"	"jump")
+    (set_attr "mode"	"none")
+    (set_attr "length"	"3")])
+ 
+-(define_insn "*maskfalse"
++(define_insn "*masktrue"
+   [(set (pc)
+ 	(if_then_else (match_operator 3 "boolean_operator"
+-		 [(and:SI (match_operand:SI 0 "register_operand" "r")
+-			  (match_operand:SI 1 "register_operand" "r"))
+-		  (const_int 0)])
+-		      (pc)
+-		      (label_ref (match_operand 2 "" ""))))]
++			[(and:SI (match_operand:SI 0 "register_operand" "r")
++				 (match_operand:SI 1 "register_operand" "r"))
++			 (const_int 0)])
++		      (label_ref (match_operand 2 "" ""))
++		      (pc)))]
+   ""
+ {
+   switch (GET_CODE (operands[3]))
+     {
+-    case EQ:		return "bany\t%0, %1, %2";
+-    case NE:		return "bnone\t%0, %1, %2";
+-    default:		gcc_unreachable ();
++    case EQ:	return "bnone\t%0, %1, %2";
++    case NE:	return "bany\t%0, %1, %2";
++    default:	gcc_unreachable ();
+     }
+ }
+   [(set_attr "type"	"jump")
+-- 
+2.20.1
+

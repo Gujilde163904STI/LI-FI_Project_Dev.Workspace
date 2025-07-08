@@ -1,0 +1,90 @@
+From a0f2dfa2e952111dbd85d2b2f1caaf570facce8a Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Tue, 14 Jun 2022 12:39:49 +0900
+Subject: [PATCH 26/31] xtensa: Eliminate unwanted reg-reg moves during DFmode
+ input reloads
+
+When spilled DFmode registers are reloaded in, once loaded into a pair of
+SImode regs and then copied from that regs.  Such unwanted reg-reg moves
+seems not to be eliminated at the "cprop_hardreg" stage, despite no problem
+in output reloads.
+
+Luckily it is easy to resolve such inefficiencies, with the use of peephole2
+pattern.
+
+gcc/ChangeLog:
+
+	* config/xtensa/predicates.md (reload_operand):
+	New predicate.
+	* config/xtensa/xtensa.md: New peephole2 pattern.
+---
+ gcc/config/xtensa/predicates.md | 13 +++++++++++++
+ gcc/config/xtensa/xtensa.md     | 31 +++++++++++++++++++++++++++++++
+ 2 files changed, 44 insertions(+)
+
+diff --git a/gcc/config/xtensa/predicates.md b/gcc/config/xtensa/predicates.md
+index 367fc17f3..c1cddb733 100644
+--- a/gcc/config/xtensa/predicates.md
++++ b/gcc/config/xtensa/predicates.md
+@@ -165,6 +165,19 @@
+   (and (match_code "const_int")
+        (match_test "xtensa_mem_offset (INTVAL (op), SFmode)")))
+ 
++(define_predicate "reload_operand"
++  (match_code "mem")
++{
++  const_rtx addr = XEXP (op, 0);
++  if (REG_P (addr))
++    return REGNO (addr) == A1_REG;
++  if (GET_CODE (addr) == PLUS)
++    return REG_P (XEXP (addr, 0))
++	   && REGNO (XEXP (addr, 0)) == A1_REG
++	   && CONST_INT_P (XEXP (addr, 1));
++  return false;
++})
++
+ (define_predicate "branch_operator"
+   (match_code "eq,ne,lt,ge"))
+ 
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 3e8e2e76f..2598c09c9 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -2754,3 +2754,34 @@
+ 	(if_then_else (match_test "TARGET_DENSITY")
+ 		      (const_int 5)
+ 		      (const_int 6)))])
++
++(define_peephole2
++  [(set (match_operand:SI 0 "register_operand")
++	(match_operand:SI 6 "reload_operand"))
++   (set (match_operand:SI 1 "register_operand")
++	(match_operand:SI 7 "reload_operand"))
++   (set (match_operand:SF 2 "register_operand")
++	(match_operand:SF 4 "register_operand"))
++   (set (match_operand:SF 3 "register_operand")
++	(match_operand:SF 5 "register_operand"))]
++  "REGNO (operands[0]) == REGNO (operands[4])
++   && REGNO (operands[1]) == REGNO (operands[5])
++   && peep2_reg_dead_p (4, operands[0])
++   && peep2_reg_dead_p (4, operands[1])"
++  [(set (match_dup 2)
++	(match_dup 6))
++   (set (match_dup 3)
++	(match_dup 7))]
++{
++  uint32_t check = 0;
++  int i;
++  for (i = 0; i <= 3; ++i)
++    {
++      uint32_t mask = (uint32_t)1 << REGNO (operands[i]);
++      if (check & mask)
++	FAIL;
++      check |= mask;
++    }
++  operands[6] = gen_rtx_MEM (SFmode, XEXP (operands[6], 0));
++  operands[7] = gen_rtx_MEM (SFmode, XEXP (operands[7], 0));
++})
+-- 
+2.20.1
+

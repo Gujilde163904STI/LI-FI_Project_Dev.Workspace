@@ -1,0 +1,86 @@
+From 22b5756399ef63a4102334724b12a4c186075227 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sun, 29 May 2022 19:46:16 +0900
+Subject: [PATCH 12/31] xtensa: Make one_cmplsi2 optimizer-friendly
+
+In Xtensa ISA, there is no single machine instruction that calculates unary
+bitwise negation.  But a few optimizers assume that bitwise negation can be
+done by a single insn.
+
+As a result, '((x < 0) ? ~x : x)' cannot be optimized to '(x ^ (x >> 31))'
+ever before, for example.
+
+This patch relaxes such limitation, by putting the insn expansion off till
+the split pass.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (one_cmplsi2):
+	Rearrange as an insn_and_split pattern.
+
+gcc/testsuite/ChangeLog:
+
+	* gcc.target/xtensa/one_cmpl_abs.c: New.
+---
+ gcc/config/xtensa/xtensa.md                   | 26 +++++++++++++------
+ .../gcc.target/xtensa/one_cmpl_abs.c          |  9 +++++++
+ 2 files changed, 27 insertions(+), 8 deletions(-)
+ create mode 100644 gcc/testsuite/gcc.target/xtensa/one_cmpl_abs.c
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index c1f44777d..2f6d48d03 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -556,16 +556,26 @@
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"3")])
+ 
+-(define_expand "one_cmplsi2"
+-  [(set (match_operand:SI 0 "register_operand" "")
+-	(not:SI (match_operand:SI 1 "register_operand" "")))]
++(define_insn_and_split "one_cmplsi2"
++  [(set (match_operand:SI 0 "register_operand" "=a")
++	(not:SI (match_operand:SI 1 "register_operand" "r")))]
+   ""
++  "#"
++  "&& can_create_pseudo_p ()"
++  [(set (match_dup 2)
++	(const_int -1))
++   (set (match_dup 0)
++	(xor:SI (match_dup 1)
++		(match_dup 2)))]
+ {
+-  rtx temp = gen_reg_rtx (SImode);
+-  emit_insn (gen_movsi (temp, constm1_rtx));
+-  emit_insn (gen_xorsi3 (operands[0], temp, operands[1]));
+-  DONE;
+-})
++  operands[2] = gen_reg_rtx (SImode);
++}
++  [(set_attr "type"	"arith")
++   (set_attr "mode"	"SI")
++   (set (attr "length")
++	(if_then_else (match_test "TARGET_DENSITY")
++		      (const_int 5)
++		      (const_int 6)))])
+ 
+ (define_insn "negsf2"
+   [(set (match_operand:SF 0 "register_operand" "=f")
+diff --git a/gcc/testsuite/gcc.target/xtensa/one_cmpl_abs.c b/gcc/testsuite/gcc.target/xtensa/one_cmpl_abs.c
+new file mode 100644
+index 000000000..608f65fd7
+--- /dev/null
++++ b/gcc/testsuite/gcc.target/xtensa/one_cmpl_abs.c
+@@ -0,0 +1,9 @@
++/* { dg-do compile } */
++/* { dg-options "-O1" } */
++
++int one_cmpl_abs(int a)
++{
++  return a < 0 ? ~a : a;
++}
++
++/* { dg-final { scan-assembler-not "bgez" } } */
+-- 
+2.20.1
+

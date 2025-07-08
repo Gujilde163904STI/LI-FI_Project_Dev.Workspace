@@ -1,0 +1,46 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Check Python
+        run: |
+          python -V
+          which python
+          echo $PATH
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U tox pytest
+          pip install -e .
+      - name: Python Lint
+        run: |
+          tox -e lint
+      - name: Integration Tests
+        run: |
+          make test
+      - name: Pack Installer Script
+        run: |
+          make pack
+      - name: Install PlatformIO Core
+        run: |
+          python3 get-platformio.py
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ~/.platformio/penv/Scripts/pio.exe system info
+          else
+            ~/.platformio/penv/bin/pio system info
+          fi
+        shell: bash

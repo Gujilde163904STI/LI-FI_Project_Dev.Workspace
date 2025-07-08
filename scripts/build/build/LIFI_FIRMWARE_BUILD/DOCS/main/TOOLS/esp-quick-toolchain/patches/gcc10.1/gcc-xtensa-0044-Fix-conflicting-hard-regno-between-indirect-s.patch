@@ -1,0 +1,60 @@
+From 25b8acf68c6d262f75a84bbc8238e5c326c1b1bf Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Sat, 30 Jul 2022 03:25:04 +0900
+Subject: [PATCH] xtensa: Fix conflicting hard regno between indirect
+ sibcall fixups and EH_RETURN_STACKADJ_RTX
+
+The hard register A10 was already allocated for EH_RETURN_STACKADJ_RTX.
+(although exception handling and sibling call may not apply at the same time,
+ but for safety)
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md: Change hard register number used in
+	the split patterns for indirect sibling call fixups from 10 to 11,
+	the last free one for the CALL0 ABI.
+---
+ gcc/config/xtensa/xtensa.md | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index ed1e072fe..9eeb73915 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -25,7 +25,7 @@
+   (A7_REG		7)
+   (A8_REG		8)
+   (A9_REG		9)
+-  (A10_REG		10)
++  (A11_REG		11)
+ 
+   (UNSPEC_NOP		2)
+   (UNSPEC_PLT		3)
+@@ -2300,9 +2300,9 @@
+   "reload_completed
+    && !TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)
+    && ! call_used_or_fixed_reg_p (REGNO (operands[0]))"
+-  [(set (reg:SI A10_REG)
++  [(set (reg:SI A11_REG)
+ 	(match_dup 0))
+-   (call (mem:SI (reg:SI A10_REG))
++   (call (mem:SI (reg:SI A11_REG))
+ 	 (match_dup 1))])
+ 
+ (define_expand "sibcall_value"
+@@ -2333,10 +2333,10 @@
+   "reload_completed
+    && !TARGET_WINDOWED_ABI && SIBLING_CALL_P (insn)
+    && ! call_used_or_fixed_reg_p (REGNO (operands[1]))"
+-  [(set (reg:SI A10_REG)
++  [(set (reg:SI A11_REG)
+ 	(match_dup 1))
+    (set (match_dup 0)
+-	(call (mem:SI (reg:SI A10_REG))
++	(call (mem:SI (reg:SI A11_REG))
+ 	      (match_dup 2)))])
+ 
+ (define_insn "entry"
+-- 
+2.20.1
+

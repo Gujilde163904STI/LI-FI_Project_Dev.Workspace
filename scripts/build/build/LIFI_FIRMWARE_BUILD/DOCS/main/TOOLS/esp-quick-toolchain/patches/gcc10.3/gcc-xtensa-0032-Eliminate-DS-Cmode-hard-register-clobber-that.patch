@@ -1,0 +1,99 @@
+From d6c2b11e9ce88f3b1a7ddcf9a2712b070ad4dbfb Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Tue, 14 Jun 2022 12:53:04 +0900
+Subject: [PATCH 27/31] xtensa: Eliminate [DS]Cmode hard register clobber that
+ is immediately followed by whole overwrite the register
+
+RTL expansion of substitution to [DS]Cmode hard register includes obstructive
+register clobber.
+
+A simplest example:
+
+    double _Complex test(double _Complex c) {
+      return c;
+    }
+
+will be converted to:
+
+    (set (reg:DF 42 [ c ]) (reg:DF 2 a2))
+    (set (reg:DF 43 [ c+8 ]) (reg:DF 4 a4))
+    (clobber (reg:DC 2 a2))
+    (set (reg:DF 2 a2) (reg:DF 42 [ c ]))
+    (set (reg:DF 4 a4) (reg:DF 43 [ c+8 ]))
+    (use (reg:DC 2 a2))
+    (return)
+
+and then finally:
+
+    test:
+	mov	a8, a2
+	mov	a9, a3
+	mov	a6, a4
+	mov	a7, a5
+	mov	a2, a8
+	mov	a3, a9
+	mov	a4, a6
+	mov	a5, a7
+	ret
+
+As you see, it is so ridiculous.
+
+This patch eliminates such clobber in order to prune away the wasted move
+instructions by the optimizer:
+
+    test:
+	ret
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (DSC): New split pattern and mode iterator.
+---
+ gcc/config/xtensa/xtensa.md | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 2598c09c9..124548dfe 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -87,6 +87,10 @@
+ ;; This code iterator is for *shlrd and its variants.
+ (define_code_iterator ior_op [ior plus])
+ 
++;; This mode iterator allows the DC and SC patterns to be defined from
++;; the same template.
++(define_mode_iterator DSC [DC SC])
++
+ 
+ ;; Attributes.
+ 
+@@ -2785,3 +2789,27 @@
+   operands[6] = gen_rtx_MEM (SFmode, XEXP (operands[6], 0));
+   operands[7] = gen_rtx_MEM (SFmode, XEXP (operands[7], 0));
+ })
++
++(define_split
++  [(clobber (match_operand:DSC 0 "register_operand"))]
++  "GP_REG_P (REGNO (operands[0]))"
++  [(const_int 0)]
++{
++  unsigned int regno = REGNO (operands[0]);
++  machine_mode inner_mode = GET_MODE_INNER (<MODE>mode);
++  rtx_insn *insn;
++  rtx x;
++  if (! ((insn = next_nonnote_nondebug_insn (curr_insn))
++	 && NONJUMP_INSN_P (insn)
++	 && GET_CODE (x = PATTERN (insn)) == SET
++	 && REG_P (x = XEXP (x, 0))
++	 && GET_MODE (x) == inner_mode
++	 && REGNO (x) == regno
++	 && (insn = next_nonnote_nondebug_insn (insn))
++	 && NONJUMP_INSN_P (insn)
++	 && GET_CODE (x = PATTERN (insn)) == SET
++	 && REG_P (x = XEXP (x, 0))
++	 && GET_MODE (x) == inner_mode
++	 && REGNO (x) == regno + REG_NREGS (operands[0]) / 2))
++    FAIL;
++})
+-- 
+2.20.1
+

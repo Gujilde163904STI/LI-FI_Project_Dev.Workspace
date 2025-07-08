@@ -1,0 +1,12 @@
+flowchart TD
+    USB_RX["Raspberry Pi USB Port"]
+    MCU["NodeMCU ESP8266 (RX)"]
+    A0["A0 (Analog In)"]
+    GND2["GND"]
+    PD["Photodiode"]
+    R1["10kΩ Resistor"]
+    USB_RX -- Serial --> MCU
+    PD -- Anode --> R1
+    R1 -- to --> A0
+    PD -- Cathode --> GND2
+    Note2["Photodiode: Connect in series with 10kΩ resistor to A0. NodeMCU to Pi via USB for serial."]

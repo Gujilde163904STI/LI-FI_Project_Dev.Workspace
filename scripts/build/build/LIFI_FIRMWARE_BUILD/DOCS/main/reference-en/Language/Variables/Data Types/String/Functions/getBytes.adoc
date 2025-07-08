@@ -1,0 +1,59 @@
+---
+title: "getBytes()"
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Function" ]
+---
+
+
+
+
+
+= getBytes()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Copies the String's characters to the supplied buffer.
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString.getBytes(buf, len)`
+
+
+[float]
+=== Parameters
+`myString`: a variable of type `String`. +
+`buf`: the buffer to copy the characters into. Allowed data types: array of `byte`. +
+`len`: the size of the buffer. Allowed data types: `unsigned int`.
+
+
+[float]
+=== Returns
+Nothing
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

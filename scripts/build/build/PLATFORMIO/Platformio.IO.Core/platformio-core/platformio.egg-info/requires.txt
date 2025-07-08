@@ -1,0 +1,16 @@
+bottle==0.13.*
+click<8.1.8,>=8.0.4
+colorama
+marshmallow==3.*
+pyelftools<1,>=0.27
+pyserial==3.5.*
+requests==2.*
+semantic_version==2.10.*
+tabulate==0.*
+ajsonrpc==1.2.*
+starlette<0.47,>=0.19
+uvicorn<0.35,>=0.16
+wsproto==1.*
+
+[:platform_system == "Darwin" and "arm" in platform_machine]
+chardet<6,>=3.0.2

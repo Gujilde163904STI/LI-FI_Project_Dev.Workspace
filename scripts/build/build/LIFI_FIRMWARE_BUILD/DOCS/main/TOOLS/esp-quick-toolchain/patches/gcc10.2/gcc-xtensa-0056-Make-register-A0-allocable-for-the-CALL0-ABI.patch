@@ -1,0 +1,66 @@
+From d262f47d2f1c0dec78b59b0b3eec26d17b60bf83 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Fri, 21 Oct 2022 11:58:35 +0900
+Subject: [PATCH] xtensa: Make register A0 allocable for the CALL0 ABI
+
+This patch offers an additional allocable register by RA for the CALL0
+ABI.
+
+> Register a0 holds the return address upon entry to a function, but
+> unlike the windowed register ABI, it is not reserved for this purpose
+> and may hold other values after the return address has been saved.
+  - Xtensa ISA Reference Manual,
+                   8.1.2 "CALL0 Register Usage and Stack Layout" [p.589]
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.c (xtensa_conditional_register_usage):
+	Remove register A0 from FIXED_REGS if the CALL0 ABI.
+	(xtensa_expand_epilogue): Change to emit '(use (reg:SI A0_REG))'
+	unconditionally after restoring callee-saved registers for
+	sibling-call functions, in order to prevent misleading that
+	register A0 is free to use.
+---
+ gcc/config/xtensa/xtensa.c | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 658d19924..767264641 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -3506,15 +3506,14 @@ xtensa_expand_epilogue (bool sibcall_p)
+ 	  if (xtensa_call_save_reg(regno))
+ 	    {
+ 	      rtx x = gen_rtx_PLUS (Pmode, stack_pointer_rtx, GEN_INT (offset));
+-	      rtx reg;
+ 
+ 	      offset -= UNITS_PER_WORD;
+-	      emit_move_insn (reg = gen_rtx_REG (SImode, regno),
++	      emit_move_insn (gen_rtx_REG (SImode, regno),
+ 			      gen_frame_mem (SImode, x));
+-	      if (regno == A0_REG && sibcall_p)
+-		emit_use (reg);
+ 	    }
+ 	}
++      if (sibcall_p)
++	emit_use (gen_rtx_REG (SImode, A0_REG));
+ 
+       if (cfun->machine->current_frame_size > 0)
+ 	{
+@@ -5005,6 +5004,13 @@ xtensa_conditional_register_usage (void)
+   /* Remove hard FP register from the preferred reload registers set.  */
+   CLEAR_HARD_REG_BIT (reg_class_contents[(int)RL_REGS],
+ 		      HARD_FRAME_POINTER_REGNUM);
++
++  /* Register A0 holds the return address upon entry to a function
++     for the CALL0 ABI, but unlike the windowed register ABI, it is
++     not reserved for this purpose and may hold other values after
++     the return address has been saved.  */
++  if (!TARGET_WINDOWED_ABI)
++    fixed_regs[A0_REG] = 0;
+ }
+ 
+ /* Map hard register number to register class */
+-- 
+2.30.2
+

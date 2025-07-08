@@ -1,0 +1,59 @@
+---
+title: "setCharAt()"
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Function" ]
+---
+
+
+
+
+
+= setCharAt()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Sets a character of the String. Has no effect on indices outside the existing length of the String.
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString.setCharAt(index, c)`
+
+
+[float]
+=== Parameters
+`myString`: a variable of type `String`. +
+`index`: the index to set the character at. +
+`c`: the character to store to the given location.
+
+
+[float]
+=== Returns
+Nothing
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

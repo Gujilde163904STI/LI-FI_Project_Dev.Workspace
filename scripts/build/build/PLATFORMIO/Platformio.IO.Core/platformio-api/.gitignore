@@ -1,0 +1,4 @@
+.tox
+dist
+*.pyc
+platformio_api.egg-info

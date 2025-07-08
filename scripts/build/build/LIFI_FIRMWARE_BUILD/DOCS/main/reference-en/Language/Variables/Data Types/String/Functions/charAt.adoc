@@ -1,0 +1,58 @@
+---
+title: "charAt()"
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Function" ]
+---
+
+
+
+
+
+= charAt()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Access a particular character of the String.
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString.charAt(n)`
+
+
+[float]
+=== Parameters
+`myString`: a variable of type `String`. +
+`n`: a variable. Allowed data types: `unsigned int`.
+
+
+[float]
+=== Returns
+The character at index n of the String.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

@@ -1,0 +1,59 @@
+---
+title: "endsWith()"
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Function" ]
+---
+
+
+
+
+
+= endsWith()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Tests whether or not a String ends with the characters of another String.
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString.endsWith(myString2)`
+
+
+[float]
+=== Parameters
+`myString`: a variable of type `String`. +
+`myString2`: another variable of type `String`.
+
+
+[float]
+=== Returns
+`true`: if myString ends with the characters of myString2. +
+`false`: otherwise.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

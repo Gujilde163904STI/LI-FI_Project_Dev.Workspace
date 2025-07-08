@@ -1,0 +1,80 @@
+---
+title: pow()
+categories: [ "Functions" ]
+subCategories: [ "Math" ]
+---
+
+
+
+
+
+= pow(base, exponent)
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Calculates the value of a number raised to a power. `pow()` can be used to raise a number to a fractional power. This is useful for generating exponential mapping of values or curves.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`pow(base, exponent)`
+
+
+[float]
+=== Parameters
+`base`: the number. Allowed data types: `float`. +
+`exponent`: the power to which the base is raised. Allowed data types: `float`.
+
+
+[float]
+=== Returns
+The result of the exponentiation. Data type: `double`.
+
+--
+// OVERVIEW SECTION ENDS
+
+
+// HOW TO USE SECTION STARTS
+[#howtouse]
+--
+
+[float]
+=== Example Code
+// Describe what the example code is all about and add relevant code   ►►►►► THIS SECTION IS MANDATORY ◄◄◄◄◄
+Calculate the value of x raised to the power of y:
+[source,arduino]
+----
+z = pow(x, y);
+----
+See the (http://arduino.cc/playground/Main/Fscale[fscale]) sketch for a more complex example of the use of `pow()`.
+[%hardbreaks]
+
+--
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:../abs[abs()]
+* #LANGUAGE# link:../constrain[constrain()]
+* #LANGUAGE# link:../map[map()]
+* #LANGUAGE# link:../max[max()]
+* #LANGUAGE# link:../min[min()]
+* #LANGUAGE# link:../sq[sq()]
+* #LANGUAGE# link:../sqrt[sqrt()]
+
+
+--
+// SEE ALSO SECTION ENDS

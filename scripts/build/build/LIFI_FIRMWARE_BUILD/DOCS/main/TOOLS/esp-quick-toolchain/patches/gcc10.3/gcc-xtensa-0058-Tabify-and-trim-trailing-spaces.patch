@@ -1,0 +1,576 @@
+From b326051c7a6d15e15b4410ef658d2e67c0a604af Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Tue, 27 Dec 2022 15:30:12 +0900
+Subject: [PATCH] xtensa: Tabify, and trim trailing spaces
+
+Cosmetic and no functional changes.
+
+gcc/ChangeLog:
+
+	* config/xtensa/elf.h: Tabify, and trim trailing spaces.
+	* config/xtensa/linux.h: Likewise.
+	* config/xtensa/uclinux.h: Likewise.
+	* config/xtensa/xtensa.c: Likewise.
+	* config/xtensa/xtensa.h: Likewise.
+	* config/xtensa/xtensa.md: Likewise.
+---
+ gcc/config/xtensa/elf.h     | 32 ++++++------
+ gcc/config/xtensa/linux.h   |  1 -
+ gcc/config/xtensa/uclinux.h |  1 -
+ gcc/config/xtensa/xtensa.c  | 85 ++++++++++++++++----------------
+ gcc/config/xtensa/xtensa.h  |  6 +--
+ gcc/config/xtensa/xtensa.md | 98 ++++++++++++++++++-------------------
+ 6 files changed, 110 insertions(+), 113 deletions(-)
+
+diff --git a/gcc/config/xtensa/elf.h b/gcc/config/xtensa/elf.h
+index 6fd589fed..e0d1d7275 100644
+--- a/gcc/config/xtensa/elf.h
++++ b/gcc/config/xtensa/elf.h
+@@ -57,7 +57,7 @@ along with GCC; see the file COPYING3.  If not see
+   "crt1-sim%O%s crt0%O%s crti%O%s crtbegin%O%s _vectors%O%s"
+ 
+ #undef ENDFILE_SPEC
+-#define ENDFILE_SPEC "crtend%O%s crtn%O%s"  
++#define ENDFILE_SPEC "crtend%O%s crtn%O%s"
+ 
+ #undef LINK_SPEC
+ #define LINK_SPEC \
+@@ -82,19 +82,17 @@ along with GCC; see the file COPYING3.  If not see
+ /* Search for headers in $tooldir/arch/include and for libraries and
+    startfiles in $tooldir/arch/lib.  */
+ #define GCC_DRIVER_HOST_INITIALIZATION \
+-do \
+-{ \
+-  char *tooldir, *archdir; \
+-  tooldir = concat (tooldir_base_prefix, spec_machine, \
+-		    dir_separator_str, NULL); \
+-  if (!IS_ABSOLUTE_PATH (tooldir)) \
+-    tooldir = concat (standard_exec_prefix, spec_machine, dir_separator_str, \
+-		      spec_version, dir_separator_str, tooldir, NULL); \
+-  archdir = concat (tooldir, "arch", dir_separator_str, NULL); \
+-  add_prefix (&startfile_prefixes, \
+-	      concat (archdir, "lib", dir_separator_str, NULL), \
+-	      "GCC", PREFIX_PRIORITY_LAST, 0, 1); \
+-  add_prefix (&include_prefixes, archdir, \
+-	      "GCC", PREFIX_PRIORITY_LAST, 0, 0); \
+-  } \
+-while (0)
++  do { \
++    char *tooldir, *archdir; \
++    tooldir = concat (tooldir_base_prefix, spec_machine, \
++		      dir_separator_str, NULL); \
++    if (!IS_ABSOLUTE_PATH (tooldir)) \
++      tooldir = concat (standard_exec_prefix, spec_machine, dir_separator_str, \
++			spec_version, dir_separator_str, tooldir, NULL); \
++    archdir = concat (tooldir, "arch", dir_separator_str, NULL); \
++    add_prefix (&startfile_prefixes, \
++		concat (archdir, "lib", dir_separator_str, NULL), \
++		"GCC", PREFIX_PRIORITY_LAST, 0, 1); \
++    add_prefix (&include_prefixes, archdir, \
++		"GCC", PREFIX_PRIORITY_LAST, 0, 0); \
++  } while (0)
+diff --git a/gcc/config/xtensa/linux.h b/gcc/config/xtensa/linux.h
+index 49796c97f..51ea065bd 100644
+--- a/gcc/config/xtensa/linux.h
++++ b/gcc/config/xtensa/linux.h
+@@ -65,4 +65,3 @@ along with GCC; see the file COPYING3.  If not see
+ #define XTENSA_ALWAYS_PIC 1
+ 
+ #undef DBX_REGISTER_NUMBER
+-
+diff --git a/gcc/config/xtensa/uclinux.h b/gcc/config/xtensa/uclinux.h
+index 64ba26f39..51b6f2f95 100644
+--- a/gcc/config/xtensa/uclinux.h
++++ b/gcc/config/xtensa/uclinux.h
+@@ -66,4 +66,3 @@ along with GCC; see the file COPYING3.  If not see
+ #define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function
+ 
+ #undef DBX_REGISTER_NUMBER
+-
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 767264641..d3dafa4aa 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -176,7 +176,7 @@ static bool constantpool_address_p (const_rtx addr);
+ static bool xtensa_legitimate_constant_p (machine_mode, rtx);
+ static void xtensa_reorg (void);
+ static bool xtensa_can_use_doloop_p (const widest_int &, const widest_int &,
+-                                     unsigned int, bool);
++				     unsigned int, bool);
+ static const char *xtensa_invalid_within_doloop (const rtx_insn *);
+ 
+ static bool xtensa_member_type_forces_blk (const_tree,
+@@ -2105,7 +2105,7 @@ xtensa_emit_loop_end (rtx_insn *insn, rtx *operands)
+ 	      done = 1;
+ 	  }
+ 	  break;
+-        }
++	}
+     }
+ 
+   output_asm_insn ("%1_LEND:", operands);
+@@ -2305,7 +2305,7 @@ xtensa_tls_module_base (void)
+       xtensa_tls_module_base_symbol =
+ 	gen_rtx_SYMBOL_REF (Pmode, "_TLS_MODULE_BASE_");
+       SYMBOL_REF_FLAGS (xtensa_tls_module_base_symbol)
+-        |= TLS_MODEL_GLOBAL_DYNAMIC << SYMBOL_FLAG_TLS_SHIFT;
++	|= TLS_MODEL_GLOBAL_DYNAMIC << SYMBOL_FLAG_TLS_SHIFT;
+     }
+ 
+   return xtensa_tls_module_base_symbol;
+@@ -3444,7 +3444,7 @@ xtensa_expand_prologue (void)
+ 	    }
+ 	}
+       else
+-        {
++	{
+ 	  insn = emit_insn (gen_movsi (hard_frame_pointer_rtx,
+ 				       stack_pointer_rtx));
+ 	  if (!TARGET_WINDOWED_ABI)
+@@ -3567,11 +3567,12 @@ xtensa_set_return_address (rtx address, rtx scratch)
+ 			  gen_rtx_REG (SImode, A0_REG));
+   rtx insn;
+ 
+-  if (total_size > 1024) {
+-    emit_move_insn (scratch, GEN_INT (total_size - UNITS_PER_WORD));
+-    emit_insn (gen_addsi3 (scratch, frame, scratch));
+-    a0_addr = scratch;
+-  }
++  if (total_size > 1024)
++    {
++      emit_move_insn (scratch, GEN_INT (total_size - UNITS_PER_WORD));
++      emit_insn (gen_addsi3 (scratch, frame, scratch));
++      a0_addr = scratch;
++    }
+ 
+   insn = emit_move_insn (gen_frame_mem (SImode, a0_addr), address);
+   RTX_FRAME_RELATED_P (insn) = 1;
+@@ -3853,8 +3854,8 @@ xtensa_gimplify_va_arg_expr (tree valist, tree type, gimple_seq *pre_p,
+   /* Check if the argument is in registers:
+ 
+      if ((AP).__va_ndx <= __MAX_ARGS_IN_REGISTERS * 4
+-         && !must_pass_in_stack (type))
+-        __array = (AP).__va_reg; */
++	 && !must_pass_in_stack (type))
++	__array = (AP).__va_reg; */
+ 
+   array = create_tmp_var (ptr_type_node);
+ 
+@@ -4550,8 +4551,8 @@ xtensa_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
+ /* Worker function for TARGET_FUNCTION_VALUE.  */
+ 
+ rtx
+-xtensa_function_value (const_tree valtype, const_tree func ATTRIBUTE_UNUSED, 
+-                      bool outgoing)
++xtensa_function_value (const_tree valtype, const_tree func ATTRIBUTE_UNUSED,
++		       bool outgoing)
+ {
+   return gen_rtx_REG ((INTEGRAL_TYPE_P (valtype)
+                       && TYPE_PRECISION (valtype) < BITS_PER_WORD)
+@@ -4754,7 +4755,7 @@ xtensa_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
+ 
+ static bool
+ xtensa_can_use_doloop_p (const widest_int &, const widest_int &,
+-                         unsigned int loop_depth, bool entered_at_top)
++			 unsigned int loop_depth, bool entered_at_top)
+ {
+   /* Considering limitations in the hardware, only use doloop
+      for innermost loops which must be entered from the top.  */
+@@ -4793,32 +4794,32 @@ hwloop_optimize (hwloop_info loop)
+   if (loop->depth > 1)
+     {
+       if (dump_file)
+-        fprintf (dump_file, ";; loop %d is not innermost\n",
+-                 loop->loop_no);
++	fprintf (dump_file, ";; loop %d is not innermost\n",
++		 loop->loop_no);
+       return false;
+     }
+ 
+   if (!loop->incoming_dest)
+     {
+       if (dump_file)
+-        fprintf (dump_file, ";; loop %d has more than one entry\n",
+-                 loop->loop_no);
++	fprintf (dump_file, ";; loop %d has more than one entry\n",
++		 loop->loop_no);
+       return false;
+     }
+ 
+   if (loop->incoming_dest != loop->head)
+     {
+       if (dump_file)
+-        fprintf (dump_file, ";; loop %d is not entered from head\n",
+-                 loop->loop_no);
++	fprintf (dump_file, ";; loop %d is not entered from head\n",
++		 loop->loop_no);
+       return false;
+     }
+ 
+   if (loop->has_call || loop->has_asm)
+     {
+       if (dump_file)
+-        fprintf (dump_file, ";; loop %d has invalid insn\n",
+-                 loop->loop_no);
++	fprintf (dump_file, ";; loop %d has invalid insn\n",
++		 loop->loop_no);
+       return false;
+     }
+ 
+@@ -4826,8 +4827,8 @@ hwloop_optimize (hwloop_info loop)
+   if (loop->iter_reg_used || loop->iter_reg_used_outside)
+     {
+       if (dump_file)
+-        fprintf (dump_file, ";; loop %d uses iterator\n",
+-                 loop->loop_no);
++	fprintf (dump_file, ";; loop %d uses iterator\n",
++		 loop->loop_no);
+       return false;
+     }
+ 
+@@ -4839,8 +4840,8 @@ hwloop_optimize (hwloop_info loop)
+   if (!insn)
+     {
+       if (dump_file)
+-        fprintf (dump_file, ";; loop %d start_label not before loop_end\n",
+-                 loop->loop_no);
++	fprintf (dump_file, ";; loop %d start_label not before loop_end\n",
++		 loop->loop_no);
+       return false;
+     }
+ 
+@@ -4864,8 +4865,8 @@ hwloop_optimize (hwloop_info loop)
+   start_sequence ();
+ 
+   insn = emit_insn (gen_zero_cost_loop_start (loop->iter_reg,
+-                                              loop->start_label,
+-                                              loop->iter_reg));
++					      loop->start_label,
++					      loop->iter_reg));
+ 
+   seq = get_insns ();
+ 
+@@ -4881,21 +4882,21 @@ hwloop_optimize (hwloop_info loop)
+       seq = emit_label_before (gen_label_rtx (), seq);
+       new_bb = create_basic_block (seq, insn, entry_bb);
+       FOR_EACH_EDGE (e, ei, loop->incoming)
+-        {
+-          if (!(e->flags & EDGE_FALLTHRU))
+-            redirect_edge_and_branch_force (e, new_bb);
+-          else
+-            redirect_edge_succ (e, new_bb);
+-        }
++	{
++	  if (!(e->flags & EDGE_FALLTHRU))
++	    redirect_edge_and_branch_force (e, new_bb);
++	  else
++	    redirect_edge_succ (e, new_bb);
++	}
+ 
+       make_edge (new_bb, loop->head, 0);
+     }
+   else
+     {
+       while (DEBUG_INSN_P (entry_after)
+-             || (NOTE_P (entry_after)
++	     || (NOTE_P (entry_after)
+ 		 && NOTE_KIND (entry_after) != NOTE_INSN_BASIC_BLOCK))
+-        entry_after = PREV_INSN (entry_after);
++	entry_after = PREV_INSN (entry_after);
+ 
+       emit_insn_after (seq, entry_after);
+     }
+@@ -4916,15 +4917,15 @@ hwloop_fail (hwloop_info loop)
+   rtx_insn *insn = loop->loop_end;
+ 
+   emit_insn_before (gen_addsi3 (loop->iter_reg,
+-                                loop->iter_reg,
+-                                constm1_rtx),
+-                    loop->loop_end);
++				loop->iter_reg,
++				constm1_rtx),
++		    loop->loop_end);
+ 
+   test = gen_rtx_NE (VOIDmode, loop->iter_reg, const0_rtx);
+   insn = emit_jump_insn_before (gen_cbranchsi4 (test,
+-                                                loop->iter_reg, const0_rtx,
+-                                                loop->start_label),
+-                                loop->loop_end);
++						loop->iter_reg, const0_rtx,
++						loop->start_label),
++				loop->loop_end);
+ 
+   JUMP_LABEL (insn) = loop->start_label;
+   LABEL_NUSES (loop->start_label)++;
+diff --git a/gcc/config/xtensa/xtensa.h b/gcc/config/xtensa/xtensa.h
+index 4b08ee5c1..b5fec1cb3 100644
+--- a/gcc/config/xtensa/xtensa.h
++++ b/gcc/config/xtensa/xtensa.h
+@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
+ #define TARGET_S32C1I		XCHAL_HAVE_S32C1I
+ #define TARGET_ABSOLUTE_LITERALS XSHAL_USE_ABSOLUTE_LITERALS
+ #define TARGET_THREADPTR	XCHAL_HAVE_THREADPTR
+-#define TARGET_LOOPS	        XCHAL_HAVE_LOOPS
++#define TARGET_LOOPS		XCHAL_HAVE_LOOPS
+ #define TARGET_WINDOWED_ABI	(XSHAL_ABI == XTHAL_ABI_WINDOWED)
+ #define TARGET_DEBUG		XCHAL_HAVE_DEBUG
+ #define TARGET_L32R		XCHAL_HAVE_L32R
+@@ -297,7 +297,7 @@ extern int leaf_function;
+ 
+ /* Coprocessor registers */
+ #define BR_REG_FIRST 18
+-#define BR_REG_LAST  18 
++#define BR_REG_LAST  18
+ #define BR_REG_NUM   (BR_REG_LAST - BR_REG_FIRST + 1)
+ 
+ /* 16 floating-point registers */
+@@ -743,7 +743,7 @@ typedef struct xtensa_args
+ 
+ 
+ /* Define output to appear before the constant pool.  */
+-#define ASM_OUTPUT_POOL_PROLOGUE(FILE, FUNNAME, FUNDECL, SIZE)          \
++#define ASM_OUTPUT_POOL_PROLOGUE(FILE, FUNNAME, FUNDECL, SIZE)		\
+   do {									\
+     if ((SIZE) > 0 || !TARGET_WINDOWED_ABI)				\
+       {									\
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 31e5f1b28..08fb6f312 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -70,13 +70,13 @@
+ 
+ ;; This code iterator is for floating-point comparisons.
+ (define_code_iterator any_scc_sf [eq lt le uneq unlt unle unordered])
+-(define_code_attr scc_sf [(eq "oeq") (lt "olt") (le "ole") 
++(define_code_attr scc_sf [(eq "oeq") (lt "olt") (le "ole")
+ 			  (uneq "ueq") (unlt "ult") (unle "ule")
+ 			  (unordered "un")])
+ 
+ ;; This iterator and attribute allow to combine most atomic operations.
+ (define_code_iterator ATOMIC [and ior xor plus minus mult])
+-(define_code_attr atomic [(and "and") (ior "ior") (xor "xor") 
++(define_code_attr atomic [(and "and") (ior "ior") (xor "xor")
+ 			  (plus "add") (minus "sub") (mult "nand")])
+ 
+ ;; This mode iterator allows the HI and QI patterns to be defined from
+@@ -195,7 +195,7 @@
+ 
+ (define_insn "subsi3"
+   [(set (match_operand:SI 0 "register_operand" "=a")
+-        (minus:SI (match_operand:SI 1 "register_operand" "r")
++	(minus:SI (match_operand:SI 1 "register_operand" "r")
+ 		  (match_operand:SI 2 "register_operand" "r")))]
+   ""
+   "sub\t%0, %1, %2"
+@@ -434,7 +434,7 @@
+ 
+ (define_insn "<code>si3"
+   [(set (match_operand:SI 0 "register_operand" "=a")
+-        (any_minmax:SI (match_operand:SI 1 "register_operand" "%r")
++	(any_minmax:SI (match_operand:SI 1 "register_operand" "%r")
+ 		       (match_operand:SI 2 "register_operand" "r")))]
+   "TARGET_MINMAX"
+   "<minmax>\t%0, %1, %2"
+@@ -507,7 +507,7 @@
+ 
+ (define_expand "bswapsi2"
+   [(set (match_operand:SI 0 "register_operand" "")
+-        (bswap:SI (match_operand:SI 1 "register_operand" "")))]
++	(bswap:SI (match_operand:SI 1 "register_operand" "")))]
+   "!optimize_debug && optimize > 1"
+ {
+   /* GIMPLE manual byte-swapping recognition is now activated.
+@@ -1025,7 +1025,7 @@
+    %v0s32i\t%1, %0
+    rsr\t%0, ACCLO
+    wsr\t%1, ACCLO"
+-  [(set_attr "type" "move,move,move,load,store,store,move,move,move,move,move,load,load,store,rsr,wsr")
++  [(set_attr "type"	"move,move,move,load,store,store,move,move,move,move,move,load,load,store,rsr,wsr")
+    (set_attr "mode"	"SI")
+    (set_attr "length"	"2,2,2,2,2,2,3,3,3,3,6,3,3,3,3,3")])
+ 
+@@ -1175,7 +1175,7 @@
+   "((register_operand (operands[0], SFmode)
+      || register_operand (operands[1], SFmode))
+     && !(FP_REG_P (xt_true_regnum (operands[0]))
+-         && (constantpool_mem_p (operands[1]) || CONSTANT_P (operands[1]))))"
++	 && (constantpool_mem_p (operands[1]) || CONSTANT_P (operands[1]))))"
+   "@
+    mov.s\t%0, %1
+    %v1lsi\t%0, %1
+@@ -1360,7 +1360,7 @@
+   [(set (match_operand:SI 0 "register_operand" "=a,a")
+ 	(ashift:SI (match_operand:SI 1 "register_operand" "r,r")
+ 		   (match_operand:SI 2 "arith_operand" "J,r")))]
+-  ""      
++  ""
+   "@
+    slli\t%0, %1, %R2
+    ssl\t%2\;sll\t%0, %1"
+@@ -1946,13 +1946,13 @@
+ 
+ (define_insn "zero_cost_loop_start"
+   [(set (pc)
+-        (if_then_else (ne (match_operand:SI 2 "register_operand" "0")
+-                          (const_int 1))
+-                      (label_ref (match_operand 1 "" ""))
+-                      (pc)))
++	(if_then_else (ne (match_operand:SI 2 "register_operand" "0")
++			  (const_int 1))
++		      (label_ref (match_operand 1 "" ""))
++		      (pc)))
+    (set (match_operand:SI 0 "register_operand" "=a")
+-        (plus (match_dup 0)
+-              (const_int -1)))
++	(plus (match_dup 0)
++	      (const_int -1)))
+    (unspec [(const_int 0)] UNSPEC_LSETUP_START)]
+   "TARGET_LOOPS && optimize"
+   "loop\t%0, %l1_LEND"
+@@ -1962,13 +1962,13 @@
+ 
+ (define_insn "zero_cost_loop_end"
+   [(set (pc)
+-        (if_then_else (ne (match_operand:SI 2 "nonimmediate_operand" "0,0")
+-                          (const_int 1))
+-                      (label_ref (match_operand 1 "" ""))
+-                      (pc)))
++	(if_then_else (ne (match_operand:SI 2 "nonimmediate_operand" "0,0")
++			  (const_int 1))
++		      (label_ref (match_operand 1 "" ""))
++		      (pc)))
+    (set (match_operand:SI 0 "nonimmediate_operand" "=a,m")
+-        (plus (match_dup 0)
+-              (const_int -1)))
++	(plus (match_dup 0)
++	      (const_int -1)))
+    (unspec [(const_int 0)] UNSPEC_LSETUP_END)
+    (clobber (match_scratch:SI 3 "=X,&r"))]
+   "TARGET_LOOPS && optimize"
+@@ -1979,13 +1979,13 @@
+ 
+ (define_insn "loop_end"
+   [(set (pc)
+-        (if_then_else (ne (match_operand:SI 2 "register_operand" "0")
+-                          (const_int 1))
+-                      (label_ref (match_operand 1 "" ""))
+-                      (pc)))
++	(if_then_else (ne (match_operand:SI 2 "register_operand" "0")
++			  (const_int 1))
++		      (label_ref (match_operand 1 "" ""))
++		      (pc)))
+    (set (match_operand:SI 0 "register_operand" "=a")
+-        (plus (match_dup 0)
+-              (const_int -1)))
++	(plus (match_dup 0)
++	      (const_int -1)))
+    (unspec [(const_int 0)] UNSPEC_LSETUP_END)]
+   "TARGET_LOOPS && optimize"
+ {
+@@ -1998,13 +1998,13 @@
+ 
+ (define_split
+   [(set (pc)
+-        (if_then_else (ne (match_operand:SI 0 "nonimmediate_operand" "")
+-                          (const_int 1))
+-                      (label_ref (match_operand 1 "" ""))
+-                      (pc)))
++	(if_then_else (ne (match_operand:SI 0 "nonimmediate_operand" "")
++			  (const_int 1))
++		      (label_ref (match_operand 1 "" ""))
++		      (pc)))
+    (set (match_operand:SI 2 "nonimmediate_operand" "")
+-        (plus:SI (match_dup 0)
+-                 (const_int -1)))
++	(plus:SI (match_dup 0)
++		 (const_int -1)))
+    (unspec [(const_int 0)] UNSPEC_LSETUP_END)
+    (clobber (match_scratch 3))]
+   "TARGET_LOOPS && optimize && reload_completed"
+@@ -2020,7 +2020,7 @@
+       emit_move_insn (operands[0], operands[3]);
+       test = gen_rtx_NE (VOIDmode, operands[3], const0_rtx);
+       emit_jump_insn (gen_cbranchsi4 (test, operands[3],
+-                                      const0_rtx, operands[1]));
++				      const0_rtx, operands[1]));
+     }
+   else
+     {
+@@ -2034,15 +2034,15 @@
+ ; operand 1 is the label to jump to at the top of the loop
+ (define_expand "doloop_end"
+   [(parallel [(set (pc) (if_then_else
+-                          (ne (match_operand:SI 0 "" "")
+-                              (const_int 1))
+-                          (label_ref (match_operand 1 "" ""))
+-                          (pc)))
+-              (set (match_dup 0)
+-                   (plus:SI (match_dup 0)
+-                            (const_int -1)))
+-              (unspec [(const_int 0)] UNSPEC_LSETUP_END)
+-              (clobber (match_dup 2))])] ; match_scratch
++			  (ne (match_operand:SI 0 "" "")
++			      (const_int 1))
++			  (label_ref (match_operand 1 "" ""))
++			  (pc)))
++	      (set (match_dup 0)
++		   (plus:SI (match_dup 0)
++			    (const_int -1)))
++	      (unspec [(const_int 0)] UNSPEC_LSETUP_END)
++	      (clobber (match_dup 2))])] ; match_scratch
+   "TARGET_LOOPS && optimize"
+ {
+   /* The loop optimizer doesn't check the predicates... */
+@@ -2281,8 +2281,8 @@
+ 
+ (define_insn "call_value_internal"
+   [(set (match_operand 0 "register_operand" "=a")
+-        (call (mem (match_operand:SI 1 "call_insn_operand" "nir"))
+-              (match_operand 2 "" "i")))]
++	(call (mem (match_operand:SI 1 "call_insn_operand" "nir"))
++	      (match_operand 2 "" "i")))]
+   "!SIBLING_CALL_P (insn)"
+ {
+   return xtensa_emit_call (1, operands);
+@@ -2387,9 +2387,9 @@
+ 
+ (define_expand "allocate_stack"
+   [(set (match_operand 0 "nonimmed_operand")
+-        (minus (reg A1_REG) (match_operand 1 "add_operand")))
++	(minus (reg A1_REG) (match_operand 1 "add_operand")))
+    (set (reg A1_REG)
+-        (minus (reg A1_REG) (match_dup 1)))]
++	(minus (reg A1_REG) (match_dup 1)))]
+   "TARGET_WINDOWED_ABI"
+ {
+   if (CONST_INT_P (operands[1]))
+@@ -2514,7 +2514,7 @@
+ 
+ (define_expand "frame_blockage"
+   [(set (match_dup 0)
+-        (unspec:BLK [(match_dup 1)] UNSPEC_FRAME_BLOCKAGE))]
++	(unspec:BLK [(match_dup 1)] UNSPEC_FRAME_BLOCKAGE))]
+   ""
+ {
+   operands[0] = gen_rtx_MEM (BLKmode, gen_rtx_SCRATCH (Pmode));
+@@ -2524,7 +2524,7 @@
+ 
+ (define_insn "*frame_blockage"
+   [(set (match_operand:BLK 0 "" "")
+-        (unspec:BLK [(match_operand:SI 1 "" "")] UNSPEC_FRAME_BLOCKAGE))]
++	(unspec:BLK [(match_operand:SI 1 "" "")] UNSPEC_FRAME_BLOCKAGE))]
+   ""
+   ""
+   [(set_attr "type"	"nop")
+@@ -2801,7 +2801,7 @@
+ (define_expand "sync_new_<atomic><mode>"
+   [(set (match_operand:HQI 0 "register_operand")
+ 	(ATOMIC:HQI (match_operand:HQI 1 "memory_operand")
+-		    (match_operand:HQI 2 "register_operand"))) 
++		    (match_operand:HQI 2 "register_operand")))
+    (set (match_dup 1) (ATOMIC:HQI (match_dup 1) (match_dup 2)))]
+   "TARGET_S32C1I"
+ {
+-- 
+2.30.2
+

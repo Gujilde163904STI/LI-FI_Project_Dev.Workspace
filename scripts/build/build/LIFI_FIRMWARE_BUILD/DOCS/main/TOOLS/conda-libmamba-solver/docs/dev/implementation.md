@@ -1,0 +1,127 @@
+# Implementation details
+
+This document provides an overview on how the `conda-libmamba-solver` integrations are implemented,
+both within the `conda*libmamba*solver` package itself, and as a `conda` plugin.
+
+## Repository structure
+
+* `.devcontainer`: Configuration for DevContainer development workflows.
+* `.github/workflows/`: CI pipelines to run unit and upstream tests, as well as linting and performance benchmarks. Some extra workflows might be added by the `conda/infra` settings.
+* `conda*libmamba*solver/`: The Python package. Check sections below for details.
+* `recipe/`: The conda-build recipe used for the PR build previews. It should be kept in sync with `conda-forge` and `defaults`.
+* `dev/`: Supporting configuration files to set up development environments.
+* `docs/`: Documentation sources.
+* `tests/`: pytest testing infrastructure.
+* `pyproject.toml`: Project metadata. See below for details.
+
+## Project metadata
+
+The `pyproject.toml` file stores the required packaging metadata,
+as well as some the configuration for some tools (`black`, `pytest`, etc.).
+
+Some peculiarities:
+
+* `hatchling` is the chosen backend for the packaging.
+* The `version` is calculated from the `git` info with `hatchling-vcs`.
+* `black` uses a line length of 99 characters.
+
+## `conda*libmamba*solver` package
+
+The package is a flat namespace:
+
+* `conda*libmamba*solver.__init__`: Defines `__version__` and the old-style plugin API.
+* `conda*libmamba*solver.exceptions`: Subclasses of `conda.exceptions`.
+* `conda*libmamba*solver.index`: Helper objects to deal with repodata fetching and loading, interfacing with `libmamba` helpers.
+* `conda*libmamba*solver.mamba_utils`: Utility functions to help set up the `libmamba` objects.
+* `conda*libmamba*solver.models`: Application-agnostic objects to assist in the metadata collection phases.
+* `conda*libmamba*solver.plugin`: The `pluggy` registration mechanism in `conda.plugins`.
+* `conda*libmamba*solver.solver`: The `conda.core.solve.Solver` subclass with all the libmamba-specific logic.
+* `conda*libmamba*solver.state`: Solver-agnostic objects to assist in the solver state specification and collection.
+* `conda*libmamba*solver.utils`: Other application-agnostic utility functions.
+
+```{note}
+Refer to each module docstrings for further details!
+```
+
+### Solver-agnostic parts
+
+The idea behind the module separation is to have better logic reusability and separation between the `libmamba` library and the preparation logic `conda` uses.
+The following paragraphs assume you have read the [Deep Dive guides](https://docs.conda.io/projects/conda/en/stable/dev-guide/deep-dives/solvers.html) in the `conda` documentation, but as a refresher:
+
+* The `Solver` class will take a list of `MatchSpec` objects coming from diverse sources, like:
+  * The packages the user requested in the command line or an environment file
+  * The installed packages in the target environment
+  * The explicitly requested packages in previous commands (the history)
+  * ... and some more coming from configured settings
+* All these `MatchSpecs` are then merged and sorted depending on certain preparation logic.
+* The final set of `MatchSpec` objects is used to *query* the so-called *index* of packages.
+* The index is a long list of `PackageRecord` objects, loaded from the `repodata.json` files obtained from the configured channels.
+* The job of the solver is to find the set of `PackageRecord` objects that better satisfies the optimization criteria for the given `MatchSpec` objects.
+
+All the preparation steps before the actual SAT solver starts working are conda-specific, and solver-agnostic!
+In `conda` classic, this logic is spread across the different layers, but in `conda-libmamba-solver` we tried to synthesize it in a single module.
+This is the `conda*libmamba*solver.state` module, which contains the `SolverInputState` and `SolverOutputState` classes.
+
+* `SolverInputState` deals with the collection and management of the `MatchSpec` objects.
+* `SolverOutputState` will assist the `Solver` class maintain its state through the different solving attempts,
+  and will finally export a list of `PackageRecords`.
+  The early exit and post-solve logics are also expressed here.
+
+Both `SolverInputState` and `SolverOutputState` classes are supported by the `TrackedMap` dictionary subclass,
+which logs its own changes for better debugging and developer experience while analyzing solver problems.
+
+### libmamba-specific parts
+
+`conda*libmamba*solver` interfaces with `libmamba` objects through three modules only:
+
+* `.solver`, which contains the `conda.core.solve.Solver` subclass.
+  It relies heavily on `conda*libmamba*solver.state` in an effort to only contain the logic necessary to interface with `libmamba`.
+* `.index`, which deals with the repodata fetching and loading.
+  Initially, it invoked the necessary `libmamba` objects to download and load the repodata JSON files.
+  In later releases, downloading is done with `conda` objects, and we then pass the JSON files to the `libmamba` loaders.
+* `.mamba_utils`, which contains utility functions borrowed and adapted from `mamba` itself.
+  Its main usage is the initialization of the `libmamba.Context` options from `conda`'s `Context`.
+
+## Integrations with `conda`
+
+### With the plugin system
+
+Once co-installed with `conda`, `conda*libmamba*solver` registers itself via the `conda.plugins.hookimpl`-decorated function in `conda.plugin`, which yields a `CondaSolver` plugin instance.
+
+After that, `conda` clients just need to get the configured solver via `context.plugin*manager.get*cached*solver*backend()`.
+
+### Draft integrations (pre-plugin phase)
+
+```{note}
+This is just here as a historical trivia item.
+Please check the Plugin implementation section for current details!
+```
+
+The first experimental releases of `conda*libmamba*solver` used an ad-hoc mechanism based on `try/except` hooks.
+
+On the `conda/conda` side, we had [`conda.core.solve.*get*solver_class()`](https://github.com/conda/conda/blob/22.9.0/conda/core/solve.py#L57-L78):
+
+```python
+def _get_solver_class(key=None):
+    key = key or conda.base.context.Context.experimental_solver
+    if key == "classic":
+        return conda.core.solve.Solver  # Classic
+    if key.startswith("libmamba"):
+        try:
+            from conda_libmamba_solver import get_solver_class
+
+            return get_solver_class(key)
+        except ImportError as exc:
+            raise CondaImportError(...)
+    raise ValueError(...)
+```
+
+The `key` values were hard-coded in `conda.base.constants`. Not very extensible!
+This was only meant to be temporary as we iterated on the `conda-libmamba-solver` side.
+We had one more `get*solver*class()` function in `conda*libmamba*solver` so we could easily change the `Solver` object import path without changing `conda` itself.
+
+The default value for the `key` was set by the `Context` object, which was populated by either:
+
+* The environment variable, `CONDA*EXPERIMENTAL*SOLVER`.
+* The command-line flag, `--experimental-solver`.
+* A configuration file (e.g. `~/.condarc`).

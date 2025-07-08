@@ -1,0 +1,55 @@
+From 5fe437012eb770e8fc2d2d9f859110e5cc707fc5 Mon Sep 17 00:00:00 2001
+From: Takayuki 'January June' Suwa <jjsuwa_sys3175@yahoo.co.jp>
+Date: Wed, 11 Jan 2023 19:26:03 +0900
+Subject: [PATCH] xtensa: Tune "*btrue" insn pattern
+
+This branch instruction has short encoding if EQ/NE comparison against
+immediate zero when the Code Density Option is enabled, but its "length"
+attribute was only for normal encoding.  This patch fixes it.
+
+This patch also prevents undesireable replacement the comparison immediate
+zero of the instruction (short encoding, as mentioned above) with a
+register that has value of zero (normal encoding) by the postreload pass.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (*btrue):
+	Correct value of the attribute "length" that depends on
+	TARGET_DENSITY and operands, and add '?' character to the register
+	constraint of the compared operand.
+---
+ gcc/config/xtensa/xtensa.md | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index ba1c044c4..4b0b74368 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -1684,7 +1684,7 @@
+   [(set (pc)
+ 	(if_then_else (match_operator 3 "branch_operator"
+ 			[(match_operand:SI 0 "register_operand" "r,r")
+-			 (match_operand:SI 1 "branch_operand" "K,r")])
++			 (match_operand:SI 1 "branch_operand" "K,?r")])
+ 		      (label_ref (match_operand 2 "" ""))
+ 		      (pc)))]
+   ""
+@@ -1693,7 +1693,14 @@
+ }
+   [(set_attr "type"	"jump,jump")
+    (set_attr "mode"	"none")
+-   (set_attr "length"	"3,3")])
++   (set (attr "length")
++        (if_then_else (match_test "TARGET_DENSITY
++				   && CONST_INT_P (operands[1])
++				   && INTVAL (operands[1]) == 0
++				   && (GET_CODE (operands[3]) == EQ
++				       || GET_CODE (operands[3]) == NE)")
++                      (const_int 2)
++                      (const_int 3)))])
+ 
+ (define_insn "*ubtrue"
+   [(set (pc)
+-- 
+2.30.2
+

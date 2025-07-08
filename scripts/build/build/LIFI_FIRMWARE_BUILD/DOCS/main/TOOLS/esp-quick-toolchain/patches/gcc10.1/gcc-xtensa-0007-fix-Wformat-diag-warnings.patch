@@ -1,0 +1,48 @@
+From 76ee6b24125c885150e5b493b26b594801998b74 Mon Sep 17 00:00:00 2001
+From: Martin Liska <mliska@suse.cz>
+Date: Tue, 18 Jan 2022 14:51:40 +0100
+Subject: [PATCH 02/31] xtensa: fix -Wformat-diag warnings.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.c (print_operand): Fix warnings.
+	(print_operand_address): Likewise.
+	(xtensa_multibss_section_type_flags): Likewise.
+---
+ gcc/config/xtensa/xtensa.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.c b/gcc/config/xtensa/xtensa.c
+index 37c6ac1fd..b1dbe8520 100644
+--- a/gcc/config/xtensa/xtensa.c
++++ b/gcc/config/xtensa/xtensa.c
+@@ -2379,7 +2379,7 @@ void
+ print_operand (FILE *file, rtx x, int letter)
+ {
+   if (!x)
+-    error ("PRINT_OPERAND null pointer");
++    error ("%<PRINT_OPERAND%> null pointer");
+ 
+   switch (letter)
+     {
+@@ -2584,7 +2584,7 @@ void
+ print_operand_address (FILE *file, rtx addr)
+ {
+   if (!addr)
+-    error ("PRINT_OPERAND_ADDRESS, null pointer");
++    error ("%<PRINT_OPERAND_ADDRESS%>, null pointer");
+ 
+   switch (GET_CODE (addr))
+     {
+@@ -3697,7 +3697,7 @@ xtensa_multibss_section_type_flags (tree decl, const char *name, int reloc)
+ 	flags |= SECTION_BSS;  /* @nobits */
+       else
+ 	warning (0, "only uninitialized variables can be placed in a "
+-		 ".bss section");
++		 "%<.bss%> section");
+     }
+ 
+   return flags;
+-- 
+2.20.1
+

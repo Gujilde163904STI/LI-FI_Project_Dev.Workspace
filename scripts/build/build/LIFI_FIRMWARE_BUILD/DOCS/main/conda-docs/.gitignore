@@ -1,0 +1,22 @@
+*~
+build/
+docs/source/commands/
+*.swp
+__pycache__
+.idea  # Pycharm
+env
+*.pyc
+
+# OS generated files
+*.DS_Store
+*.DS_Store?
+*.Trashes
+*.Spotlight-V100
+._*
+.docs_src.tar.bz2
+.web/
+*.pyc
+
+# Directories
+docs/_build/
+docs/source/_build/

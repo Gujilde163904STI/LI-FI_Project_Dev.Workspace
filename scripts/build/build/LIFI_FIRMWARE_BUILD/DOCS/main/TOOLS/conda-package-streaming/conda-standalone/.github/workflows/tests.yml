@@ -1,0 +1,88 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - .github/workflows/upload-releases.yml
+  schedule:
+    - cron: '30 6 * * *'
+
+concurrency:
+  # Concurrency group that uses the workflow name and PR number if available
+  # or commit SHA as a fallback. If a new build is triggered under that
+  # concurrency group while a previous build is running it will be canceled.
+  # Repeated pushes to a PR will cancel all previous builds, while multiple
+  # merges to main will not cancel.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build_recipe:
+    name: Build conda recipe (${{ matrix.subdir }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            subdir: linux-64
+          - os: macos-13  # ensure x86_64
+            subdir: osx-64
+          - os: macos-14  # FUTURE: Use -latest once GHA has fully migrated
+            subdir: osx-arm64
+          - os: windows-latest
+            subdir: win-64
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830 # v3.1.1
+        with:
+          auto-activate-base: true
+          activate-environment: "test"
+          run-post: false
+
+      - name: Install dependencies
+        shell: bash -el {0}
+        run: conda install -y "conda-build!=3.28.0,!=3.28.1" anaconda-client
+
+      - name: Build recipe
+        shell: bash -el {0}
+        env:
+          CONDA_BLD_PATH: ${{ runner.temp }}/bld
+        run: conda build recipe --override-channels -c conda-forge
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: github.event_name == 'pull_request'
+        with:
+          name: conda-standalone-${{ matrix.subdir }}
+          path: ${{ runner.temp }}/bld/${{ matrix.subdir }}/conda-standalone-*.*
+
+      - name: Upload package to anaconda.org
+        shell: bash -el {0}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          CONDA_BLD_PATH: ${{ runner.temp }}/bld
+          ANACONDA_ORG_TOKEN: ${{ secrets.ANACONDA_ORG_CONDA_CANARY_TOKEN }}
+          ANACONDA_ORG_CHANNEL: conda-canary
+          ANACONDA_ORG_LABEL: dev
+        run: |
+          anaconda \
+            --token="${ANACONDA_ORG_TOKEN}" \
+            upload \
+            --force \
+            --register \
+            --no-progress \
+            --user="${ANACONDA_ORG_CHANNEL}" \
+            --label="${ANACONDA_ORG_LABEL}" \
+            ${CONDA_BLD_PATH}/${{ matrix.subdir }}/conda-standalone-*.*
+          echo "Uploaded the following files:"
+          basename -a ${CONDA_BLD_PATH}/${{ matrix.subdir }}/conda-standalone-*.*
+
+          echo "Use this command to try out the build:"
+          echo "  conda install -c ${ANACONDA_ORG_CHANNEL}/label/${ANACONDA_ORG_LABEL} conda-standalone"

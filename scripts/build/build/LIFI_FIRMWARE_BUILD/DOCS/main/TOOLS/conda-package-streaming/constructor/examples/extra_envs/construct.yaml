@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: ExtraEnvs
+version: X
+installer_type: all
+channels:
+  - https://conda.anaconda.org/conda-forge
+specs:
+  - python=3.9
+  - conda # conda is required for extra_envs
+  - miniforge_console_shortcut # [win]
+exclude:  # [unix]
+  - tk  # [unix]
+extra_envs:
+  py310:
+    specs:
+      - python=3.10
+      - pip
+    channels:
+      - conda-forge
+    channels_remap:
+      - src: https://conda.anaconda.org/conda-forge
+        dest: conda-forge
+    exclude:
+      - setuptools
+  dav1d:
+    environment_file: dav1d_env.yaml
+
+post_install: test_install.sh  # [unix]
+post_install: test_install.bat  # [win]
+build_outputs:
+  - info.json
+  - pkgs_list
+  - pkgs_list:
+      env: py310
+  - lockfile
+  - lockfile:
+      env: py310
+  - licenses:
+      include_text: True
+      text_errors: replace
+initialize_by_default: false
+register_python: False

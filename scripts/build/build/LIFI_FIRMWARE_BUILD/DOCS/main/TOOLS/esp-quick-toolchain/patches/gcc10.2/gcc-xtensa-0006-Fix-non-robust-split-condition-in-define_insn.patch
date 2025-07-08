@@ -1,0 +1,44 @@
+From 2065a3fccb11e28ebcc42aa46c52a40b0fae9bea Mon Sep 17 00:00:00 2001
+From: Kewen Lin <linkw@linux.ibm.com>
+Date: Sun, 21 Nov 2021 20:18:31 -0600
+Subject: [PATCH 01/31] xtensa: Fix non-robust split condition in
+ define_insn_and_split
+
+This patch is to fix some non-robust split conditions in some
+define_insn_and_splits, to make each of them applied on top of
+the corresponding condition for define_insn part, otherwise the
+splitting could perform unexpectedly.
+
+gcc/ChangeLog:
+
+	* config/xtensa/xtensa.md (movdi_internal, movdf_internal): Fix split
+	condition.
+---
+ gcc/config/xtensa/xtensa.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gcc/config/xtensa/xtensa.md b/gcc/config/xtensa/xtensa.md
+index 2a8e59ee9..123916957 100644
+--- a/gcc/config/xtensa/xtensa.md
++++ b/gcc/config/xtensa/xtensa.md
+@@ -782,7 +782,7 @@
+   "register_operand (operands[0], DImode)
+    || register_operand (operands[1], DImode)"
+   "#"
+-  "reload_completed"
++  "&& reload_completed"
+   [(set (match_dup 0) (match_dup 2))
+    (set (match_dup 1) (match_dup 3))]
+ {
+@@ -1058,7 +1058,7 @@
+   "register_operand (operands[0], DFmode)
+    || register_operand (operands[1], DFmode)"
+   "#"
+-  "reload_completed"
++  "&& reload_completed"
+   [(set (match_dup 0) (match_dup 2))
+    (set (match_dup 1) (match_dup 3))]
+ {
+-- 
+2.20.1
+

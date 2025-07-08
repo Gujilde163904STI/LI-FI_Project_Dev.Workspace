@@ -1,0 +1,209 @@
+name: Performance
+
+on:
+  pull_request:
+    types:
+      - labeled
+  workflow_run:
+    workflows:
+      - CI
+    branches:
+      - main
+    types:
+      - completed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  CONDA_SOLVER: libmamba
+
+jobs:
+  linux:
+    if: |
+      (github.event_name == 'pull_request' &&
+      github.event.label.name == 'performance::run') ||
+      (github.event.workflow_run.conclusion == 'success')
+    name: Linux, Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9"]
+
+    env:
+      OS: "linux"
+      PYTHON: ${{ matrix.python-version }}
+
+    steps:
+      - name: Checkout our source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: conda-libmamba-solver
+          fetch-depth: 0
+
+      - name: Checkout conda
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          repository: conda/conda
+          path: conda
+
+      - name: Run performance tests
+        run: >
+          docker run
+          --rm
+          -v ${GITHUB_WORKSPACE}/conda:/opt/conda-src
+          -v ${GITHUB_WORKSPACE}/conda-libmamba-solver:/opt/conda-libmamba-solver-src
+          -e TEST_SPLITS
+          -e TEST_GROUP
+          -e CONDA_SOLVER
+          ghcr.io/conda/conda-ci:main-linux-python${{ matrix.python-version }}
+          bash -c "sudo /opt/conda/condabin/conda install -p /opt/conda \
+                        --file /opt/conda-libmamba-solver-src/dev/requirements.txt &&
+                   /opt/conda/bin/python -m pip install /opt/conda-libmamba-solver-src \
+                        --no-deps -vvv &&
+                   source /opt/conda-src/dev/linux/bashrc.sh &&
+                   /opt/conda/bin/python -m pytest /opt/conda-libmamba-solver-src \
+                        -vv --durations=0 --timeout=1800 -m 'slow'"
+
+  macos:
+    if: |
+      (github.event_name == 'pull_request' &&
+      github.event.label.name == 'performance::run') ||
+      (github.event.workflow_run.conclusion == 'success')
+    name: MacOS, Python ${{ matrix.python-version }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9"]
+
+    env:
+      OS: "macos"
+      PYTHON: ${{ matrix.python-version }}
+
+    steps:
+      - name: Checkout our source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: conda-libmamba-solver
+          fetch-depth: 0
+
+      - name: Checkout conda
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          repository: conda/conda
+          ref: libmamba
+          path: conda
+
+      - uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830 # v3.1.1
+        with:
+          activate-environment: conda-test-env
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
+      - name: Setup environment
+        shell: bash -l {0}
+        working-directory: conda
+        run: |
+          set -euxo pipefail
+          # restoring the default for changeps1 to have parity with dev
+          conda config --set changeps1 true
+          # make sure the caching works correctly
+          conda config --set use_only_tar_bz2 true
+          # install all test requirements
+          conda install --yes \
+            --file tests/requirements.txt \
+            --file ../conda-libmamba-solver/dev/requirements.txt \
+            python=${{ matrix.python-version }}
+          conda update openssl ca-certificates certifi
+          conda info
+          python -c "from mamba import __version__; print('mamba', __version__)"
+
+      - name: Install conda-libmamba-solver
+        shell: bash -l {0}
+        working-directory: conda-libmamba-solver
+        run: |
+          python -m pip install . -vv --no-deps
+
+      - name: Run performance tests
+        shell: bash -l {0}
+        working-directory: conda
+        run: |
+          eval "$(sudo ${CONDA_PREFIX}/bin/python -m conda init bash --dev)"
+          python -m pytest ${GITHUB_WORKSPACE}/conda-libmamba-solver -vv --durations=0 --timeout=1800 -m "slow"
+
+  windows:
+    if: |
+      (github.event_name == 'pull_request' &&
+      github.event.label.name == 'performance::run') ||
+      (github.event.workflow_run.conclusion == 'success')
+    name: Windows, Python ${{ matrix.python-version }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9"]
+
+    env:
+      OS: "windows"
+      PYTHON: ${{ matrix.python-version }}
+
+    steps:
+      - name: Checkout our source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: conda-libmamba-solver
+          fetch-depth: 0
+
+      - name: Checkout conda
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          repository: conda/conda
+          ref: libmamba
+          path: conda
+
+      - name: Set temp dirs correctly
+        # https://github.com/actions/virtual-environments/issues/712
+        run: |
+          echo "TMPDIR=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+          echo "TEMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+          echo "TMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+
+      - name: Setup environment
+        shell: cmd
+        working-directory: conda
+        run: |
+          :: add mamba to requirements
+          type ..\conda-libmamba-solver\dev\requirements.txt >> .\tests\requirements.txt
+          if errorlevel 1 exit 1
+          :: initialize conda dev
+          call .\dev\windows\setup.bat
+          if errorlevel 1 exit 1
+          call .\dev-init.bat
+          if errorlevel 1 exit 1
+          python -c "from mamba import __version__; print('mamba', __version__)"
+          if errorlevel 1 exit 1
+          conda info -a
+          if errorlevel 1 exit 1
+
+      - name: Install conda-libmamba-solver
+        shell: cmd
+        working-directory: conda
+        run: |
+          call .\dev-init.bat
+          if errorlevel 1 exit 1
+          python -m pip install --no-deps -vv "%GITHUB_WORKSPACE%\conda-libmamba-solver"
+          if errorlevel 1 exit 1
+
+      - name: Run performance tests
+        shell: cmd
+        working-directory: conda
+        run: |
+          CALL dev-init.bat
+          if errorlevel 1 exit 1
+          python -m pytest "%GITHUB_WORKSPACE%\conda-libmamba-solver" -vv --durations=0 --timeout=1800 -m "slow"
+          if errorlevel 1 exit 1

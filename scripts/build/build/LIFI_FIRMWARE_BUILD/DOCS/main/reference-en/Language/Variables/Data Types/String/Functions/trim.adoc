@@ -1,0 +1,57 @@
+---
+title: "trim()"
+categories: [ "Data Types" ]
+subCategories: [ "StringObject Function" ]
+---
+
+
+
+
+
+= trim()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Get a version of the String with any leading and trailing whitespace removed. The `trim()` function modifies the String in place rather than returning a new one.
+
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`myString.trim()`
+
+
+[float]
+=== Parameters
+`myString`: a variable of type String.
+
+
+[float]
+=== Returns
+Nothing
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+// HOW TO USE SECTION ENDS
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="example"]
+* #EXAMPLE# https://www.arduino.cc/en/Tutorial/BuiltInExamples#strings[String Tutorials^]
+--
+// SEE ALSO SECTION ENDS

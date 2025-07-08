@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: Funnychan
+version: 2.5.5
+
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+  - https://conda.anaconda.org/ilan
+
+# specifications
+specs:
+  - python
+  - grin
+  - sample
+
+license_file: eula.txt
+
+check_path_spaces: False
+check_path_length: False

@@ -1,0 +1,57 @@
+---
+title: int()
+categories: [ "Variables" ]
+subCategories: [ "Conversion" ]
+---
+
+
+
+
+
+= int()
+
+
+// OVERVIEW SECTION STARTS
+[#overview]
+--
+
+[float]
+=== Description
+Converts a value to the `link:../../data-types/int[int]` data type.
+[%hardbreaks]
+
+
+[float]
+=== Syntax
+`int(x)` +
+`(int)x` (C-style type conversion)
+
+
+[float]
+=== Parameters
+`x`: a value. Allowed data types: any type.
+
+
+[float]
+=== Returns
+Data type: link:../../data-types/int[`int`].
+
+--
+// OVERVIEW SECTION ENDS
+
+
+
+
+// SEE ALSO SECTION
+[#see_also]
+--
+
+[float]
+=== See also
+
+[role="language"]
+* #LANGUAGE# link:../../data-types/int[int]
+
+
+--
+// SEE ALSO SECTION ENDS
