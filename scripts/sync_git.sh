@@ -4,7 +4,7 @@
 # Usage: ./sync_git.sh [commit_message]
 
 PROJECT_DIR="/Users/djcarlogujilde/GALAHADD.DEV.PROJECTS/LI-FI_Project_Dev.Workspace"
-REMOTE_URL="https://github.com/Gujilde163904/LI-FI_Project_Dev.Workspace.git"
+REMOTE_URL="https://github.com/Gujilde163904STI/LI-FI_Project_Dev.Workspace.git"
 BRANCH="main"
 
 cd "$PROJECT_DIR" || exit 1
