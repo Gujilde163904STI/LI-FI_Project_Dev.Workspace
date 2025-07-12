@@ -1,4 +1,4 @@
-# ⚡️ LI-FI_Project_Dev.Workspace
+# ⚡️ LIFI-PROJECT
 
 > A modular development workspace for a **Light Fidelity (LI-FI)** embedded system powered by **Raspberry Pi 3**, **Raspberry Pi 4**, and **ESP8266**, featuring independent flashing workflows, photodiode-based TCP/IP transmission, a Firebase dashboard, and AI-assisted diagnostics.
 
